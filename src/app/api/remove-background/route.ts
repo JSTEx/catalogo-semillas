@@ -98,15 +98,50 @@ export async function POST(req: Request) {
       },
     );
 
-    // Postproceso: feathering suave del alpha, defringe (sin cortes duros)
-    // y compresion a WEBP premultiplicado para bordes limpios.
+    // Postproceso: endurecer el alpha (quitar lavado/fondo fantasma),
+    // defringe del halo de color en bordes y WEBP premultiplicado.
     const buffer = Buffer.from(await result.arrayBuffer());
     const { data, info } = await sharp(buffer)
       .ensureAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true });
 
+    const debug = (json as { debug?: unknown }).debug === true;
+    if (debug) {
+      let opaque = 0, transp = 0, partial = 0, maxA = 0;
+      for (let i = 3; i < data.length; i += 4) {
+        const a = data[i];
+        if (a === 255) opaque++;
+        else if (a === 0) transp++;
+        else partial++;
+        if (a > maxA) maxA = a;
+      }
+      return NextResponse.json({
+        dims: [info.width, info.height],
+        opaque,
+        transp,
+        partial,
+        maxA,
+      });
+    }
+
+    // Defringe primero sobre la mascara suave (los pixeles semi-transparentes
+    // conservan resto del fondo en RGB); luego endurecer el alpha.
     defringe(data, info.width, info.height);
+
+    const aHardLow = 48;
+    const aHardHigh = 200;
+    for (let i = 3; i < data.length; i += 4) {
+      const a = data[i];
+      if (a <= aHardLow) {
+        data[i] = 0;
+      } else if (a >= aHardHigh) {
+        data[i] = 255;
+      } else {
+        const t = (a - aHardLow) / (aHardHigh - aHardLow);
+        data[i] = Math.round(t * 255);
+      }
+    }
 
     const webp = await sharp(data, {
       raw: { width: info.width, height: info.height, channels: info.channels },

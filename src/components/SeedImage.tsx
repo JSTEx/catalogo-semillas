@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import type { ImageProps } from "next/image";
 
@@ -96,27 +96,40 @@ async function extractDominantColors(
 
 export default function SeedImage(props: ImageProps) {
   const src = props.src;
+  const imgRef = useRef<HTMLImageElement | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [colors, setColors] = useState<[string, string] | null>(null);
 
   useEffect(() => {
     setLoaded(false);
     let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
 
     if (typeof src === "string") {
       const cached = colorCache.get(src);
       if (cached !== undefined) {
         setColors(cached);
-        return;
+      } else {
+        extractDominantColors(src).then((c) => {
+          if (c) colorCache.set(src, c);
+          if (!cancelled) setColors(c);
+        });
       }
-      extractDominantColors(src).then((c) => {
-        if (c) colorCache.set(src, c);
-        if (!cancelled) setColors(c);
-      });
+    }
+
+    // Si la imagen ya esta cargada en caché, onLoad no se vuelve a disparar.
+    // Verificamos complete y, si no, esperamos el evento onLoad/onError.
+    if (imgRef.current?.complete) {
+      setLoaded(true);
+    } else {
+      timer = setTimeout(() => {
+        if (imgRef.current?.complete) setLoaded(true);
+      }, 400);
     }
 
     return () => {
       cancelled = true;
+      if (timer) clearTimeout(timer);
     };
   }, [src]);
 
@@ -151,7 +164,9 @@ export default function SeedImage(props: ImageProps) {
       </div>
       <Image
         {...props}
+        ref={imgRef}
         onLoad={() => setLoaded(true)}
+        onError={() => setLoaded(true)}
         className={[
           props.className ?? "",
           "transition-all duration-1000 ease-out",
