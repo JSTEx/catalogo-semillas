@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import type { ProductDTO } from "@/lib/types";
 import AvailabilityBadge from "@/components/AvailabilityBadge";
+import ThemeToggle from "@/components/ThemeToggle";
 
 interface Props {
   initialProducts: ProductDTO[];
@@ -162,7 +163,7 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
 
   return (
     <div className="min-h-dvh">
-      <header className="sticky top-0 z-40 border-b border-stone-200/60 bg-white/70 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-stone-200/60 bg-white/70 backdrop-blur-md dark:border-stone-800/60 dark:bg-stone-900/70">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-500 text-white shadow-sm">
@@ -183,24 +184,25 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
               </svg>
             </span>
             <div>
-              <h1 className="text-lg font-bold tracking-tight text-stone-900">
+              <h1 className="text-lg font-bold tracking-tight text-stone-900 dark:text-stone-100">
                 Administracion
               </h1>
-              <p className="text-xs text-stone-500">Sesion: {username}</p>
+              <p className="text-xs text-stone-500 dark:text-stone-400">Sesion: {username}</p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <a
               href="/"
-              className="hidden rounded-2xl border border-stone-200 bg-white/70 px-4 py-2 text-sm font-medium text-stone-600 transition-all duration-300 hover:border-brand-200 hover:text-brand-700 sm:inline-flex"
+              className="hidden rounded-2xl border border-stone-200 bg-white/70 px-4 py-2 text-sm font-medium text-stone-600 transition-all duration-300 hover:border-brand-200 hover:text-brand-700 sm:inline-flex dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:border-brand-500/40 dark:hover:text-brand-300"
             >
               Ver catalogo
             </a>
             <button
               type="button"
               onClick={logout}
-              className="rounded-2xl border border-stone-200 bg-white/70 px-4 py-2 text-sm font-medium text-stone-600 transition-all duration-300 hover:border-red-200 hover:text-red-600"
+              className="rounded-2xl border border-stone-200 bg-white/70 px-4 py-2 text-sm font-medium text-stone-600 transition-all duration-300 hover:border-red-200 hover:text-red-600 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:border-red-500/40 dark:hover:text-red-300"
             >
               Cerrar sesion
             </button>
@@ -218,7 +220,7 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
               stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"
-              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400"
+              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400 dark:text-stone-500"
               aria-hidden="true"
             >
               <circle cx="11" cy="11" r="8" />
@@ -230,7 +232,7 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar semilla..."
               aria-label="Buscar semilla"
-              className="w-full rounded-2xl border border-stone-200 bg-white/80 py-3 pl-11 pr-4 text-sm text-stone-800 outline-none backdrop-blur-md transition-all duration-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+              className="w-full rounded-2xl border border-stone-200 bg-white/80 py-3 pl-11 pr-4 text-sm text-stone-800 outline-none backdrop-blur-md transition-all duration-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
             />
           </div>
 
@@ -261,14 +263,14 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
         {error && (
           <p
             role="alert"
-            className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+            className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
           >
             {error}
           </p>
         )}
 
         {filtered.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-stone-300 bg-white/50 py-20 text-center text-sm text-stone-500 backdrop-blur-md">
+          <div className="rounded-3xl border border-dashed border-stone-300 bg-white/50 py-20 text-center text-sm text-stone-500 backdrop-blur-md dark:border-stone-700 dark:bg-stone-900/50 dark:text-stone-400">
             No hay productos para mostrar.
           </div>
         ) : (
@@ -276,9 +278,9 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
             {filtered.map((product) => (
               <article
                 key={product.id}
-                className="flex flex-col overflow-hidden rounded-3xl border border-stone-200/70 bg-white/70 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-lg"
+                className="flex flex-col overflow-hidden rounded-3xl border border-stone-200/70 bg-white/70 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-lg dark:border-stone-800/70 dark:bg-stone-900/70"
               >
-                <div className="relative aspect-[4/3] w-full bg-stone-100">
+                <div className="relative aspect-[4/3] w-full bg-stone-100 dark:bg-stone-800">
                   <Image
                     src={product.imageUrl}
                     alt={product.name}
@@ -292,7 +294,7 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                 </div>
 
                 <div className="flex flex-1 flex-col gap-4 p-4">
-                  <h3 className="line-clamp-2 flex-1 text-base font-semibold text-stone-800">
+                  <h3 className="line-clamp-2 flex-1 text-base font-semibold text-stone-800 dark:text-stone-100">
                     {product.name}
                   </h3>
 
@@ -303,7 +305,7 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                       onClick={() => toggle(product)}
                       className={[
                         "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-300 disabled:opacity-50",
-                        product.isAvailable ? "bg-brand-500" : "bg-stone-300",
+                        product.isAvailable ? "bg-brand-500" : "bg-stone-300 dark:bg-stone-700",
                       ].join(" ")}
                       aria-label="Cambiar disponibilidad"
                       aria-pressed={product.isAvailable}
@@ -330,7 +332,7 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                             imageUrl: product.imageUrl,
                           });
                         }}
-                        className="flex h-9 w-9 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-800"
+                        className="flex h-9 w-9 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-800 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
                         aria-label="Editar"
                       >
                         <svg
@@ -352,7 +354,7 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                         type="button"
                         disabled={busyId === product.id}
                         onClick={() => remove(product)}
-                        className="flex h-9 w-9 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                        className="flex h-9 w-9 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:text-stone-400 dark:hover:bg-red-500/15 dark:hover:text-red-300"
                         aria-label="Eliminar"
                       >
                         <svg
@@ -385,12 +387,12 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
           className="animate-fade-in fixed inset-0 z-50 flex items-center justify-center p-4"
           onClick={() => !saving && !uploading && setForm(null)}
         >
-          <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" />
+          <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm dark:bg-black/60" />
           <div
             onClick={(e) => e.stopPropagation()}
-            className="animate-scale-in relative z-10 max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-3xl border border-white/50 bg-white/85 p-6 shadow-2xl backdrop-blur-md sm:p-8"
+            className="animate-scale-in relative z-10 max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-3xl border border-white/50 bg-white/85 p-6 shadow-2xl backdrop-blur-md sm:p-8 dark:border-stone-700/60 dark:bg-stone-900/90"
           >
-            <h2 className="mb-6 text-xl font-bold tracking-tight text-stone-900">
+            <h2 className="mb-6 text-xl font-bold tracking-tight text-stone-900 dark:text-stone-100">
               {form.id ? "Editar producto" : "Nuevo producto"}
             </h2>
 
@@ -398,7 +400,7 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
               <div className="space-y-2">
                 <label
                   htmlFor="name"
-                  className="block text-sm font-medium text-stone-700"
+                  className="block text-sm font-medium text-stone-700 dark:text-stone-300"
                 >
                   Nombre del producto
                 </label>
@@ -410,16 +412,16 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                   onChange={(e) =>
                     setForm({ ...form, name: e.target.value })
                   }
-                  className="w-full rounded-2xl border border-stone-200 bg-white/80 px-4 py-3 text-sm text-stone-800 outline-none transition-all duration-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+                  className="w-full rounded-2xl border border-stone-200 bg-white/80 px-4 py-3 text-sm text-stone-800 outline-none transition-all duration-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
                 />
               </div>
 
               <div className="space-y-2">
-                <span className="block text-sm font-medium text-stone-700">
+                <span className="block text-sm font-medium text-stone-700 dark:text-stone-300">
                   Imagen
                 </span>
                 <div className="flex items-center gap-4">
-                  <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-stone-200 bg-stone-100">
+                  <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-stone-200 bg-stone-100 dark:border-stone-700 dark:bg-stone-800">
                     {form.imageUrl ? (
                       <Image
                         src={form.imageUrl}
@@ -429,7 +431,7 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                         className="object-cover"
                       />
                     ) : (
-                      <span className="flex h-full w-full items-center justify-center text-xs text-stone-400">
+                      <span className="flex h-full w-full items-center justify-center text-xs text-stone-400 dark:text-stone-500">
                         Sin imagen
                       </span>
                     )}
@@ -442,9 +444,9 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                       onChange={(e) =>
                         onFileChange(e.target.files?.[0] ?? undefined)
                       }
-                      className="block w-full text-xs text-stone-500 file:mr-3 file:rounded-full file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-brand-700 hover:file:bg-brand-100"
+                      className="block w-full text-xs text-stone-500 file:mr-3 file:rounded-full file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-brand-700 hover:file:bg-brand-100 dark:text-stone-400 dark:file:bg-brand-500/15 dark:file:text-brand-300 dark:hover:file:bg-brand-500/25"
                     />
-                    <p className="text-xs text-stone-400">
+                    <p className="text-xs text-stone-400 dark:text-stone-500">
                       JPG, PNG o WEBP. Maximo 2MB.
                       {uploading ? " Subiendo..." : ""}
                     </p>
@@ -452,8 +454,8 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                 </div>
               </div>
 
-              <label className="flex items-center justify-between rounded-2xl border border-stone-200 bg-white/60 px-4 py-3">
-                <span className="text-sm font-medium text-stone-700">
+              <label className="flex items-center justify-between rounded-2xl border border-stone-200 bg-white/60 px-4 py-3 dark:border-stone-700 dark:bg-stone-800/60">
+                <span className="text-sm font-medium text-stone-700 dark:text-stone-300">
                   Disponible
                 </span>
                 <input
@@ -462,7 +464,7 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                   onChange={(e) =>
                     setForm({ ...form, isAvailable: e.target.checked })
                   }
-                  className="h-5 w-5 rounded border-stone-300 text-brand-500 focus:ring-brand-400"
+                  className="h-5 w-5 rounded border-stone-300 text-brand-500 focus:ring-brand-400 dark:border-stone-600 dark:bg-stone-800 dark:focus:ring-brand-500/40"
                 />
               </label>
 
@@ -471,7 +473,7 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                   type="button"
                   onClick={() => setForm(null)}
                   disabled={saving || uploading}
-                  className="rounded-2xl border border-stone-200 bg-white px-5 py-3 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50 disabled:opacity-50"
+                  className="rounded-2xl border border-stone-200 bg-white px-5 py-3 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50 disabled:opacity-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
                 >
                   Cancelar
                 </button>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import ThemeToggle from "@/components/ThemeToggle";
 
 interface Props {
   redirectTo: string;
@@ -48,8 +49,9 @@ export default function LoginForm({ redirectTo }: Props) {
   }
 
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-gradient-to-br from-stone-50 via-white to-brand-50/60 px-4">
-      <div className="animate-fade-in-up w-full max-w-md rounded-3xl border border-white/60 bg-white/70 p-8 shadow-xl backdrop-blur-md">
+    <main className="relative flex min-h-dvh items-center justify-center bg-gradient-to-br from-stone-50 via-white to-brand-50/60 px-4 dark:from-stone-950 dark:via-stone-900 dark:to-stone-950">
+      <ThemeToggle className="absolute right-4 top-4" />
+      <div className="animate-fade-in-up w-full max-w-md rounded-3xl border border-white/60 bg-white/70 p-8 shadow-xl backdrop-blur-md dark:border-stone-700/60 dark:bg-stone-900/70">
         <div className="mb-8 flex flex-col items-center gap-3 text-center">
           <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-500 text-white shadow-sm">
             <svg
@@ -67,10 +69,10 @@ export default function LoginForm({ redirectTo }: Props) {
               <path d="M7 11V7a5 5 0 0 1 10 0v4" />
             </svg>
           </span>
-          <h1 className="text-2xl font-bold tracking-tight text-stone-900">
+          <h1 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-100">
             Panel de administracion
           </h1>
-          <p className="text-sm text-stone-500">
+          <p className="text-sm text-stone-500 dark:text-stone-400">
             Ingresa tus credenciales para continuar
           </p>
         </div>
@@ -79,7 +81,7 @@ export default function LoginForm({ redirectTo }: Props) {
           <div className="space-y-2">
             <label
               htmlFor="username"
-              className="block text-sm font-medium text-stone-700"
+              className="block text-sm font-medium text-stone-700 dark:text-stone-300"
             >
               Usuario
             </label>
@@ -90,14 +92,14 @@ export default function LoginForm({ redirectTo }: Props) {
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full rounded-2xl border border-stone-200 bg-white/80 px-4 py-3 text-sm text-stone-800 outline-none transition-all duration-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+              className="w-full rounded-2xl border border-stone-200 bg-white/80 px-4 py-3 text-sm text-stone-800 outline-none transition-all duration-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
             />
           </div>
 
           <div className="space-y-2">
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-stone-700"
+              className="block text-sm font-medium text-stone-700 dark:text-stone-300"
             >
               Contrasena
             </label>
@@ -109,14 +111,14 @@ export default function LoginForm({ redirectTo }: Props) {
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-2xl border border-stone-200 bg-white/80 px-4 py-3 text-sm text-stone-800 outline-none transition-all duration-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+              className="w-full rounded-2xl border border-stone-200 bg-white/80 px-4 py-3 text-sm text-stone-800 outline-none transition-all duration-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
             />
           </div>
 
           {error && (
             <p
               role="alert"
-              className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+              className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
             >
               {error}
             </p>

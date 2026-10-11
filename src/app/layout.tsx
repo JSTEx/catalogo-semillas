@@ -21,8 +21,15 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es">
-      <body className="min-h-dvh antialiased">{children}</body>
+    <html lang="es" suppressHydrationWarning>
+      <body className="min-h-dvh antialiased">
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("theme");var d=t?t==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.classList.toggle("dark",d);}catch(e){}})();`,
+          }}
+        />
+        {children}
+      </body>
     </html>
   );
 }

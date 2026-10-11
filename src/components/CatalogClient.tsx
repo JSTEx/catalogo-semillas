@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { ProductDTO } from "@/lib/types";
 import SeedCard from "./SeedCard";
 import SeedModal from "./SeedModal";
+import ThemeToggle from "./ThemeToggle";
 
 type Filter = "all" | "available" | "out";
 
@@ -47,7 +48,7 @@ export default function CatalogClient({ initialProducts }: Props) {
 
   return (
     <div className="min-h-dvh">
-      <header className="sticky top-0 z-40 border-b border-stone-200/60 bg-white/70 backdrop-blur-md">
+      <header className="sticky top-0 z-40 border-b border-stone-200/60 bg-white/70 backdrop-blur-md dark:border-stone-800/60 dark:bg-stone-900/70">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-500 text-white shadow-sm">
@@ -68,10 +69,10 @@ export default function CatalogClient({ initialProducts }: Props) {
               </svg>
             </span>
             <div>
-              <h1 className="text-lg font-bold tracking-tight text-stone-900">
+              <h1 className="text-lg font-bold tracking-tight text-stone-900 dark:text-stone-100">
                 Catalogo de Semillas
               </h1>
-              <p className="text-xs text-stone-500">
+              <p className="text-xs text-stone-500 dark:text-stone-400">
                 Disponibilidad en tiempo real
               </p>
             </div>
@@ -85,7 +86,7 @@ export default function CatalogClient({ initialProducts }: Props) {
               stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"
-              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400"
+              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400 dark:text-stone-500"
               aria-hidden="true"
             >
               <circle cx="11" cy="11" r="8" />
@@ -97,7 +98,7 @@ export default function CatalogClient({ initialProducts }: Props) {
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Buscar semilla..."
               aria-label="Buscar semilla"
-              className="w-full rounded-2xl border border-stone-200 bg-white/80 py-3 pl-11 pr-4 text-sm text-stone-800 shadow-sm outline-none backdrop-blur-md transition-all duration-300 placeholder:text-stone-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+              className="w-full rounded-2xl border border-stone-200 bg-white/80 py-3 pl-11 pr-4 text-sm text-stone-800 shadow-sm outline-none backdrop-blur-md transition-all duration-300 placeholder:text-stone-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
             />
           </div>
         </div>
@@ -112,7 +113,7 @@ export default function CatalogClient({ initialProducts }: Props) {
                 "inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition-all duration-300",
                 filter === f.key
                   ? "border-brand-500 bg-brand-500 text-white shadow-sm"
-                  : "border-stone-200 bg-white/70 text-stone-600 hover:border-brand-200 hover:text-brand-700",
+                  : "border-stone-200 bg-white/70 text-stone-600 hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:border-brand-500/40 dark:hover:text-brand-300",
               ].join(" ")}
             >
               {f.label}
@@ -121,20 +122,21 @@ export default function CatalogClient({ initialProducts }: Props) {
                   "rounded-full px-1.5 text-xs",
                   filter === f.key
                     ? "bg-white/25 text-white"
-                    : "bg-stone-100 text-stone-500",
+                    : "bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400",
                 ].join(" ")}
               >
                 {f.count}
               </span>
             </button>
           ))}
+          <ThemeToggle className="ml-auto" />
         </div>
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
         {filtered.length === 0 ? (
-          <div className="animate-fade-in flex flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-stone-300 bg-white/50 py-24 text-center backdrop-blur-md">
-            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-stone-100 text-stone-400">
+          <div className="animate-fade-in flex flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-stone-300 bg-white/50 py-24 text-center backdrop-blur-md dark:border-stone-700 dark:bg-stone-900/50">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-stone-100 text-stone-400 dark:bg-stone-800 dark:text-stone-500">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
@@ -149,10 +151,10 @@ export default function CatalogClient({ initialProducts }: Props) {
                 <path d="m21 21-4.3-4.3" />
               </svg>
             </span>
-            <p className="text-base font-semibold text-stone-700">
+            <p className="text-base font-semibold text-stone-700 dark:text-stone-200">
               No se encontraron semillas
             </p>
-            <p className="max-w-sm text-sm text-stone-500">
+            <p className="max-w-sm text-sm text-stone-500 dark:text-stone-400">
               Prueba con otro termino de busqueda o cambia el filtro de
               disponibilidad.
             </p>
@@ -171,7 +173,7 @@ export default function CatalogClient({ initialProducts }: Props) {
         )}
       </main>
 
-      <footer className="border-t border-stone-200/60 py-8 text-center text-xs text-stone-400">
+      <footer className="border-t border-stone-200/60 py-8 text-center text-xs text-stone-400 dark:border-stone-800/60 dark:text-stone-500">
         Catalogo de Semillas · {new Date().getFullYear()}
       </footer>
 

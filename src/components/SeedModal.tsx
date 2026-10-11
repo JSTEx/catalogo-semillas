@@ -34,17 +34,17 @@ export default function SeedModal({ product, onClose }: Props) {
       className="animate-fade-in fixed inset-0 z-50 flex items-center justify-center p-4"
       onClick={onClose}
     >
-      <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm dark:bg-black/60" />
 
       <div
         onClick={(e) => e.stopPropagation()}
-        className="animate-scale-in relative z-10 w-full max-w-3xl overflow-hidden rounded-3xl border border-white/40 bg-white/80 shadow-2xl backdrop-blur-md"
+        className="animate-scale-in relative z-10 w-full max-w-3xl overflow-hidden rounded-3xl border border-white/40 bg-white/80 shadow-2xl backdrop-blur-md dark:border-stone-700/60 dark:bg-stone-900/85"
       >
         <button
           type="button"
           onClick={onClose}
           aria-label="Cerrar"
-          className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-stone-600 shadow-sm backdrop-blur-md transition-colors hover:bg-white hover:text-stone-900"
+          className="absolute right-4 top-4 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white/80 text-stone-600 shadow-sm backdrop-blur-md transition-colors hover:bg-white hover:text-stone-900 dark:bg-stone-800/80 dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-stone-100"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -61,7 +61,7 @@ export default function SeedModal({ product, onClose }: Props) {
         </button>
 
         <div className="grid gap-0 md:grid-cols-2">
-          <div className="relative aspect-square w-full bg-stone-100">
+          <div className="relative aspect-square w-full bg-stone-100 dark:bg-stone-800">
             <Image
               src={product.imageUrl}
               alt={product.name}
@@ -78,26 +78,26 @@ export default function SeedModal({ product, onClose }: Props) {
                 available={product.isAvailable}
                 withPulse
               />
-              <h2 className="text-2xl font-bold tracking-tight text-stone-900 md:text-3xl">
+              <h2 className="text-2xl font-bold tracking-tight text-stone-900 md:text-3xl dark:text-stone-100">
                 {product.name}
               </h2>
-              <p className="text-sm leading-relaxed text-stone-500">
+              <p className="text-sm leading-relaxed text-stone-500 dark:text-stone-400">
                 {product.isAvailable
                   ? "Esta variedad esta disponible actualmente. Contactanos para reservar tu pedido."
                   : "Por el momento esta variedad no tiene existencias. Vuelve pronto o consulta otras opciones."}
               </p>
             </div>
 
-            <dl className="space-y-2 border-t border-stone-200/80 pt-4 text-sm">
+            <dl className="space-y-2 border-t border-stone-200/80 pt-4 text-sm dark:border-stone-800/80">
               <div className="flex items-center justify-between">
-                <dt className="text-stone-400">Disponibilidad</dt>
-                <dd className="font-medium text-stone-700">
+                <dt className="text-stone-400 dark:text-stone-500">Disponibilidad</dt>
+                <dd className="font-medium text-stone-700 dark:text-stone-200">
                   {product.isAvailable ? "En existencia" : "Sin existencias"}
                 </dd>
               </div>
               <div className="flex items-center justify-between">
-                <dt className="text-stone-400">Actualizado</dt>
-                <dd className="font-medium text-stone-700">
+                <dt className="text-stone-400 dark:text-stone-500">Actualizado</dt>
+                <dd className="font-medium text-stone-700 dark:text-stone-200">
                   {new Date(product.updatedAt).toLocaleDateString("es-ES", {
                     year: "numeric",
                     month: "long",
