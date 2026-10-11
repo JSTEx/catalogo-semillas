@@ -8,6 +8,7 @@ import {
   sortByStatus,
 } from "@/lib/product-status";
 import type { ProductStatus } from "@/lib/product-status";
+import { normalizeSearch } from "@/lib/search";
 import SeedCard from "./SeedCard";
 import SeedModal from "./SeedModal";
 import ThemeToggle from "./ThemeToggle";
@@ -24,9 +25,9 @@ export default function CatalogClient({ initialProducts }: Props) {
   const [selected, setSelected] = useState<ProductDTO | null>(null);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = normalizeSearch(query.trim());
     const matching = initialProducts.filter((p) => {
-      const matchesQuery = q === "" || p.name.toLowerCase().includes(q);
+      const matchesQuery = q === "" || normalizeSearch(p.name).includes(q);
       const matchesFilter = filter === "all" ? true : p.status === filter;
       return matchesQuery && matchesFilter;
     });

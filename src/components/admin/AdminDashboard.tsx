@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import type { ProductDTO } from "@/lib/types";
 import { PRODUCT_STATUSES, STATUS_META } from "@/lib/product-status";
 import type { ProductStatus } from "@/lib/product-status";
+import { normalizeSearch } from "@/lib/search";
 import AvailabilityBadge from "@/components/AvailabilityBadge";
 import ThemeToggle from "@/components/ThemeToggle";
 import Loader from "@/components/Loader";
@@ -65,9 +66,9 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
   }, [Boolean(form)]);
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const q = normalizeSearch(query.trim());
     if (!q) return items;
-    return items.filter((p) => p.name.toLowerCase().includes(q));
+    return items.filter((p) => normalizeSearch(p.name).includes(q));
   }, [items, query]);
 
   async function api(path: string, init: RequestInit) {
