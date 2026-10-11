@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ProductDTO } from "@/lib/types";
+import { PRODUCT_STATUSES, STATUS_META } from "@/lib/product-status";
+import type { ProductStatus } from "@/lib/product-status";
 import AvailabilityBadge from "@/components/AvailabilityBadge";
 import ThemeToggle from "@/components/ThemeToggle";
 import Loader from "@/components/Loader";
@@ -17,13 +19,13 @@ interface Props {
 interface FormState {
   id?: string;
   name: string;
-  isAvailable: boolean;
+  status: ProductStatus;
   imageUrl: string;
 }
 
 const emptyForm: FormState = {
   name: "",
-  isAvailable: true,
+  status: "available",
   imageUrl: "",
 };
 
@@ -87,13 +89,14 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
     return res;
   }
 
-  async function toggle(product: ProductDTO) {
+  async function changeStatus(product: ProductDTO, status: ProductStatus) {
+    if (status === product.status) return;
     setError(null);
     setBusyId(product.id);
     try {
       const res = await api(`/api/products/${product.id}`, {
         method: "PATCH",
-        body: JSON.stringify({ isAvailable: !product.isAvailable }),
+        body: JSON.stringify({ status }),
       });
       const data = (await res.json()) as { product: ProductDTO };
       setItems((prev) =>
@@ -153,7 +156,7 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
           method: "PATCH",
           body: JSON.stringify({
             name: form.name,
-            isAvailable: form.isAvailable,
+            status: form.status,
             imageUrl: form.imageUrl,
           }),
         });
@@ -166,7 +169,7 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
           method: "POST",
           body: JSON.stringify({
             name: form.name,
-            isAvailable: form.isAvailable,
+            status: form.status,
             imageUrl: form.imageUrl,
           }),
         });
@@ -366,7 +369,7 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                     className="object-contain"
                   />
                   <div className="absolute right-3 top-3">
-                    <AvailabilityBadge available={product.isAvailable} />
+                    <AvailabilityBadge status={product.status} />
                   </div>
                 </div>
 
@@ -376,26 +379,21 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                   </h3>
 
                   <div className="flex items-center justify-between gap-2">
-                    <button
-                      type="button"
+                    <select
+                      value={product.status}
                       disabled={busyId === product.id}
-                      onClick={() => toggle(product)}
-                      className={[
-                        "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-300 disabled:opacity-50",
-                        product.isAvailable ? "bg-brand-500" : "bg-stone-300 dark:bg-stone-700",
-                      ].join(" ")}
-                      aria-label="Cambiar disponibilidad"
-                      aria-pressed={product.isAvailable}
+                      onChange={(e) =>
+                        changeStatus(product, e.target.value as ProductStatus)
+                      }
+                      aria-label="Estado del producto"
+                      className="h-7 cursor-pointer rounded-full border border-stone-200 bg-white/80 pl-3 pr-7 text-xs font-medium text-stone-600 outline-none transition-colors focus:border-brand-400 focus:ring-2 focus:ring-brand-100 disabled:opacity-50 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-300 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
                     >
-                      <span
-                        className={[
-                          "inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-300",
-                          product.isAvailable
-                            ? "translate-x-6"
-                            : "translate-x-1",
-                        ].join(" ")}
-                      />
-                    </button>
+                      {PRODUCT_STATUSES.map((s) => (
+                        <option key={s} value={s}>
+                          {STATUS_META[s].short}
+                        </option>
+                      ))}
+                    </select>
 
                     <div className="flex items-center gap-1">
                       <button
@@ -405,7 +403,7 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                           setForm({
                             id: product.id,
                             name: product.name,
-                            isAvailable: product.isAvailable,
+                            status: product.status,
                             imageUrl: product.imageUrl,
                           });
                         }}
@@ -557,19 +555,38 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                 </div>
               </div>
 
-              <label className="flex items-center justify-between rounded-2xl border border-stone-200 bg-white/60 px-4 py-3 dark:border-stone-700 dark:bg-stone-800/60">
-                <span className="text-sm font-medium text-stone-700 dark:text-stone-300">
-                  Disponible
+              <div className="space-y-2">
+                <span className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+                  Estado
                 </span>
-                <input
-                  type="checkbox"
-                  checked={form.isAvailable}
-                  onChange={(e) =>
-                    setForm({ ...form, isAvailable: e.target.checked })
-                  }
-                  className="h-5 w-5 rounded border-stone-300 text-brand-500 focus:ring-brand-400 dark:border-stone-600 dark:bg-stone-800 dark:focus:ring-brand-500/40"
-                />
-              </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {PRODUCT_STATUSES.map((s) => {
+                    const active = form.status === s;
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => setForm({ ...form, status: s })}
+                        aria-pressed={active}
+                        className={[
+                          "inline-flex items-center justify-center gap-2 rounded-2xl border px-3 py-2.5 text-sm font-medium transition-all duration-300",
+                          active
+                            ? "border-brand-400 bg-brand-50 text-brand-700 shadow-sm dark:border-brand-500/50 dark:bg-brand-500/15 dark:text-brand-300"
+                            : "border-stone-200 bg-white/60 text-stone-600 hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-800/60 dark:text-stone-300 dark:hover:border-brand-500/40 dark:hover:text-brand-300",
+                        ].join(" ")}
+                      >
+                        <span
+                          className={[
+                            "h-2 w-2 rounded-full",
+                            STATUS_META[s].dot,
+                          ].join(" ")}
+                        />
+                        {STATUS_META[s].short}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button

@@ -28,8 +28,11 @@ export default function SeedCard({ product, onSelect, index = 0 }: Props) {
           className="object-contain transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute right-3 top-3">
-          <AvailabilityBadge available={product.isAvailable} withPulse />
+          <AvailabilityBadge status={product.status} withPulse />
         </div>
+        <span className="pointer-events-none absolute bottom-2 left-2 rounded-full bg-stone-900/45 px-2 py-0.5 text-[9px] font-medium leading-tight text-white/90 backdrop-blur-sm">
+          Imagen ilustrativa
+        </span>
       </div>
 
       <div className="flex flex-1 items-center justify-between gap-3 px-4 py-4">

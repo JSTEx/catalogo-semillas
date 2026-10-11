@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { ProductDTO } from "@/lib/types";
+import { statusMeta } from "@/lib/product-status";
 import AvailabilityBadge from "./AvailabilityBadge";
 import SeedImage from "./SeedImage";
 
@@ -142,16 +143,14 @@ export default function SeedModal({ product, onClose }: Props) {
           <div className="flex max-h-[45vh] flex-col justify-between gap-6 overflow-y-auto p-6 md:max-h-none md:p-8">
             <div className="space-y-3">
               <AvailabilityBadge
-                available={product.isAvailable}
+                status={product.status}
                 withPulse
               />
               <h2 className="text-2xl font-bold tracking-tight text-stone-900 md:text-3xl dark:text-stone-100">
                 {product.name}
               </h2>
               <p className="text-sm leading-relaxed text-stone-500 dark:text-stone-400">
-                {product.isAvailable
-                  ? "Esta variedad esta disponible actualmente. Contactanos para reservar tu pedido."
-                  : "Por el momento esta variedad no tiene existencias. Vuelve pronto o consulta otras opciones."}
+                {statusMeta(product.status).description}
               </p>
             </div>
 
@@ -159,7 +158,7 @@ export default function SeedModal({ product, onClose }: Props) {
               <div className="flex items-center justify-between">
                 <dt className="text-stone-400 dark:text-stone-500">Disponibilidad</dt>
                 <dd className="font-medium text-stone-700 dark:text-stone-200">
-                  {product.isAvailable ? "En existencia" : "Sin existencias"}
+                  {statusMeta(product.status).availability}
                 </dd>
               </div>
               <div className="flex items-center justify-between">

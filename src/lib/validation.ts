@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PRODUCT_STATUSES } from "./product-status";
 
 /**
  * Elimina etiquetas HTML y caracteres de control para mitigar XSS en la capa
@@ -45,14 +46,14 @@ export const imageUrlSchema = z
 
 export const createProductSchema = z.object({
   name: sanitizedString(2, 100, "El nombre"),
-  isAvailable: z.boolean().default(true),
+  status: z.enum(PRODUCT_STATUSES).default("available"),
   imageUrl: imageUrlSchema,
 });
 
 export const updateProductSchema = z
   .object({
     name: sanitizedString(2, 100, "El nombre").optional(),
-    isAvailable: z.boolean().optional(),
+    status: z.enum(PRODUCT_STATUSES).optional(),
     imageUrl: imageUrlSchema.optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {

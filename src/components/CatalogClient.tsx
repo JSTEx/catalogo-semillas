@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from "react";
 import type { ProductDTO } from "@/lib/types";
+import { PRODUCT_STATUSES, STATUS_META } from "@/lib/product-status";
+import type { ProductStatus } from "@/lib/product-status";
 import SeedCard from "./SeedCard";
 import SeedModal from "./SeedModal";
 import ThemeToggle from "./ThemeToggle";
 
-type Filter = "all" | "available" | "out";
+type Filter = "all" | ProductStatus;
 
 interface Props {
   initialProducts: ProductDTO[];
@@ -21,29 +23,25 @@ export default function CatalogClient({ initialProducts }: Props) {
     const q = query.trim().toLowerCase();
     return initialProducts.filter((p) => {
       const matchesQuery = q === "" || p.name.toLowerCase().includes(q);
-      const matchesFilter =
-        filter === "all"
-          ? true
-          : filter === "available"
-            ? p.isAvailable
-            : !p.isAvailable;
+      const matchesFilter = filter === "all" ? true : p.status === filter;
       return matchesQuery && matchesFilter;
     });
   }, [initialProducts, query, filter]);
 
-  const counts = useMemo(
-    () => ({
-      all: initialProducts.length,
-      available: initialProducts.filter((p) => p.isAvailable).length,
-      out: initialProducts.filter((p) => !p.isAvailable).length,
-    }),
-    [initialProducts],
-  );
+  const counts = useMemo(() => {
+    const base: Record<string, number> = { all: initialProducts.length };
+    for (const s of PRODUCT_STATUSES) base[s] = 0;
+    for (const p of initialProducts) base[p.status] = (base[p.status] ?? 0) + 1;
+    return base;
+  }, [initialProducts]);
 
   const filters: { key: Filter; label: string; count: number }[] = [
     { key: "all", label: "Todas", count: counts.all },
-    { key: "available", label: "Disponibles", count: counts.available },
-    { key: "out", label: "Agotadas", count: counts.out },
+    ...PRODUCT_STATUSES.map((s) => ({
+      key: s,
+      label: STATUS_META[s].short,
+      count: counts[s] ?? 0,
+    })),
   ];
 
   return (

@@ -1,6 +1,6 @@
 import {
-  boolean,
   index,
+  pgEnum,
   pgTable,
   text,
   timestamp,
@@ -8,6 +8,13 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+
+export const productStatusEnum = pgEnum("product_status", [
+  "available",
+  "low_stock",
+  "out_of_stock",
+  "coming_soon",
+]);
 
 export const adminUsers = pgTable("admin_users", {
   id: uuid("id").primaryKey().default(sql`uuid_generate_v4()`),
@@ -23,7 +30,7 @@ export const products = pgTable(
   {
     id: uuid("id").primaryKey().default(sql`uuid_generate_v4()`),
     name: varchar("name", { length: 100 }).notNull(),
-    isAvailable: boolean("is_available").default(true).notNull(),
+    status: productStatusEnum("status").default("available").notNull(),
     imageUrl: text("image_url").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
@@ -33,7 +40,7 @@ export const products = pgTable(
       .notNull(),
   },
   (table) => [
-    index("idx_products_available").on(table.isAvailable),
+    index("idx_products_status").on(table.status),
     index("idx_products_name").on(table.name),
   ],
 );

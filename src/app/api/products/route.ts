@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     .insert(products)
     .values({
       name: parsed.data.name,
-      isAvailable: parsed.data.isAvailable,
+      status: parsed.data.status,
       imageUrl: parsed.data.imageUrl,
     })
     .returning();
