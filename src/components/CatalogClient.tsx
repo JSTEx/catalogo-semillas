@@ -1,0 +1,181 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import type { ProductDTO } from "@/lib/types";
+import SeedCard from "./SeedCard";
+import SeedModal from "./SeedModal";
+
+type Filter = "all" | "available" | "out";
+
+interface Props {
+  initialProducts: ProductDTO[];
+}
+
+export default function CatalogClient({ initialProducts }: Props) {
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<Filter>("all");
+  const [selected, setSelected] = useState<ProductDTO | null>(null);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return initialProducts.filter((p) => {
+      const matchesQuery = q === "" || p.name.toLowerCase().includes(q);
+      const matchesFilter =
+        filter === "all"
+          ? true
+          : filter === "available"
+            ? p.isAvailable
+            : !p.isAvailable;
+      return matchesQuery && matchesFilter;
+    });
+  }, [initialProducts, query, filter]);
+
+  const counts = useMemo(
+    () => ({
+      all: initialProducts.length,
+      available: initialProducts.filter((p) => p.isAvailable).length,
+      out: initialProducts.filter((p) => !p.isAvailable).length,
+    }),
+    [initialProducts],
+  );
+
+  const filters: { key: Filter; label: string; count: number }[] = [
+    { key: "all", label: "Todas", count: counts.all },
+    { key: "available", label: "Disponibles", count: counts.available },
+    { key: "out", label: "Agotadas", count: counts.out },
+  ];
+
+  return (
+    <div className="min-h-dvh">
+      <header className="sticky top-0 z-40 border-b border-stone-200/60 bg-white/70 backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-500 text-white shadow-sm">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-5 w-5"
+                aria-hidden="true"
+              >
+                <path d="M12 22V12" />
+                <path d="M12 12c0-4 3-7 8-7 0 5-3 8-8 8Z" />
+                <path d="M12 12C12 8 9 5 4 5c0 5 3 8 8 8Z" />
+              </svg>
+            </span>
+            <div>
+              <h1 className="text-lg font-bold tracking-tight text-stone-900">
+                Catalogo de Semillas
+              </h1>
+              <p className="text-xs text-stone-500">
+                Disponibilidad en tiempo real
+              </p>
+            </div>
+          </div>
+
+          <div className="relative w-full lg:max-w-md">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar semilla..."
+              aria-label="Buscar semilla"
+              className="w-full rounded-2xl border border-stone-200 bg-white/80 py-3 pl-11 pr-4 text-sm text-stone-800 shadow-sm outline-none backdrop-blur-md transition-all duration-300 placeholder:text-stone-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+            />
+          </div>
+        </div>
+
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 pb-4 sm:px-6">
+          {filters.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setFilter(f.key)}
+              className={[
+                "inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition-all duration-300",
+                filter === f.key
+                  ? "border-brand-500 bg-brand-500 text-white shadow-sm"
+                  : "border-stone-200 bg-white/70 text-stone-600 hover:border-brand-200 hover:text-brand-700",
+              ].join(" ")}
+            >
+              {f.label}
+              <span
+                className={[
+                  "rounded-full px-1.5 text-xs",
+                  filter === f.key
+                    ? "bg-white/25 text-white"
+                    : "bg-stone-100 text-stone-500",
+                ].join(" ")}
+              >
+                {f.count}
+              </span>
+            </button>
+          ))}
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+        {filtered.length === 0 ? (
+          <div className="animate-fade-in flex flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-stone-300 bg-white/50 py-24 text-center backdrop-blur-md">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-stone-100 text-stone-400">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                className="h-6 w-6"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3" />
+              </svg>
+            </span>
+            <p className="text-base font-semibold text-stone-700">
+              No se encontraron semillas
+            </p>
+            <p className="max-w-sm text-sm text-stone-500">
+              Prueba con otro termino de busqueda o cambia el filtro de
+              disponibilidad.
+            </p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filtered.map((product, index) => (
+              <SeedCard
+                key={product.id}
+                product={product}
+                index={index}
+                onSelect={setSelected}
+              />
+            ))}
+          </div>
+        )}
+      </main>
+
+      <footer className="border-t border-stone-200/60 py-8 text-center text-xs text-stone-400">
+        Catalogo de Semillas · {new Date().getFullYear()}
+      </footer>
+
+      <SeedModal product={selected} onClose={() => setSelected(null)} />
+    </div>
+  );
+}

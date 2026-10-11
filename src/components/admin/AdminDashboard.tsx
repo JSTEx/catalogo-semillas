@@ -1,0 +1,492 @@
+"use client";
+
+import { useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import Image from "next/image";
+import type { ProductDTO } from "@/lib/types";
+import AvailabilityBadge from "@/components/AvailabilityBadge";
+
+interface Props {
+  initialProducts: ProductDTO[];
+  username: string;
+}
+
+interface FormState {
+  id?: string;
+  name: string;
+  isAvailable: boolean;
+  imageUrl: string;
+}
+
+const emptyForm: FormState = {
+  name: "",
+  isAvailable: true,
+  imageUrl: "",
+};
+
+export default function AdminDashboard({ initialProducts, username }: Props) {
+  const router = useRouter();
+  const [items, setItems] = useState<ProductDTO[]>(initialProducts);
+  const [query, setQuery] = useState("");
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState<FormState | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((p) => p.name.toLowerCase().includes(q));
+  }, [items, query]);
+
+  async function api(path: string, init: RequestInit) {
+    const res = await fetch(path, {
+      ...init,
+      headers: {
+        ...(init.body instanceof FormData
+          ? {}
+          : { "Content-Type": "application/json" }),
+        ...init.headers,
+      },
+    });
+    if (!res.ok) {
+      const data = (await res.json().catch(() => null)) as
+        | { error?: string }
+        | null;
+      throw new Error(data?.error ?? "Ocurrio un error inesperado");
+    }
+    return res;
+  }
+
+  async function toggle(product: ProductDTO) {
+    setError(null);
+    setBusyId(product.id);
+    try {
+      const res = await api(`/api/products/${product.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ isAvailable: !product.isAvailable }),
+      });
+      const data = (await res.json()) as { product: ProductDTO };
+      setItems((prev) =>
+        prev.map((p) => (p.id === product.id ? data.product : p)),
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al actualizar");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function remove(product: ProductDTO) {
+    if (
+      !window.confirm(`¿Eliminar "${product.name}"? Esta accion es permanente.`)
+    ) {
+      return;
+    }
+    setError(null);
+    setBusyId(product.id);
+    try {
+      await api(`/api/products/${product.id}`, { method: "DELETE" });
+      setItems((prev) => prev.filter((p) => p.id !== product.id));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al eliminar");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function onFileChange(file: File | undefined) {
+    if (!file || !form) return;
+    setError(null);
+    setUploading(true);
+    try {
+      const body = new FormData();
+      body.append("file", file);
+      const res = await api("/api/upload", { method: "POST", body });
+      const data = (await res.json()) as { url: string };
+      setForm((prev) => (prev ? { ...prev, imageUrl: data.url } : prev));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al subir la imagen");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
+  async function save(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form) return;
+    setError(null);
+    setSaving(true);
+    try {
+      if (form.id) {
+        const res = await api(`/api/products/${form.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            name: form.name,
+            isAvailable: form.isAvailable,
+            imageUrl: form.imageUrl,
+          }),
+        });
+        const data = (await res.json()) as { product: ProductDTO };
+        setItems((prev) =>
+          prev.map((p) => (p.id === form.id ? data.product : p)),
+        );
+      } else {
+        const res = await api("/api/products", {
+          method: "POST",
+          body: JSON.stringify({
+            name: form.name,
+            isAvailable: form.isAvailable,
+            imageUrl: form.imageUrl,
+          }),
+        });
+        const data = (await res.json()) as { product: ProductDTO };
+        setItems((prev) => [data.product, ...prev]);
+      }
+      setForm(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al guardar");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function logout() {
+    await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
+    router.replace("/admin/login");
+    router.refresh();
+  }
+
+  return (
+    <div className="min-h-dvh">
+      <header className="sticky top-0 z-40 border-b border-stone-200/60 bg-white/70 backdrop-blur-md">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+          <div className="flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-500 text-white shadow-sm">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-5 w-5"
+                aria-hidden="true"
+              >
+                <path d="M12 22V12" />
+                <path d="M12 12c0-4 3-7 8-7 0 5-3 8-8 8Z" />
+                <path d="M12 12C12 8 9 5 4 5c0 5 3 8 8 8Z" />
+              </svg>
+            </span>
+            <div>
+              <h1 className="text-lg font-bold tracking-tight text-stone-900">
+                Administracion
+              </h1>
+              <p className="text-xs text-stone-500">Sesion: {username}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <a
+              href="/"
+              className="hidden rounded-2xl border border-stone-200 bg-white/70 px-4 py-2 text-sm font-medium text-stone-600 transition-all duration-300 hover:border-brand-200 hover:text-brand-700 sm:inline-flex"
+            >
+              Ver catalogo
+            </a>
+            <button
+              type="button"
+              onClick={logout}
+              className="rounded-2xl border border-stone-200 bg-white/70 px-4 py-2 text-sm font-medium text-stone-600 transition-all duration-300 hover:border-red-200 hover:text-red-600"
+            >
+              Cerrar sesion
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative w-full sm:max-w-sm">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.3-4.3" />
+            </svg>
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar semilla..."
+              aria-label="Buscar semilla"
+              className="w-full rounded-2xl border border-stone-200 bg-white/80 py-3 pl-11 pr-4 text-sm text-stone-800 outline-none backdrop-blur-md transition-all duration-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setError(null);
+              setForm({ ...emptyForm });
+            }}
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-brand-600 hover:shadow-lg"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              className="h-4 w-4"
+              aria-hidden="true"
+            >
+              <path d="M5 12h14M12 5v14" />
+            </svg>
+            Nuevo producto
+          </button>
+        </div>
+
+        {error && (
+          <p
+            role="alert"
+            className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          >
+            {error}
+          </p>
+        )}
+
+        {filtered.length === 0 ? (
+          <div className="rounded-3xl border border-dashed border-stone-300 bg-white/50 py-20 text-center text-sm text-stone-500 backdrop-blur-md">
+            No hay productos para mostrar.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((product) => (
+              <article
+                key={product.id}
+                className="flex flex-col overflow-hidden rounded-3xl border border-stone-200/70 bg-white/70 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-lg"
+              >
+                <div className="relative aspect-[4/3] w-full bg-stone-100">
+                  <Image
+                    src={product.imageUrl}
+                    alt={product.name}
+                    fill
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="object-cover"
+                  />
+                  <div className="absolute right-3 top-3">
+                    <AvailabilityBadge available={product.isAvailable} />
+                  </div>
+                </div>
+
+                <div className="flex flex-1 flex-col gap-4 p-4">
+                  <h3 className="line-clamp-2 flex-1 text-base font-semibold text-stone-800">
+                    {product.name}
+                  </h3>
+
+                  <div className="flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      disabled={busyId === product.id}
+                      onClick={() => toggle(product)}
+                      className={[
+                        "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors duration-300 disabled:opacity-50",
+                        product.isAvailable ? "bg-brand-500" : "bg-stone-300",
+                      ].join(" ")}
+                      aria-label="Cambiar disponibilidad"
+                      aria-pressed={product.isAvailable}
+                    >
+                      <span
+                        className={[
+                          "inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform duration-300",
+                          product.isAvailable
+                            ? "translate-x-6"
+                            : "translate-x-1",
+                        ].join(" ")}
+                      />
+                    </button>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setError(null);
+                          setForm({
+                            id: product.id,
+                            name: product.name,
+                            isAvailable: product.isAvailable,
+                            imageUrl: product.imageUrl,
+                          });
+                        }}
+                        className="flex h-9 w-9 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-800"
+                        aria-label="Editar"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-4 w-4"
+                          aria-hidden="true"
+                        >
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busyId === product.id}
+                        onClick={() => remove(product)}
+                        className="flex h-9 w-9 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50"
+                        aria-label="Eliminar"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-4 w-4"
+                          aria-hidden="true"
+                        >
+                          <path d="M3 6h18" />
+                          <path d="M8 6V4h8v2" />
+                          <path d="M19 6l-1 14H6L5 6" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </main>
+
+      {form && (
+        <div
+          className="animate-fade-in fixed inset-0 z-50 flex items-center justify-center p-4"
+          onClick={() => !saving && !uploading && setForm(null)}
+        >
+          <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm" />
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="animate-scale-in relative z-10 max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-3xl border border-white/50 bg-white/85 p-6 shadow-2xl backdrop-blur-md sm:p-8"
+          >
+            <h2 className="mb-6 text-xl font-bold tracking-tight text-stone-900">
+              {form.id ? "Editar producto" : "Nuevo producto"}
+            </h2>
+
+            <form onSubmit={save} className="space-y-5">
+              <div className="space-y-2">
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-medium text-stone-700"
+                >
+                  Nombre del producto
+                </label>
+                <input
+                  id="name"
+                  required
+                  maxLength={100}
+                  value={form.name}
+                  onChange={(e) =>
+                    setForm({ ...form, name: e.target.value })
+                  }
+                  className="w-full rounded-2xl border border-stone-200 bg-white/80 px-4 py-3 text-sm text-stone-800 outline-none transition-all duration-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <span className="block text-sm font-medium text-stone-700">
+                  Imagen
+                </span>
+                <div className="flex items-center gap-4">
+                  <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-stone-200 bg-stone-100">
+                    {form.imageUrl ? (
+                      <Image
+                        src={form.imageUrl}
+                        alt="Vista previa"
+                        fill
+                        sizes="80px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <span className="flex h-full w-full items-center justify-center text-xs text-stone-400">
+                        Sin imagen
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <input
+                      ref={fileRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      onChange={(e) =>
+                        onFileChange(e.target.files?.[0] ?? undefined)
+                      }
+                      className="block w-full text-xs text-stone-500 file:mr-3 file:rounded-full file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-brand-700 hover:file:bg-brand-100"
+                    />
+                    <p className="text-xs text-stone-400">
+                      JPG, PNG o WEBP. Maximo 2MB.
+                      {uploading ? " Subiendo..." : ""}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <label className="flex items-center justify-between rounded-2xl border border-stone-200 bg-white/60 px-4 py-3">
+                <span className="text-sm font-medium text-stone-700">
+                  Disponible
+                </span>
+                <input
+                  type="checkbox"
+                  checked={form.isAvailable}
+                  onChange={(e) =>
+                    setForm({ ...form, isAvailable: e.target.checked })
+                  }
+                  className="h-5 w-5 rounded border-stone-300 text-brand-500 focus:ring-brand-400"
+                />
+              </label>
+
+              <div className="flex items-center justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setForm(null)}
+                  disabled={saving || uploading}
+                  className="rounded-2xl border border-stone-200 bg-white px-5 py-3 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving || uploading || !form.imageUrl}
+                  className="rounded-2xl bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-brand-600 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {saving ? "Guardando..." : "Guardar"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
