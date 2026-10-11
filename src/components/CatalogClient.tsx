@@ -147,7 +147,7 @@ export default function CatalogClient({ initialProducts }: Props) {
               >
                 <path d="M12 5v14M5 12h14" />
               </svg>
-              Agregar producto
+              Productos
             </a>
             <ThemeToggle />
           </div>
