@@ -2,7 +2,11 @@
 
 import { useMemo, useState } from "react";
 import type { ProductDTO } from "@/lib/types";
-import { PRODUCT_STATUSES, STATUS_META } from "@/lib/product-status";
+import {
+  PRODUCT_STATUSES,
+  STATUS_META,
+  sortByStatus,
+} from "@/lib/product-status";
 import type { ProductStatus } from "@/lib/product-status";
 import SeedCard from "./SeedCard";
 import SeedModal from "./SeedModal";
@@ -21,11 +25,12 @@ export default function CatalogClient({ initialProducts }: Props) {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return initialProducts.filter((p) => {
+    const matching = initialProducts.filter((p) => {
       const matchesQuery = q === "" || p.name.toLowerCase().includes(q);
       const matchesFilter = filter === "all" ? true : p.status === filter;
       return matchesQuery && matchesFilter;
     });
+    return sortByStatus(matching);
   }, [initialProducts, query, filter]);
 
   const counts = useMemo(() => {

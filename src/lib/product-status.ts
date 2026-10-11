@@ -15,6 +15,7 @@ export interface StatusMeta {
   badge: string;
   dot: string;
   solid: string;
+  rank: number;
 }
 
 export const STATUS_META: Record<ProductStatus, StatusMeta> = {
@@ -28,6 +29,7 @@ export const STATUS_META: Record<ProductStatus, StatusMeta> = {
       "border-emerald-200/70 bg-emerald-50/80 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300",
     dot: "bg-emerald-500",
     solid: "bg-emerald-500",
+    rank: 0,
   },
   low_stock: {
     label: "Pocas unidades",
@@ -39,6 +41,7 @@ export const STATUS_META: Record<ProductStatus, StatusMeta> = {
       "border-amber-200/70 bg-amber-50/80 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300",
     dot: "bg-amber-500",
     solid: "bg-amber-500",
+    rank: 1,
   },
   out_of_stock: {
     label: "Agotado",
@@ -50,6 +53,7 @@ export const STATUS_META: Record<ProductStatus, StatusMeta> = {
       "border-rose-200/70 bg-rose-50/80 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300",
     dot: "bg-rose-500",
     solid: "bg-rose-500",
+    rank: 3,
   },
   coming_soon: {
     label: "Proximamente",
@@ -61,9 +65,20 @@ export const STATUS_META: Record<ProductStatus, StatusMeta> = {
       "border-sky-200/70 bg-sky-50/80 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300",
     dot: "bg-sky-500",
     solid: "bg-sky-500",
+    rank: 2,
   },
 };
 
 export function statusMeta(status: ProductStatus): StatusMeta {
   return STATUS_META[status] ?? STATUS_META.available;
 }
+
+/** Ordena una lista de productos por prioridad de estado (disponibles primero). */
+export function sortByStatus<T extends { status: ProductStatus }>(
+  items: T[],
+): T[] {
+  return [...items].sort(
+    (a, b) => (STATUS_META[a.status]?.rank ?? 0) - (STATUS_META[b.status]?.rank ?? 0),
+  );
+}
+
