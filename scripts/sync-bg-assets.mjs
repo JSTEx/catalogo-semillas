@@ -1,4 +1,4 @@
-// Genera bg-assets/ con el modelo "small" recortado de
+// Genera bg-assets/ con el modelo "medium" recortado de
 // @imgly/background-removal-node, para no empaquetar los ~127MB del dist.
 import fs from "node:fs";
 import path from "node:path";
@@ -21,14 +21,14 @@ fs.mkdirSync(dst, { recursive: true });
 const resources = JSON.parse(
   fs.readFileSync(path.join(src, "resources.json"), "utf8"),
 );
-const small = resources["/models/small"];
+const model = resources["/models/medium"];
 
-for (const chunk of small.chunks) {
+for (const chunk of model.chunks) {
   fs.copyFileSync(path.join(src, chunk.hash), path.join(dst, chunk.hash));
 }
 fs.writeFileSync(
   path.join(dst, "resources.json"),
-  JSON.stringify({ "/models/small": small }, null, 2),
+  JSON.stringify({ "/models/medium": model }, null, 2),
 );
 
 const sizeMb = Math.round(
@@ -36,4 +36,4 @@ const sizeMb = Math.round(
     .map((f) => fs.statSync(path.join(dst, f)).size)
     .reduce((a, b) => a + b, 0) / 1048576,
 );
-console.log(`bg-assets: sincronizado (~${sizeMb}MB)`);
+console.log(`bg-assets: sincronizado (modelo medium, ~${sizeMb}MB)`);

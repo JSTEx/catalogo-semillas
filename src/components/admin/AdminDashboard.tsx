@@ -359,7 +359,7 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                     alt={product.name}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    className="object-cover"
+                    className="object-contain"
                   />
                   <div className="absolute right-3 top-3">
                     <AvailabilityBadge available={product.isAvailable} />
@@ -501,7 +501,7 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                         alt="Vista previa"
                         fill
                         sizes="80px"
-                        className="object-cover"
+                        className="object-contain"
                       />
                     ) : (
                       <span className="flex h-full w-full items-center justify-center text-xs text-stone-400 dark:text-stone-500">

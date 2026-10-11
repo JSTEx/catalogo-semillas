@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import path from "node:path";
+import sharp from "sharp";
 import { uploadImage } from "@/lib/storage";
 import { jsonError, requireAdmin } from "@/lib/http";
 
@@ -44,13 +45,29 @@ export async function POST(req: Request) {
     const result = await removeBackground(
       new Blob([image], { type: "image/png" }),
       {
-        model: "small",
+        model: "medium",
         publicPath: `file://${path.resolve(process.cwd(), "bg-assets")}/`,
       },
     );
 
+    // Postproceso: limpiar halo fino y comprimir a WEBP con transparencia.
     const buffer = Buffer.from(await result.arrayBuffer());
-    const uploaded = await uploadImage(buffer, "image/png");
+    const { data, info } = await sharp(buffer)
+      .ensureAlpha()
+      .raw()
+      .toBuffer({ resolveWithObject: true });
+
+    for (let i = 3; i < data.length; i += 4) {
+      if (data[i] < 10) data[i] = 0;
+    }
+
+    const webp = await sharp(data, {
+      raw: { width: info.width, height: info.height, channels: info.channels },
+    })
+      .webp({ quality: 88, alphaQuality: 90 })
+      .toBuffer();
+
+    const uploaded = await uploadImage(webp, "image/webp");
     return NextResponse.json({ url: uploaded }, { status: 201 });
   } catch (e) {
     console.error("remove-background", e);

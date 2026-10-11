@@ -25,7 +25,7 @@ export default function SeedCard({ product, onSelect, index = 0 }: Props) {
           alt={product.name}
           fill
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          className="object-contain transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute right-3 top-3">
           <AvailabilityBadge available={product.isAvailable} withPulse />
