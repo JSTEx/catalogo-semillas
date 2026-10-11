@@ -19,7 +19,6 @@
   --color-brand-900: #064e3b;
 
   --animate-pulse-ring: pulse-ring 2.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  --animate-skeleton: skeleton 2.4s ease-in-out infinite;
   --animate-spin-slow: loader-spin 1.6s linear infinite;
 }
 
@@ -32,62 +31,6 @@
   }
   100% {
     box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-  }
-}
-
-@keyframes skeleton {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.35;
-  }
-}
-
-@keyframes shimmer {
-  100% {
-    transform: translateX(100%);
-  }
-}
-
-/* Bloque de esqueleto con brillo deslizante (más evidente que el pulso) */
-.skeleton {
-  position: relative;
-  overflow: hidden;
-  background-color: #e7e5e4; /* stone-200 */
-}
-
-.skeleton::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  transform: translateX(-100%);
-  background-image: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.65) 50%,
-    rgba(255, 255, 255, 0) 100%
-  );
-  animation: shimmer 1.6s infinite;
-}
-
-html.dark .skeleton {
-  background-color: #292524; /* stone-800 */
-}
-
-html.dark .skeleton::after {
-  background-image: linear-gradient(
-    90deg,
-    rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.1) 50%,
-    rgba(255, 255, 255, 0) 100%
-  );
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .skeleton::after {
-    animation: none;
   }
 }
 
