@@ -195,7 +195,12 @@ export default function CatalogClient({ initialProducts }: Props) {
       </main>
 
       <footer className="border-t border-stone-200/60 py-8 text-center text-xs text-stone-400 dark:border-stone-800/60 dark:text-stone-500">
-        Catalogo de Semillas · {new Date().getFullYear()}
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-center gap-2 px-4 sm:px-6">
+          <p>Catalogo de Semillas · {new Date().getFullYear()}</p>
+          <p className="text-[11px] text-stone-400/80 dark:text-stone-500/80">
+            Las imagenes son con fines ilustrativos.
+          </p>
+        </div>
       </footer>
 
       <SeedModal product={selected} onClose={() => setSelected(null)} />
