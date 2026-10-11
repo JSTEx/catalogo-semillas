@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect } from "react";
-import Image from "next/image";
 import type { ProductDTO } from "@/lib/types";
 import AvailabilityBadge from "./AvailabilityBadge";
+import SeedImage from "./SeedImage";
 
 interface Props {
   product: ProductDTO | null;
@@ -62,7 +62,7 @@ export default function SeedModal({ product, onClose }: Props) {
 
         <div className="grid gap-0 md:grid-cols-2">
           <div className="relative aspect-square w-full bg-stone-100 dark:bg-stone-800">
-            <Image
+            <SeedImage
               src={product.imageUrl}
               alt={product.name}
               fill

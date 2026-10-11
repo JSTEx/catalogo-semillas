@@ -18,18 +18,36 @@
   --color-brand-800: #065f46;
   --color-brand-900: #064e3b;
 
-  --animate-pulse-ring: pulse-ring 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-pulse-ring: pulse-ring 2.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-skeleton: skeleton 2.4s ease-in-out infinite;
+  --animate-spin-slow: loader-spin 1.6s linear infinite;
 }
 
 @keyframes pulse-ring {
   0% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.45);
   }
   70% {
-    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+    box-shadow: 0 0 0 9px rgba(16, 185, 129, 0);
   }
   100% {
     box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+@keyframes skeleton {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes loader-spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 
@@ -87,15 +105,38 @@ html.dark body {
 }
 
 .animate-fade-in-up {
-  animation: fade-in-up 0.4s ease-out both;
+  animation: fade-in-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .animate-fade-in {
-  animation: fade-in 0.25s ease-out both;
+  animation: fade-in 0.5s ease-out both;
 }
 
 .animate-scale-in {
-  animation: scale-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: scale-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Fondo a cuadros para previsualizar transparencia */
+.bg-checkers {
+  background-color: #f5f5f4;
+  background-image:
+    conic-gradient(
+      #e7e5e4 25%,
+      transparent 0 50%,
+      #e7e5e4 0 75%,
+      transparent 0
+    );
+  background-size: 22px 22px;
+}
+
+.dark .bg-checkers {
+  background-color: #1c1917;
+  background-image: conic-gradient(
+    #292524 25%,
+    transparent 0 50%,
+    #292524 0 75%,
+    transparent 0
+  );
 }
 
 /* Scrollbar sutil */

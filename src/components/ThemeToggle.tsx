@@ -1,15 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-type Theme = "light" | "dark";
+import { applyTheme, writeThemeCookie } from "@/lib/theme";
 
 interface Props {
   className?: string;
 }
 
 export default function ThemeToggle({ className = "" }: Props) {
-  const [theme, setTheme] = useState<Theme>("light");
+  const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
     setTheme(
@@ -18,9 +17,10 @@ export default function ThemeToggle({ className = "" }: Props) {
   }, []);
 
   function toggle() {
-    const next: Theme = theme === "dark" ? "light" : "dark";
+    const next = theme === "dark" ? "light" : "dark";
     setTheme(next);
-    document.documentElement.classList.toggle("dark", next === "dark");
+    applyTheme(next);
+    writeThemeCookie(next);
     try {
       localStorage.setItem("theme", next);
     } catch {

@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
+import { cookies, headers } from "next/headers";
 import "./globals.css";
+import ThemeSync from "@/components/ThemeSync";
 
 export const metadata: Metadata = {
   title: {
@@ -17,17 +19,26 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const cookieStore = await cookies();
+  const themeCookie = cookieStore.get("theme")?.value;
+
+  let themeClass = "";
+  if (themeCookie === "dark") {
+    themeClass = "dark";
+  } else if (themeCookie !== "light") {
+    const hintHeaders = await headers();
+    const systemPrefersDark =
+      hintHeaders.get("sec-ch-prefers-color-scheme") === "dark";
+    themeClass = systemPrefersDark ? "dark" : "";
+  }
+
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning className={themeClass}>
       <body className="min-h-dvh antialiased">
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem("theme");var d=t?t==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;document.documentElement.classList.toggle("dark",d);}catch(e){}})();`,
-          }}
-        />
+        <ThemeSync />
         {children}
       </body>
     </html>

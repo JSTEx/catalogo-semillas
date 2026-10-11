@@ -66,7 +66,7 @@ export const ALLOWED_IMAGE_MIME = [
   "image/png",
   "image/webp",
 ] as const;
-export const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2MB
+export const MAX_IMAGE_BYTES = 3 * 1024 * 1024; // 3MB
 
 export type LoginInput = z.infer<typeof loginSchema>;
 export type CreateProductInput = z.infer<typeof createProductSchema>;

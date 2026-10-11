@@ -1,8 +1,8 @@
 "use client";
 
-import Image from "next/image";
 import type { ProductDTO } from "@/lib/types";
 import AvailabilityBadge from "./AvailabilityBadge";
+import SeedImage from "./SeedImage";
 
 interface Props {
   product: ProductDTO;
@@ -15,12 +15,12 @@ export default function SeedCard({ product, onSelect, index = 0 }: Props) {
     <button
       type="button"
       onClick={() => onSelect(product)}
-      style={{ animationDelay: `${Math.min(index, 12) * 40}ms` }}
+      style={{ animationDelay: `${Math.min(index, 12) * 90}ms` }}
       className="group animate-fade-in-up flex flex-col overflow-hidden rounded-3xl border border-stone-200/70 bg-white/70 text-left shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-400 dark:border-stone-800/70 dark:bg-stone-900/70 dark:hover:border-brand-500/40 dark:hover:shadow-brand-500/10"
       aria-label={`Ver detalle de ${product.name}`}
     >
       <div className="relative aspect-square w-full overflow-hidden bg-stone-100 dark:bg-stone-800">
-        <Image
+        <SeedImage
           src={product.imageUrl}
           alt={product.name}
           fill

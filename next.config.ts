@@ -1,4 +1,4 @@
-import type { NextConfig } from "next";
+type NextConfig = import("next").NextConfig;
 
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -17,11 +17,27 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
+  // Dependencias nativas (onnx/sharp) que no deben empaquetarse con webpack.
+  serverExternalPackages: [
+    "@imgly/background-removal-node",
+    "onnxruntime-node",
+    "sharp",
+  ],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "**.supabase.co" },
       { protocol: "https", hostname: "res.cloudinary.com" },
       { protocol: "https", hostname: "**.supabase.in" },
+    ],
+  },
+  outputFileTracingIncludes: {
+    "/api/remove-background": [
+      "./bg-assets/**",
+      "./node_modules/onnxruntime-node/bin/napi-v3/linux/**",
+      "./node_modules/sharp/**",
+      "./node_modules/@img/sharp-linux-x64/**",
+      "./node_modules/@img/sharp-libvips-linux-x64/**",
+      "./node_modules/@img/sharp-libvips/**",
     ],
   },
   async headers() {

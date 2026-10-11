@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
+import Loader from "@/components/Loader";
 
 interface Props {
   redirectTo: string;
@@ -49,7 +50,7 @@ export default function LoginForm({ redirectTo }: Props) {
   }
 
   return (
-    <main className="relative flex min-h-dvh items-center justify-center bg-gradient-to-br from-stone-50 via-white to-brand-50/60 px-4 dark:from-stone-950 dark:via-stone-900 dark:to-stone-950">
+    <main className="relative flex min-h-dvh flex-col items-center justify-center gap-6 bg-gradient-to-br from-stone-50 via-white to-brand-50/60 px-4 dark:from-stone-950 dark:via-stone-900 dark:to-stone-950">
       <ThemeToggle className="absolute right-4 top-4" />
       <div className="animate-fade-in-up w-full max-w-md rounded-3xl border border-white/60 bg-white/70 p-8 shadow-xl backdrop-blur-md dark:border-stone-700/60 dark:bg-stone-900/70">
         <div className="mb-8 flex flex-col items-center gap-3 text-center">
@@ -129,10 +130,31 @@ export default function LoginForm({ redirectTo }: Props) {
             disabled={loading}
             className="w-full rounded-2xl bg-brand-500 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-brand-600 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? "Ingresando..." : "Ingresar"}
+            {loading ? <Loader label="Ingresando..." /> : "Ingresar"}
           </button>
         </form>
       </div>
+
+      <a
+        href="/"
+        className="inline-flex h-10 items-center gap-2 rounded-2xl border border-stone-200 bg-white/70 px-4 text-sm font-medium text-stone-600 shadow-sm backdrop-blur-md transition-all duration-300 hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:border-brand-500/40 dark:hover:text-brand-300"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-4 w-4"
+          aria-hidden="true"
+        >
+          <path d="m12 19-7-7 7-7" />
+          <path d="M19 12H5" />
+        </svg>
+        Volver al catalogo
+      </a>
     </main>
   );
 }

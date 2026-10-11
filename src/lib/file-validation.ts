@@ -70,7 +70,10 @@ export function validateImage(
     return { ok: false, error: "El archivo esta vacio" };
   }
   if (buffer.byteLength > MAX_IMAGE_BYTES) {
-    return { ok: false, error: "La imagen supera el limite de 2MB" };
+    return {
+      ok: false,
+      error: `La imagen supera el limite de ${MAX_IMAGE_BYTES / 1024 / 1024}MB`,
+    };
   }
 
   const detected = detectImageMime(buffer);

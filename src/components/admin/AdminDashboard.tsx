@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import type { ProductDTO } from "@/lib/types";
 import AvailabilityBadge from "@/components/AvailabilityBadge";
 import ThemeToggle from "@/components/ThemeToggle";
+import Loader from "@/components/Loader";
+import SeedImage from "@/components/SeedImage";
+import ImageStudio from "./ImageStudio";
 
 interface Props {
   initialProducts: ProductDTO[];
@@ -34,7 +36,31 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
   const [form, setForm] = useState<FormState | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [studioOpen, setStudioOpen] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const onFileChangeRef = useRef(onFileChange);
+
+  useEffect(() => {
+    onFileChangeRef.current = onFileChange;
+  });
+
+  useEffect(() => {
+    if (!form) return;
+    const onPaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (const item of items) {
+        if (item.type.startsWith("image/")) {
+          e.preventDefault();
+          const file = item.getAsFile();
+          if (file) onFileChangeRef.current(file);
+          return;
+        }
+      }
+    };
+    document.addEventListener("paste", onPaste);
+    return () => document.removeEventListener("paste", onPaste);
+  }, [Boolean(form)]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -155,6 +181,30 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
     }
   }
 
+  async function handleStudioApply(targetId: string, url: string) {
+    setError(null);
+    if (targetId === "new") {
+      setForm((prev) =>
+        prev ? { ...prev, imageUrl: url } : { ...emptyForm, imageUrl: url },
+      );
+      setStudioOpen(false);
+      return;
+    }
+    try {
+      const res = await api(`/api/products/${targetId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ imageUrl: url }),
+      });
+      const data = (await res.json()) as { product: ProductDTO };
+      setItems((prev) =>
+        prev.map((p) => (p.id === data.product.id ? data.product : p)),
+      );
+      setStudioOpen(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al aplicar la imagen");
+    }
+  }
+
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
     router.replace("/admin/login");
@@ -236,28 +286,51 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
             />
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              setError(null);
-              setForm({ ...emptyForm });
-            }}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-brand-600 hover:shadow-lg"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              className="h-4 w-4"
-              aria-hidden="true"
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <button
+              type="button"
+              onClick={() => setStudioOpen(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-brand-200 bg-brand-50 px-5 py-3 text-sm font-semibold text-brand-700 transition-all duration-300 hover:bg-brand-100 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300 dark:hover:bg-brand-500/20"
             >
-              <path d="M5 12h14M12 5v14" />
-            </svg>
-            Nuevo producto
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path d="m12 3 1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3Z" />
+              </svg>
+              Editor de imagen
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setError(null);
+                setForm({ ...emptyForm });
+              }}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-brand-600 hover:shadow-lg"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                className="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path d="M5 12h14M12 5v14" />
+              </svg>
+              Nuevo producto
+            </button>
+          </div>
         </div>
 
         {error && (
@@ -281,7 +354,7 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                 className="flex flex-col overflow-hidden rounded-3xl border border-stone-200/70 bg-white/70 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-lg dark:border-stone-800/70 dark:bg-stone-900/70"
               >
                 <div className="relative aspect-[4/3] w-full bg-stone-100 dark:bg-stone-800">
-                  <Image
+                  <SeedImage
                     src={product.imageUrl}
                     alt={product.name}
                     fill
@@ -423,7 +496,7 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                 <div className="flex items-center gap-4">
                   <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-stone-200 bg-stone-100 dark:border-stone-700 dark:bg-stone-800">
                     {form.imageUrl ? (
-                      <Image
+                      <SeedImage
                         src={form.imageUrl}
                         alt="Vista previa"
                         fill
@@ -447,9 +520,35 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                       className="block w-full text-xs text-stone-500 file:mr-3 file:rounded-full file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-brand-700 hover:file:bg-brand-100 dark:text-stone-400 dark:file:bg-brand-500/15 dark:file:text-brand-300 dark:hover:file:bg-brand-500/25"
                     />
                     <p className="text-xs text-stone-400 dark:text-stone-500">
-                      JPG, PNG o WEBP. Maximo 2MB.
-                      {uploading ? " Subiendo..." : ""}
+                      {uploading ? (
+                        <Loader label="Subiendo..." />
+                      ) : (
+                        "JPG, PNG o WEBP. Maximo 3MB. Tambien puedes pegar una imagen (Ctrl+V)."
+                      )}
                     </p>
+                    {form.imageUrl && (
+                      <button
+                        type="button"
+                        disabled={saving || uploading}
+                        onClick={() => setStudioOpen(true)}
+                        className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 transition-all duration-300 hover:bg-brand-100 disabled:opacity-50 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300 dark:hover:bg-brand-500/20"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="h-3.5 w-3.5"
+                          aria-hidden="true"
+                        >
+                          <path d="m12 3 1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3Z" />
+                        </svg>
+                        Quitar fondo
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -482,13 +581,25 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                   disabled={saving || uploading || !form.imageUrl}
                   className="rounded-2xl bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-brand-600 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {saving ? "Guardando..." : "Guardar"}
+                  {saving ? (
+                    <Loader label="Guardando..." className="w-full justify-center" />
+                  ) : (
+                    "Guardar"
+                  )}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
+      <ImageStudio
+        open={studioOpen}
+        targets={items.map((p) => ({ id: p.id, name: p.name }))}
+        initialTargetId={form?.id ?? "new"}
+        onClose={() => setStudioOpen(false)}
+        onApply={handleStudioApply}
+      />
     </div>
   );
 }
