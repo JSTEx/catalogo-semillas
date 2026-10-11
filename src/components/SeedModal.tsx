@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { ProductDTO } from "@/lib/types";
 import AvailabilityBadge from "./AvailabilityBadge";
 import SeedImage from "./SeedImage";
@@ -11,6 +11,15 @@ interface Props {
 }
 
 export default function SeedModal({ product, onClose }: Props) {
+  const [zoom, setZoom] = useState(false);
+  const [origin, setOrigin] = useState("50% 50%");
+  const [pointerKind, setPointerKind] = useState<"mouse" | "touch" | "pen">(
+    () =>
+      typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches
+        ? "mouse"
+        : "touch",
+  );
+
   useEffect(() => {
     if (!product) return;
     const onKey = (e: KeyboardEvent) => {
@@ -24,7 +33,23 @@ export default function SeedModal({ product, onClose }: Props) {
     };
   }, [product, onClose]);
 
+  useEffect(() => {
+    setZoom(false);
+    setOrigin("50% 50%");
+  }, [product]);
+
   if (!product) return null;
+
+  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (e.pointerType !== "mouse") return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x =
+      rect.width > 0 ? ((e.clientX - rect.left) / rect.width) * 100 : 50;
+    const y =
+      rect.height > 0 ? ((e.clientY - rect.top) / rect.height) * 100 : 50;
+    setOrigin(`${x}% ${y}%`);
+    setZoom(true);
+  }
 
   return (
     <div
@@ -61,18 +86,60 @@ export default function SeedModal({ product, onClose }: Props) {
         </button>
 
         <div className="grid gap-0 md:grid-cols-2">
-          <div className="relative aspect-square w-full bg-stone-100 dark:bg-stone-800">
-            <SeedImage
-              src={product.imageUrl}
-              alt={product.name}
-              fill
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-contain"
-              priority
-            />
+          <div
+            className="group relative aspect-square w-full touch-manipulation bg-stone-100 dark:bg-stone-800"
+            onPointerMove={handlePointerMove}
+            onPointerLeave={(e) => {
+              if (e.pointerType === "mouse") setZoom(false);
+            }}
+            onPointerDown={(e) => {
+              setPointerKind(e.pointerType);
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              if (pointerKind !== "mouse") {
+                setZoom((z) => !z);
+                setOrigin("50% 50%");
+              }
+            }}
+          >
+            <div
+              className={[
+                "absolute inset-0 transition-transform duration-500 ease-out",
+                zoom ? "scale-[2]" : "scale-100",
+              ].join(" ")}
+              style={{ transformOrigin: origin }}
+            >
+              <SeedImage
+                src={product.imageUrl}
+                alt={product.name}
+                fill
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-contain"
+                priority
+              />
+            </div>
+
+            <span className="pointer-events-none absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-medium text-stone-600 shadow-sm backdrop-blur-md dark:bg-stone-800/80 dark:text-stone-300">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-3 w-3"
+                aria-hidden="true"
+              >
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.3-4.3M11 8v6M8 11h6" />
+              </svg>
+              {pointerKind === "mouse" ? "Pasa el mouse" : "Toca para ampliar"}
+            </span>
           </div>
 
-          <div className="flex flex-col justify-between gap-6 p-6 md:p-8">
+          <div className="flex max-h-[45vh] flex-col justify-between gap-6 overflow-y-auto p-6 md:max-h-none md:p-8">
             <div className="space-y-3">
               <AvailabilityBadge
                 available={product.isAvailable}

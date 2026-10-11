@@ -132,7 +132,7 @@ export default function CatalogClient({ initialProducts }: Props) {
           <div className="ml-auto flex items-center gap-2">
             <a
               href="/admin"
-              className="inline-flex h-10 items-center gap-2 rounded-2xl border border-stone-200 bg-white/70 px-3 text-sm font-medium text-stone-600 shadow-sm backdrop-blur-md transition-all duration-300 hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:border-brand-500/40 dark:hover:text-brand-300"
+              className="inline-flex h-10 items-center gap-2 rounded-2xl border border-brand-200 bg-brand-50 px-4 text-sm font-semibold text-brand-700 shadow-sm backdrop-blur-md transition-all duration-300 hover:border-brand-300 hover:bg-brand-100 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300 dark:hover:border-brand-500/50 dark:hover:bg-brand-500/20"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -145,10 +145,9 @@ export default function CatalogClient({ initialProducts }: Props) {
                 className="h-4 w-4"
                 aria-hidden="true"
               >
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
+                <path d="M12 5v14M5 12h14" />
               </svg>
-              Panel admin
+              Agregar producto
             </a>
             <ThemeToggle />
           </div>

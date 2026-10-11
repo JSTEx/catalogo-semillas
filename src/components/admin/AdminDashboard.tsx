@@ -183,11 +183,11 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
 
   async function handleStudioApply(targetId: string, url: string) {
     setError(null);
+    setStudioOpen(false);
     if (targetId === "new") {
       setForm((prev) =>
         prev ? { ...prev, imageUrl: url } : { ...emptyForm, imageUrl: url },
       );
-      setStudioOpen(false);
       return;
     }
     try {
@@ -199,7 +199,11 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
       setItems((prev) =>
         prev.map((p) => (p.id === data.product.id ? data.product : p)),
       );
-      setStudioOpen(false);
+      setForm((prev) =>
+        prev && prev.id === targetId
+          ? { ...prev, imageUrl: url }
+          : prev,
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al aplicar la imagen");
     }
