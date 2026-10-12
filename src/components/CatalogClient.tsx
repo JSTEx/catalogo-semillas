@@ -9,9 +9,11 @@ import {
 } from "@/lib/product-status";
 import type { ProductStatus } from "@/lib/product-status";
 import { normalizeSearch } from "@/lib/search";
+import { useViewMode } from "@/lib/use-view-mode";
 import SeedCard from "./SeedCard";
 import SeedModal from "./SeedModal";
 import ThemeToggle from "./ThemeToggle";
+import ViewToggle from "./ViewToggle";
 
 type Filter = "all" | ProductStatus;
 
@@ -19,10 +21,18 @@ interface Props {
   initialProducts: ProductDTO[];
 }
 
+const GRID_CLASSES: Record<string, string> = {
+  grid: "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+  compact:
+    "grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6",
+  list: "flex flex-col gap-3",
+};
+
 export default function CatalogClient({ initialProducts }: Props) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
   const [selected, setSelected] = useState<ProductDTO | null>(null);
+  const [view, setView] = useViewMode("catalog-view", "grid");
 
   const filtered = useMemo(() => {
     const q = normalizeSearch(query.trim());
@@ -134,6 +144,7 @@ export default function CatalogClient({ initialProducts }: Props) {
             </button>
           ))}
           <div className="ml-auto flex items-center gap-2">
+            <ViewToggle value={view} onChange={setView} />
             <a
               href="/admin"
               className="inline-flex h-10 items-center gap-2 rounded-2xl border border-brand-200 bg-brand-50 px-4 text-sm font-semibold text-brand-700 shadow-sm backdrop-blur-md transition-all duration-300 hover:border-brand-300 hover:bg-brand-100 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300 dark:hover:border-brand-500/50 dark:hover:bg-brand-500/20"
@@ -185,12 +196,13 @@ export default function CatalogClient({ initialProducts }: Props) {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className={GRID_CLASSES[view]}>
             {filtered.map((product, index) => (
               <SeedCard
                 key={product.id}
                 product={product}
                 index={index}
+                variant={view}
                 onSelect={setSelected}
               />
             ))}

@@ -3,11 +3,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ProductDTO } from "@/lib/types";
-import { PRODUCT_STATUSES, STATUS_META } from "@/lib/product-status";
+import { PRODUCT_STATUSES, STATUS_META, sortByStatus } from "@/lib/product-status";
 import type { ProductStatus } from "@/lib/product-status";
 import { normalizeSearch } from "@/lib/search";
+import { useViewMode } from "@/lib/use-view-mode";
 import AvailabilityBadge from "@/components/AvailabilityBadge";
 import ThemeToggle from "@/components/ThemeToggle";
+import ViewToggle from "@/components/ViewToggle";
 import Loader from "@/components/Loader";
 import SeedImage from "@/components/SeedImage";
 import ImageStudio from "./ImageStudio";
@@ -24,16 +26,36 @@ interface FormState {
   imageUrl: string;
 }
 
+type StatusFilter = "all" | ProductStatus;
+type SortKey = "status" | "name" | "recent" | "oldest";
+
 const emptyForm: FormState = {
   name: "",
   status: "available",
   imageUrl: "",
 };
 
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: "status", label: "Estado (recomendado)" },
+  { key: "name", label: "Nombre (A-Z)" },
+  { key: "recent", label: "Mas recientes" },
+  { key: "oldest", label: "Mas antiguos" },
+];
+
+const GRID_CLASSES: Record<string, string> = {
+  grid: "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3",
+  compact:
+    "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5",
+  list: "flex flex-col gap-2",
+};
+
 export default function AdminDashboard({ initialProducts, username }: Props) {
   const router = useRouter();
   const [items, setItems] = useState<ProductDTO[]>(initialProducts);
   const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<StatusFilter>("all");
+  const [sort, setSort] = useState<SortKey>("status");
+  const [view, setView] = useViewMode("admin-view", "grid");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<FormState | null>(null);
@@ -67,9 +89,123 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
 
   const filtered = useMemo(() => {
     const q = normalizeSearch(query.trim());
-    if (!q) return items;
-    return items.filter((p) => normalizeSearch(p.name).includes(q));
-  }, [items, query]);
+    const list = items.filter((p) => {
+      const matchesQuery = !q || normalizeSearch(p.name).includes(q);
+      const matchesFilter = filter === "all" || p.status === filter;
+      return matchesQuery && matchesFilter;
+    });
+    if (sort === "status") return sortByStatus(list);
+    if (sort === "name") {
+      return [...list].sort((a, b) =>
+        a.name.localeCompare(b.name, "es", { sensitivity: "base" }),
+      );
+    }
+    if (sort === "recent") {
+      return [...list].sort(
+        (a, b) => +new Date(b.createdAt) - +new Date(a.createdAt),
+      );
+    }
+    return [...list].sort(
+      (a, b) => +new Date(a.createdAt) - +new Date(b.createdAt),
+    );
+  }, [items, query, filter, sort]);
+
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { all: items.length };
+    for (const s of PRODUCT_STATUSES) c[s] = 0;
+    for (const p of items) c[p.status] = (c[p.status] ?? 0) + 1;
+    return c;
+  }, [items]);
+
+  const filters: { key: StatusFilter; label: string; count: number }[] = [
+    { key: "all", label: "Todas", count: counts.all },
+    ...PRODUCT_STATUSES.map((s) => ({
+      key: s,
+      label: STATUS_META[s].short,
+      count: counts[s] ?? 0,
+    })),
+  ];
+
+  function openEdit(product: ProductDTO) {
+    setError(null);
+    setForm({
+      id: product.id,
+      name: product.name,
+      status: product.status,
+      imageUrl: product.imageUrl,
+    });
+  }
+
+  function renderStatusSelect(product: ProductDTO) {
+    return (
+      <select
+        value={product.status}
+        disabled={busyId === product.id}
+        onChange={(e) =>
+          changeStatus(product, e.target.value as ProductStatus)
+        }
+        aria-label="Estado del producto"
+        className="h-7 cursor-pointer rounded-full border border-stone-200 bg-white/80 pl-3 pr-7 text-xs font-medium text-stone-600 outline-none transition-colors focus:border-brand-400 focus:ring-2 focus:ring-brand-100 disabled:opacity-50 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-300 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
+      >
+        {PRODUCT_STATUSES.map((s) => (
+          <option key={s} value={s}>
+            {STATUS_META[s].short}
+          </option>
+        ))}
+      </select>
+    );
+  }
+
+  function renderActions(product: ProductDTO) {
+    return (
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => openEdit(product)}
+          className="flex h-9 w-9 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-800 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+          aria-label="Editar"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-4 w-4"
+            aria-hidden="true"
+          >
+            <path d="M12 20h9" />
+            <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          disabled={busyId === product.id}
+          onClick={() => remove(product)}
+          className="flex h-9 w-9 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:text-stone-400 dark:hover:bg-red-500/15 dark:hover:text-red-300"
+          aria-label="Eliminar"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-4 w-4"
+            aria-hidden="true"
+          >
+            <path d="M3 6h18" />
+            <path d="M8 6V4h8v2" />
+            <path d="M19 6l-1 14H6L5 6" />
+          </svg>
+        </button>
+      </div>
+    );
+  }
 
   async function api(path: string, init: RequestInit) {
     const res = await fetch(path, {
@@ -341,6 +477,93 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
           </div>
         </div>
 
+        <div className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+          {[
+            { label: "Total", value: counts.all, dot: "bg-stone-400" },
+            {
+              label: STATUS_META.available.short,
+              value: counts.available,
+              dot: STATUS_META.available.dot,
+            },
+            {
+              label: STATUS_META.low_stock.short,
+              value: counts.low_stock,
+              dot: STATUS_META.low_stock.dot,
+            },
+            {
+              label: STATUS_META.coming_soon.short,
+              value: counts.coming_soon,
+              dot: STATUS_META.coming_soon.dot,
+            },
+            {
+              label: STATUS_META.out_of_stock.short,
+              value: counts.out_of_stock,
+              dot: STATUS_META.out_of_stock.dot,
+            },
+          ].map((s) => (
+            <div
+              key={s.label}
+              className="flex items-center gap-3 rounded-2xl border border-stone-200/70 bg-white/70 px-4 py-3 shadow-sm backdrop-blur-md dark:border-stone-800/70 dark:bg-stone-900/70"
+            >
+              <span
+                className={["h-2.5 w-2.5 shrink-0 rounded-full", s.dot].join(" ")}
+              />
+              <div className="min-w-0">
+                <p className="text-lg font-bold leading-none text-stone-800 dark:text-stone-100">
+                  {s.value}
+                </p>
+                <p className="truncate text-[11px] text-stone-500 dark:text-stone-400">
+                  {s.label}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          {filters.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setFilter(f.key)}
+              className={[
+                "inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all duration-300",
+                filter === f.key
+                  ? "border-brand-500 bg-brand-500 text-white shadow-sm"
+                  : "border-stone-200 bg-white/70 text-stone-600 hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:border-brand-500/40 dark:hover:text-brand-300",
+              ].join(" ")}
+            >
+              {f.label}
+              <span
+                className={[
+                  "rounded-full px-1.5 text-xs",
+                  filter === f.key
+                    ? "bg-white/25 text-white"
+                    : "bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400",
+                ].join(" ")}
+              >
+                {f.count}
+              </span>
+            </button>
+          ))}
+
+          <div className="ml-auto flex items-center gap-2">
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortKey)}
+              aria-label="Ordenar productos"
+              className="h-10 cursor-pointer rounded-2xl border border-stone-200 bg-white/70 pl-3 pr-8 text-sm text-stone-600 shadow-sm outline-none backdrop-blur-md focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
+            >
+              {SORT_OPTIONS.map((o) => (
+                <option key={o.key} value={o.key}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+            <ViewToggle value={view} onChange={setView} />
+          </div>
+        </div>
+
         {error && (
           <p
             role="alert"
@@ -355,105 +578,93 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
             No hay productos para mostrar.
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((product) => (
-              <article
-                key={product.id}
-                className="flex flex-col overflow-hidden rounded-3xl border border-stone-200/70 bg-white/70 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-lg dark:border-stone-800/70 dark:bg-stone-900/70"
-              >
-                <div className="relative aspect-[4/3] w-full bg-stone-100 dark:bg-stone-800">
-                  <SeedImage
-                    src={product.imageUrl}
-                    alt={product.name}
-                    fill
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    className="object-contain"
-                  />
-                  <div className="absolute right-3 top-3">
-                    <AvailabilityBadge status={product.status} />
+          <div className={GRID_CLASSES[view]}>
+            {filtered.map((product) =>
+              view === "list" ? (
+                <article
+                  key={product.id}
+                  className="flex items-center gap-3 rounded-2xl border border-stone-200/70 bg-white/70 p-2.5 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-md dark:border-stone-800/70 dark:bg-stone-900/70"
+                >
+                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-stone-100 dark:bg-stone-800">
+                    <SeedImage
+                      src={product.imageUrl}
+                      alt={product.name}
+                      fill
+                      sizes="64px"
+                      className="object-contain"
+                    />
                   </div>
-                </div>
-
-                <div className="flex flex-1 flex-col gap-4 p-4">
-                  <h3 className="line-clamp-2 flex-1 text-base font-semibold text-stone-800 dark:text-stone-100">
-                    {product.name}
-                  </h3>
-
-                  <div className="flex items-center justify-between gap-2">
-                    <select
-                      value={product.status}
-                      disabled={busyId === product.id}
-                      onChange={(e) =>
-                        changeStatus(product, e.target.value as ProductStatus)
-                      }
-                      aria-label="Estado del producto"
-                      className="h-7 cursor-pointer rounded-full border border-stone-200 bg-white/80 pl-3 pr-7 text-xs font-medium text-stone-600 outline-none transition-colors focus:border-brand-400 focus:ring-2 focus:ring-brand-100 disabled:opacity-50 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-300 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
-                    >
-                      {PRODUCT_STATUSES.map((s) => (
-                        <option key={s} value={s}>
-                          {STATUS_META[s].short}
-                        </option>
-                      ))}
-                    </select>
-
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setError(null);
-                          setForm({
-                            id: product.id,
-                            name: product.name,
-                            status: product.status,
-                            imageUrl: product.imageUrl,
-                          });
-                        }}
-                        className="flex h-9 w-9 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-800 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
-                        aria-label="Editar"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="h-4 w-4"
-                          aria-hidden="true"
-                        >
-                          <path d="M12 20h9" />
-                          <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        disabled={busyId === product.id}
-                        onClick={() => remove(product)}
-                        className="flex h-9 w-9 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:text-stone-400 dark:hover:bg-red-500/15 dark:hover:text-red-300"
-                        aria-label="Eliminar"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="h-4 w-4"
-                          aria-hidden="true"
-                        >
-                          <path d="M3 6h18" />
-                          <path d="M8 6V4h8v2" />
-                          <path d="M19 6l-1 14H6L5 6" />
-                        </svg>
-                      </button>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-stone-800 dark:text-stone-100">
+                      {product.name}
+                    </p>
+                    <div className="mt-1">
+                      <AvailabilityBadge status={product.status} size="sm" />
                     </div>
                   </div>
-                </div>
-              </article>
-            ))}
+                  <div className="flex shrink-0 items-center gap-2">
+                    {renderStatusSelect(product)}
+                    {renderActions(product)}
+                  </div>
+                </article>
+              ) : view === "compact" ? (
+                <article
+                  key={product.id}
+                  className="flex flex-col overflow-hidden rounded-2xl border border-stone-200/70 bg-white/70 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-md dark:border-stone-800/70 dark:bg-stone-900/70"
+                >
+                  <div className="relative aspect-square w-full bg-stone-100 dark:bg-stone-800">
+                    <SeedImage
+                      src={product.imageUrl}
+                      alt={product.name}
+                      fill
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
+                      className="object-contain"
+                    />
+                    <div className="absolute right-2 top-2">
+                      <AvailabilityBadge status={product.status} size="sm" />
+                    </div>
+                  </div>
+                  <div className="flex flex-1 flex-col gap-2 p-3">
+                    <h3 className="truncate text-sm font-semibold text-stone-800 dark:text-stone-100">
+                      {product.name}
+                    </h3>
+                    <div className="mt-auto flex items-center justify-between gap-1">
+                      {renderStatusSelect(product)}
+                      {renderActions(product)}
+                    </div>
+                  </div>
+                </article>
+              ) : (
+                <article
+                  key={product.id}
+                  className="flex flex-col overflow-hidden rounded-3xl border border-stone-200/70 bg-white/70 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-lg dark:border-stone-800/70 dark:bg-stone-900/70"
+                >
+                  <div className="relative aspect-[4/3] w-full bg-stone-100 dark:bg-stone-800">
+                    <SeedImage
+                      src={product.imageUrl}
+                      alt={product.name}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className="object-contain"
+                    />
+                    <div className="absolute right-3 top-3">
+                      <AvailabilityBadge status={product.status} />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-1 flex-col gap-4 p-4">
+                    <h3 className="line-clamp-2 flex-1 text-base font-semibold text-stone-800 dark:text-stone-100">
+                      {product.name}
+                    </h3>
+
+                    <div className="flex items-center justify-between gap-2">
+                      {renderStatusSelect(product)}
+                      {renderActions(product)}
+                    </div>
+                  </div>
+                </article>
+              ),
+            )}
           </div>
         )}
       </main>

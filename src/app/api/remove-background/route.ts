@@ -106,25 +106,6 @@ export async function POST(req: Request) {
       .raw()
       .toBuffer({ resolveWithObject: true });
 
-    const debug = (json as { debug?: unknown }).debug === true;
-    if (debug) {
-      let opaque = 0, transp = 0, partial = 0, maxA = 0;
-      for (let i = 3; i < data.length; i += 4) {
-        const a = data[i];
-        if (a === 255) opaque++;
-        else if (a === 0) transp++;
-        else partial++;
-        if (a > maxA) maxA = a;
-      }
-      return NextResponse.json({
-        dims: [info.width, info.height],
-        opaque,
-        transp,
-        partial,
-        maxA,
-      });
-    }
-
     // Defringe primero sobre la mascara suave (los pixeles semi-transparentes
     // conservan resto del fondo en RGB); luego endurecer el alpha.
     defringe(data, info.width, info.height);
