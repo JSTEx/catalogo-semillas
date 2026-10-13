@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useCart } from "./CartProvider";
 import { formatMoney } from "@/lib/money";
 import { customerWhatsAppLink, orderTrackingPath } from "@/lib/orders";
+import { saveMyOrder } from "@/lib/my-order";
 import type { OrderDTO } from "@/lib/types";
 
 interface Props {
@@ -79,6 +80,7 @@ export default function CheckoutModal({ open, onClose }: Props) {
         throw new Error(data?.error ?? "No se pudo enviar el pedido");
       }
       setSuccess(data.order);
+      saveMyOrder({ id: data.order.id, number: data.order.number });
       clear();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al enviar el pedido");

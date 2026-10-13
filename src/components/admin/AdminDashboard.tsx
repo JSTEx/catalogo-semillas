@@ -8,6 +8,7 @@ import type { ProductStatus } from "@/lib/product-status";
 import { normalizeSearch } from "@/lib/search";
 import { useViewMode } from "@/lib/use-view-mode";
 import { formatMoney } from "@/lib/money";
+import { SUGGESTED_CATEGORIES } from "@/lib/validation";
 import AvailabilityBadge from "@/components/AvailabilityBadge";
 import ThemeToggle from "@/components/ThemeToggle";
 import ViewToggle from "@/components/ViewToggle";
@@ -27,6 +28,8 @@ interface Props {
 interface FormState {
   id?: string;
   name: string;
+  category: string;
+  description: string;
   status: ProductStatus;
   imageUrl: string;
   priceCents: number;
@@ -39,6 +42,8 @@ type SortKey = "status" | "name" | "recent" | "oldest";
 
 const emptyForm: FormState = {
   name: "",
+  category: "otros",
+  description: "",
   status: "available",
   imageUrl: "",
   priceCents: 0,
@@ -184,6 +189,8 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
     setForm({
       id: product.id,
       name: product.name,
+      category: product.category,
+      description: product.description ?? "",
       status: product.status,
       imageUrl: product.imageUrl,
       priceCents: product.priceCents,
@@ -354,6 +361,8 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
           method: "PATCH",
           body: JSON.stringify({
             name: form.name,
+            category: form.category,
+            description: form.description,
             status: form.status,
             imageUrl: form.imageUrl,
             priceCents,
@@ -369,6 +378,8 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
           method: "POST",
           body: JSON.stringify({
             name: form.name,
+            category: form.category,
+            description: form.description,
             status: form.status,
             imageUrl: form.imageUrl,
             priceCents,
@@ -527,8 +538,8 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar semilla..."
-              aria-label="Buscar semilla"
+              placeholder="Buscar producto..."
+              aria-label="Buscar producto"
               className="w-full rounded-2xl border border-stone-200 bg-white/80 py-3 pl-11 pr-4 text-sm text-stone-800 outline-none backdrop-blur-md transition-all duration-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
             />
           </div>
@@ -765,6 +776,9 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                   </div>
 
                   <div className="flex flex-1 flex-col gap-4 p-4">
+                    <span className="self-start rounded-full bg-stone-100 px-2 py-0.5 text-[11px] font-medium text-stone-500 dark:bg-stone-800 dark:text-stone-400">
+                      {product.category}
+                    </span>
                     <h3 className="line-clamp-2 flex-1 text-base font-semibold text-stone-800 dark:text-stone-100">
                       {product.name}
                     </h3>
@@ -828,6 +842,51 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                     setForm({ ...form, name: e.target.value })
                   }
                   className="w-full rounded-2xl border border-stone-200 bg-white/80 px-4 py-3 text-sm text-stone-800 outline-none transition-all duration-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="category"
+                  className="block text-sm font-medium text-stone-700 dark:text-stone-300"
+                >
+                  Categoria
+                </label>
+                <input
+                  id="category"
+                  list="category-options"
+                  maxLength={40}
+                  value={form.category}
+                  onChange={(e) =>
+                    setForm({ ...form, category: e.target.value })
+                  }
+                  placeholder="Snacks, Tecnologia, Ropa..."
+                  className="w-full rounded-2xl border border-stone-200 bg-white/80 px-4 py-3 text-sm text-stone-800 outline-none transition-all duration-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
+                />
+                <datalist id="category-options">
+                  {SUGGESTED_CATEGORIES.map((c) => (
+                    <option key={c} value={c} />
+                  ))}
+                </datalist>
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="description"
+                  className="block text-sm font-medium text-stone-700 dark:text-stone-300"
+                >
+                  Descripcion (opcional)
+                </label>
+                <textarea
+                  id="description"
+                  rows={3}
+                  maxLength={300}
+                  value={form.description}
+                  onChange={(e) =>
+                    setForm({ ...form, description: e.target.value })
+                  }
+                  placeholder="Detalles del producto (sabor, tamano, material...)"
+                  className="w-full resize-none rounded-2xl border border-stone-200 bg-white/80 px-4 py-3 text-sm text-stone-800 outline-none transition-all duration-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
                 />
               </div>
 

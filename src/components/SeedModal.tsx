@@ -149,15 +149,19 @@ export default function SeedModal({ product, onClose, onOpenCart }: Props) {
 
           <div className="flex max-h-[45vh] flex-col justify-between gap-6 overflow-y-auto p-6 md:max-h-none md:p-8">
             <div className="space-y-3">
-              <AvailabilityBadge
-                status={product.status}
-                withPulse
-              />
+              <div className="flex flex-wrap items-center gap-2">
+                <AvailabilityBadge status={product.status} withPulse />
+                {product.category && (
+                  <span className="rounded-full bg-stone-100 px-2.5 py-1 text-[11px] font-medium text-stone-500 dark:bg-stone-800 dark:text-stone-400">
+                    {product.category}
+                  </span>
+                )}
+              </div>
               <h2 className="text-2xl font-bold tracking-tight text-stone-900 md:text-3xl dark:text-stone-100">
                 {product.name}
               </h2>
-              <p className="text-sm leading-relaxed text-stone-500 dark:text-stone-400">
-                {statusMeta(product.status).description}
+              <p className="text-sm leading-relaxed text-stone-600 dark:text-stone-300">
+                {product.description || statusMeta(product.status).description}
               </p>
             </div>
 

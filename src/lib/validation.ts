@@ -44,8 +44,20 @@ export const imageUrlSchema = z
   .max(2048, "URL de imagen demasiado larga")
   .refine((v) => v.startsWith("https://"), "La imagen debe usar HTTPS");
 
+const categorySchema = sanitizedString(1, 40, "La categoria");
+
+const descriptionSchema = z
+  .string()
+  .transform(sanitizeText)
+  .refine((v) => v.length <= 300, {
+    message: "La descripcion no puede superar 300 caracteres",
+  })
+  .transform((v) => (v.length > 0 ? v : null));
+
 export const createProductSchema = z.object({
   name: sanitizedString(2, 100, "El nombre"),
+  category: categorySchema.default("otros"),
+  description: descriptionSchema.optional(),
   status: z.enum(PRODUCT_STATUSES).default("available"),
   imageUrl: imageUrlSchema,
   priceCents: z.number().int("El precio debe ser un numero entero").min(0).max(100_000_000),
@@ -55,6 +67,8 @@ export const createProductSchema = z.object({
 export const updateProductSchema = z
   .object({
     name: sanitizedString(2, 100, "El nombre").optional(),
+    category: categorySchema.optional(),
+    description: descriptionSchema.optional(),
     status: z.enum(PRODUCT_STATUSES).optional(),
     imageUrl: imageUrlSchema.optional(),
     priceCents: z
@@ -73,6 +87,17 @@ export const updateProductSchema = z
   .refine((data) => Object.keys(data).length > 0, {
     message: "No se envio ningun campo para actualizar",
   });
+
+/** Categorias sugeridas para la tienda (el admin puede escribir otras). */
+export const SUGGESTED_CATEGORIES = [
+  "Snacks",
+  "Bebidas",
+  "Tecnologia",
+  "Ropa",
+  "Hogar",
+  "Accesorios",
+  "Otros",
+] as const;
 
 export const productIdSchema = z.string().uuid("Identificador no valido");
 

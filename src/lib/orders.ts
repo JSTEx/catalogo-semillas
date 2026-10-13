@@ -164,6 +164,26 @@ export function confirmWhatsAppLink(order: OrderDTO): string {
   return waLink(order.customerPhone, confirmOrderToCustomerMessage(order));
 }
 
+/** Mensaje corto al cliente segun el estado actual del pedido. */
+export function statusNotifyMessage(order: OrderDTO): string {
+  const trackingUrl = orderTrackingUrl(order.id);
+  const base: Record<OrderStatus, string> = {
+    new: `Hola ${order.customerName}! Recibimos tu pedido N° ${order.number}. Te lo confirmamos en breve.`,
+    confirmed: `Hola ${order.customerName}! Tu pedido N° ${order.number} quedo confirmado.`,
+    in_transit: `Hola ${order.customerName}! Tu pedido N° ${order.number} va en camino.`,
+    delivered: `Hola ${order.customerName}! Tu pedido N° ${order.number} fue entregado. Gracias por tu compra!`,
+    cancelled: `Hola ${order.customerName}! Tu pedido N° ${order.number} fue cancelado. Escribenos si tienes dudas.`,
+  };
+  return [base[order.status], trackingUrl ? `Sigue el estado aqui: ${trackingUrl}` : null]
+    .filter((l) => l !== null)
+    .join("\n");
+}
+
+/** Enlace de WhatsApp al cliente para avisar del estado actual del pedido. */
+export function statusNotifyWhatsAppLink(order: OrderDTO): string {
+  return waLink(order.customerPhone, statusNotifyMessage(order));
+}
+
 /** Ruta publica de seguimiento para el cliente. */
 export function orderTrackingPath(id: string): string {
   return `/pedido/${id}`;

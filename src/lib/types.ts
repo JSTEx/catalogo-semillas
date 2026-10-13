@@ -8,6 +8,8 @@ import type { ProductStatus } from "./product-status";
 export interface ProductDTO {
   id: string;
   name: string;
+  category: string;
+  description: string | null;
   status: ProductStatus;
   imageUrl: string;
   priceCents: number;
@@ -20,6 +22,8 @@ export function toProductDTO(p: Product): ProductDTO {
   return {
     id: p.id,
     name: p.name,
+    category: p.category,
+    description: p.description,
     status: p.status,
     imageUrl: p.imageUrl,
     priceCents: p.priceCents,

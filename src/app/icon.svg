@@ -1,19 +1,17 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <rect width="64" height="64" rx="14" fill="#10b981"/>
   <path
-    fill="#fff"
-    d="M32 50c0-10 4-18 12-24 1 10-3 18-12 24Z"
-  />
-  <path
-    fill="#fff"
-    d="M32 50c0-10-4-18-12-24-1 10 3 18 12 24Z"
-  />
-  <path
-    fill="#fff"
-    d="M32 50v-6c0-8 4-14 8-18"
+    d="M20 26h24l-1.8 22a4 4 0 0 1-4 3.6H25.8a4 4 0 0 1-4-3.6Z"
     fill="none"
     stroke="#fff"
-    stroke-width="3"
+    stroke-width="3.5"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M25.5 26v-4.5a6.5 6.5 0 0 1 13 0V26"
+    fill="none"
+    stroke="#fff"
+    stroke-width="3.5"
     stroke-linecap="round"
   />
 </svg>

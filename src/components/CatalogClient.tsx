@@ -14,6 +14,7 @@ import SeedCard from "./SeedCard";
 import SeedModal from "./SeedModal";
 import ThemeToggle from "./ThemeToggle";
 import ViewToggle from "./ViewToggle";
+import MyOrderLink from "./MyOrderLink";
 import { CartProvider } from "./cart/CartProvider";
 import CartButton from "./cart/CartButton";
 import CartDrawer from "./cart/CartDrawer";
@@ -35,6 +36,7 @@ const GRID_CLASSES: Record<string, string> = {
 export default function CatalogClient({ initialProducts }: Props) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
+  const [category, setCategory] = useState<string | null>(null);
   const [selected, setSelected] = useState<ProductDTO | null>(null);
   const [view, setView] = useViewMode("catalog-view", "grid");
   const [cartOpen, setCartOpen] = useState(false);
@@ -43,12 +45,35 @@ export default function CatalogClient({ initialProducts }: Props) {
   const filtered = useMemo(() => {
     const q = normalizeSearch(query.trim());
     const matching = initialProducts.filter((p) => {
-      const matchesQuery = q === "" || normalizeSearch(p.name).includes(q);
+      const matchesQuery =
+        q === "" ||
+        normalizeSearch(p.name).includes(q) ||
+        normalizeSearch(p.category).includes(q) ||
+        normalizeSearch(p.description ?? "").includes(q);
       const matchesFilter = filter === "all" ? true : p.status === filter;
-      return matchesQuery && matchesFilter;
+      const matchesCategory =
+        category === null || normalizeSearch(p.category) === category;
+      return matchesQuery && matchesFilter && matchesCategory;
     });
     return sortByStatus(matching);
-  }, [initialProducts, query, filter]);
+  }, [initialProducts, query, filter, category]);
+
+  const categories = useMemo(() => {
+    const map = new Map<string, { label: string; count: number }>();
+    for (const p of initialProducts) {
+      const raw = (p.category ?? "").trim();
+      if (!raw) continue;
+      const key = normalizeSearch(raw);
+      const current = map.get(key);
+      if (current) current.count += 1;
+      else map.set(key, { label: raw, count: 1 });
+    }
+    return Array.from(map, ([key, v]) => ({
+      key,
+      label: v.label,
+      count: v.count,
+    })).sort((a, b) => a.label.localeCompare(b.label, "es"));
+  }, [initialProducts]);
 
   const counts = useMemo(() => {
     const base: Record<string, number> = { all: initialProducts.length };
@@ -84,17 +109,17 @@ export default function CatalogClient({ initialProducts }: Props) {
                 className="h-5 w-5"
                 aria-hidden="true"
               >
-                <path d="M12 22V12" />
-                <path d="M12 12c0-4 3-7 8-7 0 5-3 8-8 8Z" />
-                <path d="M12 12C12 8 9 5 4 5c0 5 3 8 8 8Z" />
+                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+                <path d="M3 6h18" />
+                <path d="M16 10a4 4 0 0 1-8 0" />
               </svg>
             </span>
             <div>
               <h1 className="text-lg font-bold tracking-tight text-stone-900 dark:text-stone-100">
-                Catalogo de Semillas
+                JecsitoShop
               </h1>
               <p className="text-xs text-stone-500 dark:text-stone-400">
-                Disponibilidad en tiempo real
+                Catalogo en linea
               </p>
             </div>
           </div>
@@ -117,8 +142,8 @@ export default function CatalogClient({ initialProducts }: Props) {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar semilla..."
-              aria-label="Buscar semilla"
+              placeholder="Buscar producto..."
+              aria-label="Buscar producto"
               className="w-full rounded-2xl border border-stone-200 bg-white/80 py-3 pl-11 pr-4 text-sm text-stone-800 shadow-sm outline-none backdrop-blur-md transition-all duration-300 placeholder:text-stone-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
             />
           </div>
@@ -151,6 +176,7 @@ export default function CatalogClient({ initialProducts }: Props) {
             </button>
           ))}
           <div className="ml-auto flex items-center gap-2">
+            <MyOrderLink />
             <ViewToggle value={view} onChange={setView} />
             <a
               href="/admin"
@@ -174,6 +200,45 @@ export default function CatalogClient({ initialProducts }: Props) {
             <ThemeToggle />
           </div>
         </div>
+
+        {categories.length > 0 && (
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 pb-4 sm:px-6">
+            <span className="mr-1 text-xs font-medium text-stone-400 dark:text-stone-500">
+              Categoria
+            </span>
+            {[
+              { key: null as string | null, label: "Todas", count: initialProducts.length },
+              ...categories,
+            ].map((c) => {
+              const active = category === c.key;
+              return (
+                <button
+                  key={c.key ?? "all"}
+                  type="button"
+                  onClick={() => setCategory(c.key)}
+                  className={[
+                    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-all duration-300",
+                    active
+                      ? "border-brand-500 bg-brand-500 text-white shadow-sm"
+                      : "border-stone-200 bg-white/70 text-stone-600 hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:border-brand-500/40 dark:hover:text-brand-300",
+                  ].join(" ")}
+                >
+                  {c.label}
+                  <span
+                    className={[
+                      "rounded-full px-1.5 text-[10px]",
+                      active
+                        ? "bg-white/25 text-white"
+                        : "bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400",
+                    ].join(" ")}
+                  >
+                    {c.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
@@ -195,7 +260,7 @@ export default function CatalogClient({ initialProducts }: Props) {
               </svg>
             </span>
             <p className="text-base font-semibold text-stone-700 dark:text-stone-200">
-              No se encontraron semillas
+              No se encontraron productos
             </p>
             <p className="max-w-sm text-sm text-stone-500 dark:text-stone-400">
               Prueba con otro termino de busqueda o cambia el filtro de
@@ -220,7 +285,7 @@ export default function CatalogClient({ initialProducts }: Props) {
 
       <footer className="border-t border-stone-200/60 py-8 text-center text-xs text-stone-400 dark:border-stone-800/60 dark:text-stone-500">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-center gap-2 px-4 sm:px-6">
-          <p>Catalogo de Semillas · {new Date().getFullYear()}</p>
+          <p>JecsitoShop · {new Date().getFullYear()}</p>
           <p className="text-[11px] text-stone-400/80 dark:text-stone-500/80">
             Las imagenes son con fines ilustrativos.
           </p>

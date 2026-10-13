@@ -59,6 +59,8 @@ export const products = pgTable(
   {
     id: uuid("id").primaryKey().default(sql`uuid_generate_v4()`),
     name: varchar("name", { length: 100 }).notNull(),
+    category: varchar("category", { length: 40 }).default("otros").notNull(),
+    description: text("description"),
     status: productStatusEnum("status").default("available").notNull(),
     imageUrl: text("image_url").notNull(),
     priceCents: integer("price_cents").default(0).notNull(),
@@ -73,6 +75,7 @@ export const products = pgTable(
   (table) => [
     index("idx_products_status").on(table.status),
     index("idx_products_name").on(table.name),
+    index("idx_products_category").on(table.category),
   ],
 );
 

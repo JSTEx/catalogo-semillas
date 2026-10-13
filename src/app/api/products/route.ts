@@ -38,6 +38,8 @@ export async function POST(req: Request) {
     .insert(products)
     .values({
       name: parsed.data.name,
+      category: parsed.data.category,
+      description: parsed.data.description ?? null,
       status: parsed.data.status,
       imageUrl: parsed.data.imageUrl,
       priceCents: parsed.data.priceCents,

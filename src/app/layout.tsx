@@ -5,11 +5,11 @@ import ThemeSync from "@/components/ThemeSync";
 
 export const metadata: Metadata = {
   title: {
-    default: "Catalogo de Semillas",
-    template: "%s · Catalogo de Semillas",
+    default: "JecsitoShop",
+    template: "%s · JecsitoShop",
   },
   description:
-    "Catalogo interactivo de semillas: consulta disponibilidad en tiempo real.",
+    "Catalogo en linea de JecsitoShop: consulta productos y disponibilidad en tiempo real.",
   robots: { index: true, follow: true },
 };
 
