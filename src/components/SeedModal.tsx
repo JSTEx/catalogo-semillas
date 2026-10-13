@@ -3,6 +3,9 @@
 import { useEffect, useState } from "react";
 import type { ProductDTO } from "@/lib/types";
 import { statusMeta } from "@/lib/product-status";
+import { formatMoney } from "@/lib/money";
+import { isOrderable } from "@/lib/orders";
+import { useCart } from "./cart/CartProvider";
 import AvailabilityBadge from "./AvailabilityBadge";
 import SeedImage from "./SeedImage";
 
@@ -12,6 +15,8 @@ interface Props {
 }
 
 export default function SeedModal({ product, onClose }: Props) {
+  const { add } = useCart();
+  const [added, setAdded] = useState(false);
   const [zoom, setZoom] = useState(false);
   const [origin, setOrigin] = useState("50% 50%");
   const [pointerKind, setPointerKind] = useState<"mouse" | "touch" | "pen">(
@@ -37,6 +42,7 @@ export default function SeedModal({ product, onClose }: Props) {
   useEffect(() => {
     setZoom(false);
     setOrigin("50% 50%");
+    setAdded(false);
   }, [product]);
 
   if (!product) return null;
@@ -172,6 +178,30 @@ export default function SeedModal({ product, onClose }: Props) {
                 </dd>
               </div>
             </dl>
+
+            <div className="flex items-center justify-between gap-3 border-t border-stone-200/80 pt-4 dark:border-stone-800/80">
+              <div>
+                <p className="text-xs text-stone-400 dark:text-stone-500">Precio</p>
+                <p className="text-2xl font-bold text-brand-600 dark:text-brand-400">
+                  {product.priceCents > 0
+                    ? formatMoney(product.priceCents)
+                    : "Consultar"}
+                </p>
+              </div>
+              {isOrderable(product) && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    add(product);
+                    setAdded(true);
+                  }}
+                  className="inline-flex items-center gap-2 rounded-2xl bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-brand-600 hover:shadow-lg"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true"><circle cx="9" cy="20" r="1.4" /><circle cx="18" cy="20" r="1.4" /><path d="M2 3h2.2l2.2 12.2a1.5 1.5 0 0 0 1.5 1.3h9.6a1.5 1.5 0 0 0 1.5-1.2L21 7H5" /></svg>
+                  {added ? "Agregado" : "Agregar al pedido"}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

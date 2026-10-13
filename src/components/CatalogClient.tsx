@@ -14,6 +14,10 @@ import SeedCard from "./SeedCard";
 import SeedModal from "./SeedModal";
 import ThemeToggle from "./ThemeToggle";
 import ViewToggle from "./ViewToggle";
+import { CartProvider } from "./cart/CartProvider";
+import CartButton from "./cart/CartButton";
+import CartDrawer from "./cart/CartDrawer";
+import CheckoutModal from "./cart/CheckoutModal";
 
 type Filter = "all" | ProductStatus;
 
@@ -33,6 +37,8 @@ export default function CatalogClient({ initialProducts }: Props) {
   const [filter, setFilter] = useState<Filter>("all");
   const [selected, setSelected] = useState<ProductDTO | null>(null);
   const [view, setView] = useViewMode("catalog-view", "grid");
+  const [cartOpen, setCartOpen] = useState(false);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   const filtered = useMemo(() => {
     const q = normalizeSearch(query.trim());
@@ -61,7 +67,8 @@ export default function CatalogClient({ initialProducts }: Props) {
   ];
 
   return (
-    <div className="min-h-dvh">
+    <CartProvider>
+      <div className="min-h-dvh">
       <header className="sticky top-0 z-40 border-b border-stone-200/60 bg-white/70 backdrop-blur-md dark:border-stone-800/60 dark:bg-stone-900/70">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
@@ -220,6 +227,21 @@ export default function CatalogClient({ initialProducts }: Props) {
       </footer>
 
       <SeedModal product={selected} onClose={() => setSelected(null)} />
+
+      <CartButton onClick={() => setCartOpen(true)} />
+      <CartDrawer
+        open={cartOpen}
+        onClose={() => setCartOpen(false)}
+        onCheckout={() => {
+          setCartOpen(false);
+          setCheckoutOpen(true);
+        }}
+      />
+      <CheckoutModal
+        open={checkoutOpen}
+        onClose={() => setCheckoutOpen(false)}
+      />
     </div>
+    </CartProvider>
   );
 }

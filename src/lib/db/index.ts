@@ -19,6 +19,8 @@ const client =
     max: 1, // Serverless: una conexion por instancia
     prepare: false, // Compatible con transaction pooler (Supabase/pgBouncer)
     idle_timeout: 20,
+    connect_timeout: 15,
+    max_lifetime: 60 * 30,
   });
 
 if (process.env.NODE_ENV !== "production") {

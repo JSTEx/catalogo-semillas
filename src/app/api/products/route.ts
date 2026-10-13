@@ -40,6 +40,8 @@ export async function POST(req: Request) {
       name: parsed.data.name,
       status: parsed.data.status,
       imageUrl: parsed.data.imageUrl,
+      priceCents: parsed.data.priceCents,
+      stock: parsed.data.stock,
     })
     .returning();
 

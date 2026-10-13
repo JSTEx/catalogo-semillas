@@ -48,6 +48,8 @@ export const createProductSchema = z.object({
   name: sanitizedString(2, 100, "El nombre"),
   status: z.enum(PRODUCT_STATUSES).default("available"),
   imageUrl: imageUrlSchema,
+  priceCents: z.number().int("El precio debe ser un numero entero").min(0).max(100_000_000),
+  stock: z.number().int("El stock debe ser un numero entero").min(0).max(1_000_000),
 });
 
 export const updateProductSchema = z
@@ -55,12 +57,74 @@ export const updateProductSchema = z
     name: sanitizedString(2, 100, "El nombre").optional(),
     status: z.enum(PRODUCT_STATUSES).optional(),
     imageUrl: imageUrlSchema.optional(),
+    priceCents: z
+      .number()
+      .int("El precio debe ser un numero entero")
+      .min(0)
+      .max(100_000_000)
+      .optional(),
+    stock: z
+      .number()
+      .int("El stock debe ser un numero entero")
+      .min(0)
+      .max(1_000_000)
+      .optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "No se envio ningun campo para actualizar",
   });
 
 export const productIdSchema = z.string().uuid("Identificador no valido");
+
+export const cartItemSchema = z.object({
+  productId: z.string().uuid("Producto no valido"),
+  quantity: z.number().int().min(1, "Cantidad minima: 1").max(99, "Cantidad maxima: 99"),
+});
+
+export const createOrderSchema = z
+  .object({
+    customerName: sanitizedString(2, 80, "El nombre"),
+    customerPhone: sanitizedString(7, 20, "El telefono"),
+    delivery: z.enum(["retiro", "domicilio"]).default("retiro"),
+    address: sanitizedString(1, 200, "La direccion").optional(),
+    payment: z.enum(["efectivo", "transferencia"]).default("efectivo"),
+    notes: sanitizedString(1, 300, "Las notas").optional(),
+    items: z
+      .array(cartItemSchema)
+      .min(1, "El pedido debe tener al menos un producto")
+      .max(30, "Demasiados productos en el pedido"),
+  })
+  .refine((data) => data.delivery !== "domicilio" || (data.address ?? "").length > 0, {
+    path: ["address"],
+    message: "Para envio a domicilio es obligatorio indicar la direccion",
+  });
+
+export const updateOrderSchema = z
+  .object({
+    status: z
+      .enum(["new", "confirmed", "in_transit", "delivered", "cancelled"])
+      .optional(),
+    shippingCents: z
+      .number()
+      .int()
+      .min(0, "El envio no puede ser negativo")
+      .max(10_000_000)
+      .optional(),
+    notes: sanitizedString(1, 300, "Las notas").optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "No se envio ningun campo para actualizar",
+  });
+
+export const createExpenseSchema = z.object({
+  concept: sanitizedString(2, 120, "El concepto"),
+  category: z.enum(["insumos", "envio", "empaque", "publicidad", "otros"]).default("otros"),
+  amountCents: z
+    .number()
+    .int("El monto debe ser un numero entero")
+    .min(1, "El monto debe ser mayor a 0")
+    .max(1_000_000_000),
+});
 
 export const ALLOWED_IMAGE_MIME = [
   "image/jpeg",
@@ -72,3 +136,5 @@ export const MAX_IMAGE_BYTES = 3 * 1024 * 1024; // 3MB
 export type LoginInput = z.infer<typeof loginSchema>;
 export type CreateProductInput = z.infer<typeof createProductSchema>;
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
+export type CreateOrderInput = z.infer<typeof createOrderSchema>;
+export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;

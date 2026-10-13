@@ -2,20 +2,25 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { ProductDTO } from "@/lib/types";
+import type { ExpenseDTO, OrderDTO, ProductDTO } from "@/lib/types";
 import { PRODUCT_STATUSES, STATUS_META, sortByStatus } from "@/lib/product-status";
 import type { ProductStatus } from "@/lib/product-status";
 import { normalizeSearch } from "@/lib/search";
 import { useViewMode } from "@/lib/use-view-mode";
+import { formatMoney } from "@/lib/money";
 import AvailabilityBadge from "@/components/AvailabilityBadge";
 import ThemeToggle from "@/components/ThemeToggle";
 import ViewToggle from "@/components/ViewToggle";
 import Loader from "@/components/Loader";
 import SeedImage from "@/components/SeedImage";
+import AdminOrders from "./AdminOrders";
+import AdminStats from "./AdminStats";
 import ImageStudio from "./ImageStudio";
 
 interface Props {
   initialProducts: ProductDTO[];
+  initialOrders: OrderDTO[];
+  initialExpenses: ExpenseDTO[];
   username: string;
 }
 
@@ -24,6 +29,8 @@ interface FormState {
   name: string;
   status: ProductStatus;
   imageUrl: string;
+  priceCents: number;
+  stock: number;
 }
 
 type StatusFilter = "all" | ProductStatus;
@@ -33,6 +40,8 @@ const emptyForm: FormState = {
   name: "",
   status: "available",
   imageUrl: "",
+  priceCents: 0,
+  stock: 0,
 };
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
@@ -49,9 +58,12 @@ const GRID_CLASSES: Record<string, string> = {
   list: "flex flex-col gap-2",
 };
 
-export default function AdminDashboard({ initialProducts, username }: Props) {
+export default function AdminDashboard({ initialProducts, initialOrders, initialExpenses, username }: Props) {
   const router = useRouter();
   const [items, setItems] = useState<ProductDTO[]>(initialProducts);
+  const [orders, setOrders] = useState<OrderDTO[]>(initialOrders);
+  const [expenses, setExpenses] = useState<ExpenseDTO[]>(initialExpenses);
+  const [tab, setTab] = useState<"products" | "orders" | "stats">("products");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [sort, setSort] = useState<SortKey>("status");
@@ -126,6 +138,11 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
     })),
   ];
 
+  const pendingOrders = useMemo(
+    () => orders.filter((o) => o.status === "new").length,
+    [orders],
+  );
+
   function openEdit(product: ProductDTO) {
     setError(null);
     setForm({
@@ -133,7 +150,13 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
       name: product.name,
       status: product.status,
       imageUrl: product.imageUrl,
+      priceCents: product.priceCents,
+      stock: product.stock,
     });
+  }
+
+  function priceLabel(p: ProductDTO): string {
+    return p.priceCents > 0 ? formatMoney(p.priceCents) : "Consultar";
   }
 
   function renderStatusSelect(product: ProductDTO) {
@@ -295,6 +318,8 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
             name: form.name,
             status: form.status,
             imageUrl: form.imageUrl,
+            priceCents: form.priceCents,
+            stock: form.stock,
           }),
         });
         const data = (await res.json()) as { product: ProductDTO };
@@ -308,6 +333,8 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
             name: form.name,
             status: form.status,
             imageUrl: form.imageUrl,
+            priceCents: form.priceCents,
+            stock: form.stock,
           }),
         });
         const data = (await res.json()) as { product: ProductDTO };
@@ -404,7 +431,45 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
         </div>
       </header>
 
+      <nav className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 pt-5 sm:px-6">
+        {(
+          [
+            { key: "products", label: "Productos", badge: 0 },
+            { key: "orders", label: "Pedidos", badge: pendingOrders },
+            { key: "stats", label: "Resumen", badge: 0 },
+          ] as const
+        ).map((t) => (
+          <button
+            key={t.key}
+            type="button"
+            onClick={() => setTab(t.key)}
+            className={[
+              "inline-flex items-center gap-2 whitespace-nowrap rounded-2xl px-4 py-2 text-sm font-semibold transition-all duration-300",
+              tab === t.key
+                ? "bg-brand-500 text-white shadow-sm"
+                : "text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800",
+            ].join(" ")}
+          >
+            {t.label}
+            {t.badge > 0 && (
+              <span
+                className={[
+                  "rounded-full px-1.5 text-xs",
+                  tab === t.key
+                    ? "bg-white/25 text-white"
+                    : "bg-rose-500 text-white",
+                ].join(" ")}
+              >
+                {t.badge}
+              </span>
+            )}
+          </button>
+        ))}
+      </nav>
+
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+        {tab === "products" ? (
+          <>
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative w-full sm:max-w-sm">
             <svg
@@ -601,6 +666,12 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                     <div className="mt-1">
                       <AvailabilityBadge status={product.status} size="sm" />
                     </div>
+                    <p className="mt-1 text-sm font-semibold text-brand-600 dark:text-brand-400">
+                      {priceLabel(product)}
+                      <span className="ml-2 text-xs font-normal text-stone-400 dark:text-stone-500">
+                        stock: {product.stock}
+                      </span>
+                    </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     {renderStatusSelect(product)}
@@ -628,6 +699,9 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                     <h3 className="truncate text-sm font-semibold text-stone-800 dark:text-stone-100">
                       {product.name}
                     </h3>
+                    <p className="text-sm font-semibold text-brand-600 dark:text-brand-400">
+                      {priceLabel(product)}
+                    </p>
                     <div className="mt-auto flex items-center justify-between gap-1">
                       {renderStatusSelect(product)}
                       {renderActions(product)}
@@ -656,6 +730,12 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                     <h3 className="line-clamp-2 flex-1 text-base font-semibold text-stone-800 dark:text-stone-100">
                       {product.name}
                     </h3>
+                    <p className="text-lg font-bold text-brand-600 dark:text-brand-400">
+                      {priceLabel(product)}
+                      <span className="ml-2 text-xs font-normal text-stone-400 dark:text-stone-500">
+                        stock: {product.stock}
+                      </span>
+                    </p>
 
                     <div className="flex items-center justify-between gap-2">
                       {renderStatusSelect(product)}
@@ -666,6 +746,16 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
               ),
             )}
           </div>
+        )}
+          </>
+        ) : tab === "orders" ? (
+          <AdminOrders orders={orders} onOrdersChange={setOrders} />
+        ) : (
+          <AdminStats
+            orders={orders}
+            expenses={expenses}
+            onExpensesChange={setExpenses}
+          />
         )}
       </main>
 
@@ -799,6 +889,62 @@ export default function AdminDashboard({ initialProducts, username }: Props) {
                   })}
                 </div>
               </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <label
+                    htmlFor="price"
+                    className="block text-sm font-medium text-stone-700 dark:text-stone-300"
+                  >
+                    Precio (USD)
+                  </label>
+                  <input
+                    id="price"
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    inputMode="decimal"
+                    value={form.priceCents === 0 ? "" : (form.priceCents / 100).toFixed(2)}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        priceCents: Math.round(parseFloat(e.target.value) * 100) || 0,
+                      })
+                    }
+                    placeholder="0.00"
+                    className="w-full rounded-2xl border border-stone-200 bg-white/80 px-4 py-3 text-sm text-stone-800 outline-none transition-all duration-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label
+                    htmlFor="stock"
+                    className="block text-sm font-medium text-stone-700 dark:text-stone-300"
+                  >
+                    Stock (unidades)
+                  </label>
+                  <input
+                    id="stock"
+                    type="number"
+                    min={0}
+                    step={1}
+                    inputMode="numeric"
+                    value={form.stock}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        stock: Math.max(0, Math.floor(Number(e.target.value) || 0)),
+                      })
+                    }
+                    placeholder="0"
+                    className="w-full rounded-2xl border border-stone-200 bg-white/80 px-4 py-3 text-sm text-stone-800 outline-none transition-all duration-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-stone-400 dark:text-stone-500">
+                Con precio en 0 o sin stock el producto se muestra como consulta
+                y no se puede agregar al carrito.
+              </p>
 
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button
