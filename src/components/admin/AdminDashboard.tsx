@@ -30,6 +30,7 @@ interface FormState {
   status: ProductStatus;
   imageUrl: string;
   priceCents: number;
+  priceText: string;
   stock: number;
 }
 
@@ -41,8 +42,18 @@ const emptyForm: FormState = {
   status: "available",
   imageUrl: "",
   priceCents: 0,
+  priceText: "",
   stock: 0,
 };
+
+function centsToText(cents: number): string {
+  return cents > 0 ? (cents / 100).toFixed(2) : "";
+}
+
+function textToCents(text: string): number {
+  const n = parseFloat(text.replace(",", "."));
+  return Number.isFinite(n) ? Math.max(0, Math.round(n * 100)) : 0;
+}
 
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "status", label: "Estado (recomendado)" },
@@ -151,6 +162,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
       status: product.status,
       imageUrl: product.imageUrl,
       priceCents: product.priceCents,
+      priceText: centsToText(product.priceCents),
       stock: product.stock,
     });
   }
@@ -310,6 +322,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
     if (!form) return;
     setError(null);
     setSaving(true);
+    const priceCents = textToCents(form.priceText);
     try {
       if (form.id) {
         const res = await api(`/api/products/${form.id}`, {
@@ -318,7 +331,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
             name: form.name,
             status: form.status,
             imageUrl: form.imageUrl,
-            priceCents: form.priceCents,
+            priceCents,
             stock: form.stock,
           }),
         });
@@ -333,7 +346,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
             name: form.name,
             status: form.status,
             imageUrl: form.imageUrl,
-            priceCents: form.priceCents,
+            priceCents,
             stock: form.stock,
           }),
         });
@@ -900,17 +913,17 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                   </label>
                   <input
                     id="price"
-                    type="number"
-                    min={0}
-                    step="0.01"
+                    type="text"
                     inputMode="decimal"
-                    value={form.priceCents === 0 ? "" : (form.priceCents / 100).toFixed(2)}
+                    autoComplete="off"
+                    value={form.priceText}
                     onChange={(e) =>
-                      setForm({
-                        ...form,
-                        priceCents: Math.round(parseFloat(e.target.value) * 100) || 0,
-                      })
+                      setForm({ ...form, priceText: e.target.value })
                     }
+                    onBlur={() => {
+                      const cents = textToCents(form.priceText);
+                      setForm({ ...form, priceText: centsToText(cents) });
+                    }}
                     placeholder="0.00"
                     className="w-full rounded-2xl border border-stone-200 bg-white/80 px-4 py-3 text-sm text-stone-800 outline-none transition-all duration-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
                   />

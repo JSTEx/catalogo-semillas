@@ -73,34 +73,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const add = useCallback((product: ProductDTO, quantity = 1) => {
     setItems((prev) => {
       const existing = prev.find((it) => it.product.id === product.id);
+      const cap = product.stock > 0 ? product.stock : 99;
       if (existing) {
-        const cap = product.stock > 0 ? product.stock : 99;
-        const next = Math.min(
-          99,
-          Math.max(1, existing.quantity + quantity),
-        );
-        if (product.stock > 0) {
-          return prev.map((it) =>
-            it.product.id === product.id
-              ? { ...it, quantity: Math.min(next, cap) }
-              : it,
-          );
-        }
         return prev.map((it) =>
-          it.product.id === product.id ? { ...it, quantity: next } : it,
+          it.product.id === product.id
+            ? { ...it, quantity: Math.min(cap, Math.max(1, it.quantity + quantity)) }
+            : it,
         );
       }
-      return [...prev, { product, quantity: Math.max(1, quantity) }];
+      return [
+        ...prev,
+        { product, quantity: Math.min(cap, Math.max(1, quantity)) },
+      ];
     });
   }, []);
 
   const setQuantity = useCallback((productId: string, quantity: number) => {
     setItems((prev) =>
-      prev.map((it) =>
-        it.product.id === productId
-          ? { ...it, quantity: Math.min(99, Math.max(1, quantity)) }
-          : it,
-      ),
+      prev.map((it) => {
+        if (it.product.id !== productId) return it;
+        const cap = it.product.stock > 0 ? it.product.stock : 99;
+        return { ...it, quantity: Math.min(cap, Math.max(1, quantity)) };
+      }),
     );
   }, []);
 

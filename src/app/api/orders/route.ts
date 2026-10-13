@@ -41,10 +41,15 @@ export async function POST(req: Request) {
     if (!isOrderable(product)) {
       return jsonError(`"${product.name}" no esta disponible`, 409);
     }
-    const quantity = Math.min(line.quantity, product.stock);
-    if (quantity < 1) {
-      return jsonError(`"${product.name}" no tiene stock suficiente`, 409);
+    if (line.quantity > product.stock) {
+      return jsonError(
+        `"${product.name}" solo tiene ${product.stock} ${
+          product.stock === 1 ? "unidad disponible" : "unidades disponibles"
+        }`,
+        409,
+      );
     }
+    const quantity = line.quantity;
     items.push({
       productId: product.id,
       name: product.name,

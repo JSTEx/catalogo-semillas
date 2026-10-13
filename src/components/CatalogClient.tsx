@@ -211,6 +211,7 @@ export default function CatalogClient({ initialProducts }: Props) {
                 index={index}
                 variant={view}
                 onSelect={setSelected}
+                onOpenCart={() => setCartOpen(true)}
               />
             ))}
           </div>
@@ -226,7 +227,11 @@ export default function CatalogClient({ initialProducts }: Props) {
         </div>
       </footer>
 
-      <SeedModal product={selected} onClose={() => setSelected(null)} />
+      <SeedModal
+        product={selected}
+        onClose={() => setSelected(null)}
+        onOpenCart={() => setCartOpen(true)}
+      />
 
       <CartButton onClick={() => setCartOpen(true)} />
       <CartDrawer

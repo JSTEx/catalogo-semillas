@@ -12,11 +12,11 @@ import SeedImage from "./SeedImage";
 interface Props {
   product: ProductDTO | null;
   onClose: () => void;
+  onOpenCart?: () => void;
 }
 
-export default function SeedModal({ product, onClose }: Props) {
-  const { add } = useCart();
-  const [added, setAdded] = useState(false);
+export default function SeedModal({ product, onClose, onOpenCart }: Props) {
+  const { add, items } = useCart();
   const [zoom, setZoom] = useState(false);
   const [origin, setOrigin] = useState("50% 50%");
   const [pointerKind, setPointerKind] = useState<"mouse" | "touch" | "pen">(
@@ -42,10 +42,11 @@ export default function SeedModal({ product, onClose }: Props) {
   useEffect(() => {
     setZoom(false);
     setOrigin("50% 50%");
-    setAdded(false);
   }, [product]);
 
   if (!product) return null;
+
+  const inCart = items.some((it) => it.product.id === product.id);
 
   function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
     if (e.pointerType !== "mouse") return;
@@ -167,6 +168,16 @@ export default function SeedModal({ product, onClose }: Props) {
                   {statusMeta(product.status).availability}
                 </dd>
               </div>
+              {isOrderable(product) && (
+                <div className="flex items-center justify-between">
+                  <dt className="text-stone-400 dark:text-stone-500">Existencias</dt>
+                  <dd className="font-medium text-stone-700 dark:text-stone-200">
+                    {product.stock > 0
+                      ? `${product.stock} ${product.stock === 1 ? "unidad" : "unidades"}`
+                      : "Sin stock"}
+                  </dd>
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <dt className="text-stone-400 dark:text-stone-500">Actualizado</dt>
                 <dd className="font-medium text-stone-700 dark:text-stone-200">
@@ -192,13 +203,26 @@ export default function SeedModal({ product, onClose }: Props) {
                 <button
                   type="button"
                   onClick={() => {
+                    if (inCart) {
+                      onOpenCart?.();
+                      onClose();
+                      return;
+                    }
                     add(product);
-                    setAdded(true);
                   }}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-brand-600 hover:shadow-lg"
+                  className={[
+                    "inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300",
+                    inCart
+                      ? "bg-emerald-500 hover:bg-emerald-600"
+                      : "bg-brand-500 hover:bg-brand-600 hover:shadow-lg",
+                  ].join(" ")}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true"><circle cx="9" cy="20" r="1.4" /><circle cx="18" cy="20" r="1.4" /><path d="M2 3h2.2l2.2 12.2a1.5 1.5 0 0 0 1.5 1.3h9.6a1.5 1.5 0 0 0 1.5-1.2L21 7H5" /></svg>
-                  {added ? "Agregado" : "Agregar al pedido"}
+                  {inCart ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true"><circle cx="9" cy="20" r="1.4" /><circle cx="18" cy="20" r="1.4" /><path d="M2 3h2.2l2.2 12.2a1.5 1.5 0 0 0 1.5 1.3h9.6a1.5 1.5 0 0 0 1.5-1.2L21 7H5" /></svg>
+                  )}
+                  {inCart ? "Ver en el pedido" : "Agregar al pedido"}
                 </button>
               )}
             </div>

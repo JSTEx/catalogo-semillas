@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import type { ProductDTO } from "@/lib/types";
 import { formatMoney } from "@/lib/money";
 import { isOrderable } from "@/lib/orders";
@@ -13,6 +12,7 @@ type Variant = "grid" | "compact" | "list";
 interface Props {
   product: ProductDTO;
   onSelect: (product: ProductDTO) => void;
+  onOpenCart?: () => void;
   index?: number;
   variant?: Variant;
 }
@@ -79,39 +79,43 @@ function CheckIcon() {
 function AddButton({
   product,
   withLabel = false,
+  onOpenCart,
   className,
 }: {
   product: ProductDTO;
   withLabel?: boolean;
+  onOpenCart?: () => void;
   className?: string;
 }) {
-  const { add } = useCart();
-  const [added, setAdded] = useState(false);
+  const { items, add } = useCart();
+  const inCart = items.some((it) => it.product.id === product.id);
   if (!isOrderable(product)) return null;
 
-  function handleAdd(e: React.MouseEvent) {
+  function handleClick(e: React.MouseEvent) {
     e.stopPropagation();
+    if (inCart) {
+      onOpenCart?.();
+      return;
+    }
     add(product);
-    setAdded(true);
-    window.setTimeout(() => setAdded(false), 1400);
   }
 
   const base = withLabel
     ? "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm transition-all duration-300 hover:shadow-md"
     : "flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-sm transition-all duration-300 hover:shadow-md";
-  const tone = added
-    ? "bg-emerald-500 text-white"
+  const tone = inCart
+    ? "bg-emerald-500 text-white hover:bg-emerald-600"
     : "bg-brand-500 text-white hover:bg-brand-600";
 
   return (
     <button
       type="button"
-      onClick={handleAdd}
+      onClick={handleClick}
       aria-label={`Agregar ${product.name} al pedido`}
       className={[base, tone, className ?? ""].join(" ")}
     >
-      {added ? <CheckIcon /> : <CartIcon />}
-      {withLabel && <span>{added ? "Agregado" : "Agregar"}</span>}
+      {inCart ? <CheckIcon /> : <CartIcon />}
+      {withLabel && <span>{inCart ? "Agregado" : "Agregar"}</span>}
     </button>
   );
 }
@@ -119,6 +123,7 @@ function AddButton({
 export default function SeedCard({
   product,
   onSelect,
+  onOpenCart,
   index = 0,
   variant = "grid",
 }: Props) {
@@ -162,7 +167,11 @@ export default function SeedCard({
           </p>
         </div>
         <AvailabilityBadge status={product.status} size="sm" />
-        {hasPrice ? <AddButton product={product} withLabel /> : <Arrow />}
+        {hasPrice ? (
+          <AddButton product={product} withLabel onOpenCart={onOpenCart} />
+        ) : (
+          <Arrow />
+        )}
       </div>
     );
   }
@@ -208,7 +217,7 @@ export default function SeedCard({
         )}
         {compact && (
           <div className="absolute bottom-2 right-2">
-            <AddButton product={product} />
+            <AddButton product={product} onOpenCart={onOpenCart} />
           </div>
         )}
       </div>
@@ -243,7 +252,9 @@ export default function SeedCard({
               </span>
             )}
           </div>
-          {!compact && <AddButton product={product} withLabel />}
+          {!compact && (
+            <AddButton product={product} withLabel onOpenCart={onOpenCart} />
+          )}
         </div>
       </div>
     </div>

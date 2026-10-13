@@ -92,7 +92,7 @@ export default function CartDrawer({ open, onClose, onCheckout }: Props) {
               {items.map((it) => (
                 <li
                   key={it.product.id}
-                  className="flex items-center gap-3 rounded-2xl border border-stone-200/70 bg-white/70 p-2.5 dark:border-stone-800/70 dark:bg-stone-900/70"
+                  className="flex flex-wrap items-center gap-3 rounded-2xl border border-stone-200/70 bg-white/70 p-2.5 dark:border-stone-800/70 dark:bg-stone-900/70"
                 >
                   <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-xl bg-stone-100 dark:bg-stone-800">
                     <SeedImage
@@ -138,7 +138,10 @@ export default function CartDrawer({ open, onClose, onCheckout }: Props) {
                         )
                       }
                       aria-label="Agregar uno"
-                      className="flex h-7 w-7 items-center justify-center rounded-full border border-stone-200 text-stone-600 transition-colors hover:bg-stone-100 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
+                      disabled={
+                        it.product.stock > 0 && it.quantity >= it.product.stock
+                      }
+                      className="flex h-7 w-7 items-center justify-center rounded-full border border-stone-200 text-stone-600 transition-colors hover:bg-stone-100 disabled:opacity-40 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800"
                     >
                       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-3.5 w-3.5"><path d="M12 5v14M5 12h14" /></svg>
                     </button>
@@ -151,6 +154,15 @@ export default function CartDrawer({ open, onClose, onCheckout }: Props) {
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /></svg>
                   </button>
+                  {it.product.stock > 0 && it.quantity >= it.product.stock && (
+                    <p className="basis-full text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                      Solo {it.product.stock}{" "}
+                      {it.product.stock === 1
+                        ? "unidad disponible"
+                        : "unidades disponibles"}
+                      . Si necesitas mas, escribenos por WhatsApp.
+                    </p>
+                  )}
                 </li>
               ))}
             </ul>
