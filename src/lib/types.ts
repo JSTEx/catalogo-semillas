@@ -79,6 +79,38 @@ export function toOrderDTOList(rows: Order[]): OrderDTO[] {
   return rows.map(toOrderDTO);
 }
 
+/**
+ * Version publica de un pedido para la pagina de seguimiento del cliente.
+ * Omite datos privados (nombre, telefono, direccion y notas del cliente).
+ */
+export interface PublicOrderDTO {
+  id: string;
+  number: number;
+  delivery: "retiro" | "domicilio";
+  status: "new" | "confirmed" | "in_transit" | "delivered" | "cancelled";
+  items: OrderItem[];
+  productsTotal: number;
+  shippingCents: number;
+  totalCents: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export function toPublicOrderDTO(o: Order): PublicOrderDTO {
+  return {
+    id: o.id,
+    number: o.number,
+    delivery: o.delivery,
+    status: o.status,
+    items: (o.items ?? []) as OrderItem[],
+    productsTotal: o.productsTotal,
+    shippingCents: o.shippingCents,
+    totalCents: o.totalCents,
+    createdAt: o.createdAt.toISOString(),
+    updatedAt: o.updatedAt.toISOString(),
+  };
+}
+
 export interface ExpenseDTO {
   id: string;
   concept: string;

@@ -161,3 +161,21 @@ export function customerWhatsAppLink(order: OrderDTO): string {
 export function confirmWhatsAppLink(order: OrderDTO): string {
   return waLink(order.customerPhone, confirmOrderToCustomerMessage(order));
 }
+
+/** Ruta publica de seguimiento para el cliente. */
+export function orderTrackingPath(id: string): string {
+  return `/pedido/${id}`;
+}
+
+/** Pasos visibles del flujo normal de un pedido (sin contar cancelado). */
+export const ORDER_STATUS_FLOW: OrderStatus[] = [
+  "new",
+  "confirmed",
+  "in_transit",
+  "delivered",
+];
+
+/** Indice del estado dentro del flujo; -1 si esta cancelado. */
+export function orderStatusStep(status: OrderStatus): number {
+  return ORDER_STATUS_FLOW.indexOf(status);
+}

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useCart } from "./CartProvider";
 import { formatMoney } from "@/lib/money";
-import { customerWhatsAppLink } from "@/lib/orders";
+import { customerWhatsAppLink, orderTrackingPath } from "@/lib/orders";
 import type { OrderDTO } from "@/lib/types";
 
 interface Props {
@@ -123,6 +123,12 @@ export default function CheckoutModal({ open, onClose }: Props) {
             </p>
             <div className="mt-2 flex w-full flex-col gap-2">
               <a
+                href={orderTrackingPath(success.id)}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-brand-600"
+              >
+                Ver estado de mi pedido
+              </a>
+              <a
                 href={customerWhatsAppLink(success)}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -133,7 +139,7 @@ export default function CheckoutModal({ open, onClose }: Props) {
               <button
                 type="button"
                 onClick={close}
-                className="w-full rounded-2xl bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-brand-600"
+                className="w-full rounded-2xl border border-stone-200 bg-white px-5 py-3 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
               >
                 Listo
               </button>

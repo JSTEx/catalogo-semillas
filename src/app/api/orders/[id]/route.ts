@@ -4,11 +4,25 @@ import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { productIdSchema, updateOrderSchema } from "@/lib/validation";
 import { requireAdmin, jsonError } from "@/lib/http";
-import { toOrderDTO } from "@/lib/types";
+import { toOrderDTO, toPublicOrderDTO } from "@/lib/types";
 
 export const runtime = "nodejs";
 
 type Params = { params: Promise<{ id: string }> };
+
+/**
+ * Seguimiento publico del estado de un pedido (solo datos no sensibles).
+ * El identificador es un UUID no adivinable.
+ */
+export async function GET(_req: Request, { params }: Params) {
+  const { id } = await params;
+  if (!productIdSchema.safeParse(id).success) {
+    return jsonError("Identificador no valido", 400);
+  }
+  const [order] = await db.select().from(orders).where(eq(orders.id, id));
+  if (!order) return jsonError("Pedido no encontrado", 404);
+  return NextResponse.json({ order: toPublicOrderDTO(order) });
+}
 
 export async function PATCH(req: Request, { params }: Params) {
   const guard = await requireAdmin(req);
