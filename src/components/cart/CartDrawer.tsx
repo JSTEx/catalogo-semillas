@@ -156,11 +156,8 @@ export default function CartDrawer({ open, onClose, onCheckout }: Props) {
                   </button>
                   {it.product.stock > 0 && it.quantity >= it.product.stock && (
                     <p className="basis-full text-[11px] font-medium text-amber-600 dark:text-amber-400">
-                      Solo {it.product.stock}{" "}
-                      {it.product.stock === 1
-                        ? "unidad disponible"
-                        : "unidades disponibles"}
-                      . Si necesitas mas, escribenos por WhatsApp.
+                      Alcanzaste el maximo disponible de este producto. Si
+                      necesitas mas, escribenos por WhatsApp.
                     </p>
                   )}
                 </li>
