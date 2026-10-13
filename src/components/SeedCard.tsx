@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { ProductDTO } from "@/lib/types";
 import { formatMoney } from "@/lib/money";
 import { isOrderable } from "@/lib/orders";
@@ -57,24 +58,60 @@ function CartIcon() {
   );
 }
 
-function AddButton({ product, className }: { product: ProductDTO; className?: string }) {
+function CheckIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-4 w-4"
+      aria-hidden="true"
+    >
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}
+
+function AddButton({
+  product,
+  withLabel = false,
+  className,
+}: {
+  product: ProductDTO;
+  withLabel?: boolean;
+  className?: string;
+}) {
   const { add } = useCart();
-  const orderable = isOrderable(product);
-  if (!orderable) return null;
+  const [added, setAdded] = useState(false);
+  if (!isOrderable(product)) return null;
+
+  function handleAdd(e: React.MouseEvent) {
+    e.stopPropagation();
+    add(product);
+    setAdded(true);
+    window.setTimeout(() => setAdded(false), 1400);
+  }
+
+  const base = withLabel
+    ? "flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold shadow-sm transition-all duration-300 hover:shadow-md"
+    : "flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-sm transition-all duration-300 hover:shadow-md";
+  const tone = added
+    ? "bg-emerald-500 text-white"
+    : "bg-brand-500 text-white hover:bg-brand-600";
+
   return (
     <button
       type="button"
-      onClick={(e) => {
-        e.stopPropagation();
-        add(product);
-      }}
+      onClick={handleAdd}
       aria-label={`Agregar ${product.name} al pedido`}
-      className={[
-        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white shadow-sm transition-all duration-300 hover:bg-brand-600 hover:shadow-md",
-        className ?? "",
-      ].join(" ")}
+      className={[base, tone, className ?? ""].join(" ")}
     >
-      <CartIcon />
+      {added ? <CheckIcon /> : <CartIcon />}
+      {withLabel && <span>{added ? "Agregado" : "Agregar"}</span>}
     </button>
   );
 }
@@ -125,7 +162,7 @@ export default function SeedCard({
           </p>
         </div>
         <AvailabilityBadge status={product.status} size="sm" />
-        {hasPrice ? <AddButton product={product} /> : <Arrow />}
+        {hasPrice ? <AddButton product={product} withLabel /> : <Arrow />}
       </div>
     );
   }
@@ -169,9 +206,11 @@ export default function SeedCard({
             Imagen ilustrativa
           </span>
         )}
-        <div className="absolute bottom-2 right-2 opacity-0 transition-opacity duration-300 group-hover:opacity-100 focus-within:opacity-100">
-          <AddButton product={product} />
-        </div>
+        {compact && (
+          <div className="absolute bottom-2 right-2">
+            <AddButton product={product} />
+          </div>
+        )}
       </div>
 
       <div
@@ -189,19 +228,22 @@ export default function SeedCard({
           {product.name}
         </h3>
         <div className="mt-auto flex items-center justify-between gap-2">
-          <span
-            className={[
-              "font-bold text-brand-600 dark:text-brand-400",
-              compact ? "text-sm" : "text-lg",
-            ].join(" ")}
-          >
-            {price}
-          </span>
-          {!compact && hasPrice && (
-            <span className="text-xs text-stone-400 dark:text-stone-500">
-              {product.stock > 0 ? `${product.stock} disp.` : ""}
+          <div className="flex min-w-0 flex-col">
+            <span
+              className={[
+                "font-bold text-brand-600 dark:text-brand-400",
+                compact ? "text-sm" : "text-lg",
+              ].join(" ")}
+            >
+              {price}
             </span>
-          )}
+            {!compact && hasPrice && product.stock > 0 && (
+              <span className="text-xs text-stone-400 dark:text-stone-500">
+                {product.stock} disponibles
+              </span>
+            )}
+          </div>
+          {!compact && <AddButton product={product} withLabel />}
         </div>
       </div>
     </div>
