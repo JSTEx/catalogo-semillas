@@ -140,6 +140,7 @@ export function orderToBusinessMessage(order: OrderDTO): string {
 
 /** Mensaje que el negocio envia al cliente para confirmar. */
 export function confirmOrderToCustomerMessage(order: OrderDTO): string {
+  const trackingUrl = orderTrackingUrl(order.id);
   const lines = [
     `Hola ${order.customerName}! Recibimos tu pedido N° ${order.number}`,
     orderItemsSummary(order.items),
@@ -149,6 +150,7 @@ export function confirmOrderToCustomerMessage(order: OrderDTO): string {
     `Total: ${formatMoney(order.totalCents)}`,
     `Entrega: ${DELIVERY_META[order.delivery].label}`,
     order.address ? `Direccion: ${order.address}` : null,
+    trackingUrl ? `Sigue el estado de tu pedido aqui: ${trackingUrl}` : null,
     "Gracias por tu compra!",
   ].filter((l) => l !== null);
   return lines.join("\n");
@@ -165,6 +167,19 @@ export function confirmWhatsAppLink(order: OrderDTO): string {
 /** Ruta publica de seguimiento para el cliente. */
 export function orderTrackingPath(id: string): string {
   return `/pedido/${id}`;
+}
+
+/** Origen del sitio (para enlaces absolutos); usa el navegador si aplica. */
+export function siteOrigin(): string {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL;
+  if (configured) return configured.replace(/\/+$/, "");
+  if (typeof window !== "undefined") return window.location.origin;
+  return "";
+}
+
+/** URL absoluta del seguimiento del pedido (para compartir). */
+export function orderTrackingUrl(id: string): string {
+  return `${siteOrigin()}${orderTrackingPath(id)}`;
 }
 
 /** Pasos visibles del flujo normal de un pedido (sin contar cancelado). */

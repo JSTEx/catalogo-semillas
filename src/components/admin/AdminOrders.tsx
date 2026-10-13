@@ -8,6 +8,7 @@ import {
   PAYMENT_META,
   DELIVERY_META,
   confirmWhatsAppLink,
+  orderTrackingUrl,
   type OrderStatus,
 } from "@/lib/orders";
 import { formatMoney } from "@/lib/money";
@@ -30,6 +31,7 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [shippingDraft, setShippingDraft] = useState<Record<string, string>>({});
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: orders.length };
@@ -91,6 +93,19 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
     const cents = Math.max(0, Math.round((parseFloat(raw) || 0) * 100));
     if (cents === order.shippingCents) return;
     patch(order.id, { shippingCents: cents });
+  }
+
+  async function copyLink(id: string) {
+    try {
+      await navigator.clipboard.writeText(orderTrackingUrl(id));
+      setCopiedId(id);
+      window.setTimeout(
+        () => setCopiedId((c) => (c === id ? null : c)),
+        1600,
+      );
+    } catch {
+      setError("No se pudo copiar el enlace");
+    }
   }
 
   return (
@@ -258,6 +273,14 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
                     </button>
                   ))}
                   <div className="ml-auto flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => copyLink(order.id)}
+                      aria-label="Copiar enlace de seguimiento"
+                      className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-white px-3 py-1.5 text-xs font-semibold text-stone-600 transition-colors hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
+                    >
+                      {copiedId === order.id ? "Copiado" : "Copiar enlace"}
+                    </button>
                     <a
                       href={confirmWhatsAppLink(order)}
                       target="_blank"
