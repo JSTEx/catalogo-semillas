@@ -246,11 +246,6 @@ export default function SeedCard({
             >
               {price}
             </span>
-            {!compact && hasPrice && product.stock > 0 && (
-              <span className="text-xs text-stone-400 dark:text-stone-500">
-                {product.stock} disponibles
-              </span>
-            )}
           </div>
           {!compact && (
             <AddButton product={product} withLabel onOpenCart={onOpenCart} />

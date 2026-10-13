@@ -168,16 +168,6 @@ export default function SeedModal({ product, onClose, onOpenCart }: Props) {
                   {statusMeta(product.status).availability}
                 </dd>
               </div>
-              {isOrderable(product) && (
-                <div className="flex items-center justify-between">
-                  <dt className="text-stone-400 dark:text-stone-500">Existencias</dt>
-                  <dd className="font-medium text-stone-700 dark:text-stone-200">
-                    {product.stock > 0
-                      ? `${product.stock} ${product.stock === 1 ? "unidad" : "unidades"}`
-                      : "Sin stock"}
-                  </dd>
-                </div>
-              )}
               <div className="flex items-center justify-between">
                 <dt className="text-stone-400 dark:text-stone-500">Actualizado</dt>
                 <dd className="font-medium text-stone-700 dark:text-stone-200">
