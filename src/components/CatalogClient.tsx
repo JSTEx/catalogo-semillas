@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import type { ProductDTO } from "@/lib/types";
 import {
   PRODUCT_STATUSES,
@@ -97,22 +98,15 @@ export default function CatalogClient({ initialProducts }: Props) {
       <header className="sticky top-0 z-40 border-b border-stone-200/60 bg-white/70 backdrop-blur-md dark:border-stone-800/60 dark:bg-stone-900/70">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-500 text-white shadow-sm">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-5 w-5"
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-500 shadow-sm">
+              <Image
+                src="/logo.png"
+                alt=""
+                width={146}
+                height={96}
                 aria-hidden="true"
-              >
-                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
-                <path d="M3 6h18" />
-                <path d="M16 10a4 4 0 0 1-8 0" />
-              </svg>
+                className="h-5 w-auto"
+              />
             </span>
             <div>
               <h1 className="text-lg font-bold tracking-tight text-stone-900 dark:text-stone-100">

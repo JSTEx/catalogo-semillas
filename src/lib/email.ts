@@ -129,6 +129,7 @@ async function sendEmail(
         html,
         text,
       });
+      console.log(`[email] enviado (gmail) a ${to.join(", ")}: ${subject}`);
     } catch (err) {
       console.error("[email] No se pudo enviar por SMTP de Gmail", err);
     }
@@ -149,6 +150,8 @@ async function sendEmail(
     });
     if (error) {
       console.error("[email] Resend respondio con error", error);
+    } else {
+      console.log(`[email] enviado (resend) a ${to.join(", ")}: ${subject}`);
     }
   } catch (err) {
     console.error("[email] No se pudo enviar el correo", err);
@@ -457,5 +460,52 @@ export async function sendCustomerOrderEmail(order: OrderDTO): Promise<void> {
     `${CUSTOMER_STATUS_TITLES[order.status]} · Pedido N° ${order.number}`,
     customerHtml(order, order.status),
     customerText(order, order.status),
+  );
+}
+
+/* --------------------------- Aviso de cancelacion --------------------------- */
+
+function cancelledHtml(order: OrderDTO): string {
+  const inner = `
+    <p style="margin:0 0 2px;color:${MUTED};font-size:13px;">El cliente cancelo su pedido</p>
+    <h1 style="margin:0 0 16px;color:#fda4af;font-size:24px;font-weight:800;letter-spacing:-0.02em;">Pedido N° ${order.number} cancelado</h1>
+    ${card(
+      `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        ${detailRow("Cliente", escapeHtml(order.customerName))}
+        ${detailRow("Telefono", escapeHtml(order.customerPhone))}
+        ${detailRow("Total", formatMoney(order.totalCents))}
+      </table>`,
+    )}
+    <p style="margin:16px 0 0;color:${TEXT};font-size:14px;line-height:1.6;">Puedes escribirle por WhatsApp si necesitas coordinar algo.</p>
+    <div style="margin-top:20px;">
+      ${button(confirmWhatsAppLink(order), "Escribir al cliente", "solid")}
+      ${button(`${siteOrigin()}/admin`, "Ir al panel", "outline")}
+    </div>`;
+  return shell(
+    `Pedido N° ${order.number} cancelado por el cliente`,
+    inner,
+    "Notificacion automatica de JecsitoShop.",
+  );
+}
+
+function cancelledText(order: OrderDTO): string {
+  return [
+    `Pedido N° ${order.number} cancelado por el cliente`,
+    "",
+    `Cliente: ${order.customerName}`,
+    `Telefono: ${order.customerPhone}`,
+    `Total: ${formatMoney(order.totalCents)}`,
+    "",
+    `Panel: ${siteOrigin()}/admin`,
+  ].join("\n");
+}
+
+/** Notifica al negocio que el cliente cancelo su pedido. */
+export async function sendOrderCancelledEmail(order: OrderDTO): Promise<void> {
+  await sendEmail(
+    businessRecipients(),
+    `Pedido N° ${order.number} cancelado por el cliente`,
+    cancelledHtml(order),
+    cancelledText(order),
   );
 }

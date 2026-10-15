@@ -11,6 +11,14 @@ export const metadata: Metadata = {
   description:
     "Catalogo en linea de JecsitoShop: consulta productos y disponibilidad en tiempo real.",
   robots: { index: true, follow: true },
+  icons: {
+    icon: [
+      { url: "/icons/favicon-light.png", media: "(prefers-color-scheme: light)" },
+      { url: "/icons/favicon-dark.png", media: "(prefers-color-scheme: dark)" },
+      { url: "/icons/favicon.png" },
+    ],
+    apple: [{ url: "/icons/apple-icon.png", sizes: "180x180" }],
+  },
 };
 
 export const viewport: Viewport = {

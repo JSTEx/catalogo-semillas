@@ -117,6 +117,9 @@ export default function CheckoutModal({ open, onClose }: Props) {
         number: data.order.number,
         totalCents: data.order.totalCents,
         payment: data.order.payment,
+        delivery: data.order.delivery,
+        itemCount: data.order.items.reduce((n, it) => n + it.quantity, 0),
+        status: data.order.status,
       });
       clear();
     } catch (err) {

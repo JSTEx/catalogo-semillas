@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orders, products } from "@/lib/db/schema";
@@ -95,8 +95,10 @@ export async function POST(req: Request) {
     .returning();
 
   const dto = toOrderDTO(created);
-  await sendNewOrderEmail(dto);
-  await sendCustomerOrderEmail(dto);
+  after(async () => {
+    await sendNewOrderEmail(dto);
+    await sendCustomerOrderEmail(dto);
+  });
 
   return NextResponse.json({ order: dto }, { status: 201 });
 }

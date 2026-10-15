@@ -83,3 +83,40 @@ export async function checkOrderRateLimit(
   const { success, limit, remaining, reset } = await l.limit(identifier);
   return { success, limit, remaining, reset };
 }
+
+/**
+ * Limite para cancelar pedidos: 10 intentos cada 10 minutos por IP.
+ * Mitiga el sondeo del telefono asociado a un pedido.
+ */
+let cancelLimiter: Ratelimit | null | undefined;
+
+function getCancelLimiter(): Ratelimit | null {
+  if (cancelLimiter !== undefined) return cancelLimiter;
+
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (!url || !token) {
+    cancelLimiter = null;
+    return cancelLimiter;
+  }
+
+  cancelLimiter = new Ratelimit({
+    redis: new Redis({ url, token }),
+    limiter: Ratelimit.slidingWindow(10, "10 m"),
+    analytics: true,
+    prefix: "rl:cancel",
+  });
+  return cancelLimiter;
+}
+
+export async function checkCancelRateLimit(
+  identifier: string,
+): Promise<RateLimitResult> {
+  const l = getCancelLimiter();
+  if (!l) {
+    return { success: true, limit: 10, remaining: 10, reset: 0 };
+  }
+  const { success, limit, remaining, reset } = await l.limit(identifier);
+  return { success, limit, remaining, reset };
+}

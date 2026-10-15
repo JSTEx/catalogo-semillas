@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
@@ -63,7 +63,7 @@ export async function PATCH(req: Request, { params }: Params) {
 
   const dto = toOrderDTO(updated);
   if (parsed.data.status && parsed.data.status !== existing.status) {
-    await sendCustomerOrderEmail(dto);
+    after(() => sendCustomerOrderEmail(dto));
   }
 
   return NextResponse.json({ order: dto });
