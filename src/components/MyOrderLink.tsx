@@ -1,17 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MY_ORDER_EVENT, readMyOrders } from "@/lib/my-order";
+import { MY_ORDER_EVENT, isActiveOrder, readMyOrders } from "@/lib/my-order";
 
 /**
  * Acceso persistente a los pedidos del cliente (guardados en el dispositivo).
  * No requiere iniciar sesion.
  */
 export default function MyOrderLink({ className }: { className?: string }) {
-  const [count, setCount] = useState(0);
+  const [total, setTotal] = useState(0);
+  const [active, setActive] = useState(0);
 
   useEffect(() => {
-    const sync = () => setCount(readMyOrders().length);
+    const sync = () => {
+      const orders = readMyOrders();
+      setTotal(orders.length);
+      setActive(orders.filter((o) => isActiveOrder(o.status)).length);
+    };
     sync();
     window.addEventListener(MY_ORDER_EVENT, sync);
     window.addEventListener("storage", sync);
@@ -21,7 +26,7 @@ export default function MyOrderLink({ className }: { className?: string }) {
     };
   }, []);
 
-  if (count === 0) return null;
+  if (total === 0) return null;
 
   return (
     <a
@@ -47,7 +52,9 @@ export default function MyOrderLink({ className }: { className?: string }) {
         <path d="M3 8l9 5 9-5" />
         <path d="M12 13v8" />
       </svg>
-      <span className="hidden sm:inline">Mis pedidos ({count})</span>
+      <span className="hidden sm:inline">
+        {active > 0 ? `Mis pedidos (${active})` : "Mis pedidos"}
+      </span>
       <span className="sm:hidden">Mis pedidos</span>
     </a>
   );

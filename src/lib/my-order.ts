@@ -133,3 +133,43 @@ export function clearMyOrders(): void {
   }
   window.dispatchEvent(new Event(MY_ORDER_EVENT));
 }
+
+/** Estados que cuentan como "en curso" (el pedido aun no finaliza). */
+export function isActiveOrder(status: OrderStatus): boolean {
+  return status === "new" || status === "confirmed" || status === "in_transit";
+}
+
+/** Quita un pedido del historial de este dispositivo. */
+export function removeMyOrder(id: string): void {
+  if (typeof window === "undefined") return;
+  const next = readMyOrders().filter((o) => o.id !== id);
+  persist(next);
+}
+
+/**
+ * Sincroniza el historial local con el servidor: elimina los pedidos que ya no
+ * existen (borrados desde el admin) y actualiza el estado de los que si existen.
+ * Solo debe llamarse cuando la consulta al servidor fue exitosa.
+ */
+export function reconcileMyOrders(statuses: Record<string, OrderStatus>): void {
+  if (typeof window === "undefined") return;
+  const current = readMyOrders();
+  if (current.length === 0) return;
+
+  let changed = false;
+  const next: StoredOrder[] = [];
+  for (const order of current) {
+    const live = statuses[order.id];
+    if (live === undefined) {
+      changed = true;
+      continue;
+    }
+    if (live !== order.status) {
+      changed = true;
+      next.push({ ...order, status: live });
+    } else {
+      next.push(order);
+    }
+  }
+  if (changed) persist(next);
+}
