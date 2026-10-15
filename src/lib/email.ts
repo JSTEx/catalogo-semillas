@@ -31,6 +31,12 @@ import {
 let client: Resend | null = null;
 let smtp: Transporter | null = null;
 
+const BRAND = "#059669";
+const BRAND_DARK = "#047857";
+const INK = "#1c1917";
+const MUTED = "#78716c";
+const LINE = "#e7e5e4";
+
 function apiKey(): string | undefined {
   return process.env.RESEND_API_KEY;
 }
@@ -131,92 +137,154 @@ async function sendEmail(
   }
 }
 
-function detailText(order: OrderDTO): string[] {
-  return [
-    `Pago: ${PAYMENT_META[order.payment].label}`,
-    `Entrega: ${DELIVERY_META[order.delivery].label}`,
-    order.address ? `Direccion: ${order.address}` : null,
-  ].filter((l): l is string => l !== null);
+/* ------------------------------ Plantilla base ----------------------------- */
+
+const FONT =
+  "system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
+
+/** Marco visual comun: fondo, encabezado de marca y pie. */
+function shell(preheader: string, inner: string, footer: string): string {
+  return `<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="color-scheme" content="light only" />
+  </head>
+  <body style="margin:0;padding:0;background:#f5f5f4;font-family:${FONT};">
+    <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${escapeHtml(
+      preheader,
+    )}</div>
+    <div style="padding:28px 12px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;">
+        <tr>
+          <td>
+            <div style="background:${BRAND};border-radius:18px 18px 0 0;padding:22px 26px;">
+              <span style="color:#ffffff;font-size:19px;font-weight:800;letter-spacing:-0.02em;">JecsitoShop</span>
+              <span style="float:right;color:#d1fae5;font-size:11px;font-weight:600;line-height:26px;text-transform:uppercase;letter-spacing:.08em;">Tienda</span>
+            </div>
+            <div style="background:#ffffff;border:1px solid ${LINE};border-top:0;border-radius:0 0 18px 18px;padding:26px;">
+              ${inner}
+            </div>
+          </td>
+        </tr>
+      </table>
+      <p style="max-width:560px;margin:18px auto 0;text-align:center;color:#a8a29e;font-size:12px;line-height:1.5;">${footer}</p>
+    </div>
+  </body>
+</html>`;
 }
 
-function totalsText(order: OrderDTO): string[] {
-  return [
-    `Subtotal: ${formatMoney(order.productsTotal)}`,
-    order.shippingCents > 0 ? `Envio: ${formatMoney(order.shippingCents)}` : null,
-    `Total: ${formatMoney(order.totalCents)}`,
-  ].filter((l): l is string => l !== null);
+function button(
+  href: string,
+  label: string,
+  variant: "solid" | "sky" | "outline",
+): string {
+  const style = {
+    solid: `background:${BRAND};color:#ffffff;border:1px solid ${BRAND};`,
+    sky: "background:#0284c7;color:#ffffff;border:1px solid #0284c7;",
+    outline: `background:#ffffff;color:${BRAND_DARK};border:1px solid #a7f3d0;`,
+  }[variant];
+  return `<a href="${href}" style="display:inline-block;${style}text-decoration:none;font-size:14px;font-weight:600;padding:12px 20px;border-radius:12px;margin:0 8px 8px 0;">${label}</a>`;
+}
+
+function sectionTitle(label: string): string {
+  return `<p style="margin:0 0 10px;color:${MUTED};font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;">${label}</p>`;
+}
+
+function card(inner: string): string {
+  return `<div style="border:1px solid ${LINE};border-radius:14px;padding:16px;">${inner}</div>`;
+}
+
+function detailRow(label: string, value: string): string {
+  return `<tr>
+    <td style="padding:4px 0;color:${MUTED};font-size:13px;vertical-align:top;">${label}</td>
+    <td style="padding:4px 0;color:${INK};font-size:13px;text-align:right;font-weight:600;">${value}</td>
+  </tr>`;
+}
+
+function itemsTable(order: OrderDTO): string {
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    ${order.items
+      .map(
+        (it) => `<tr>
+      <td width="54" style="padding:8px 12px 8px 0;vertical-align:middle;">
+        <img src="${escapeHtml(it.imageUrl)}" width="44" height="44" alt="" style="border-radius:10px;background:#f5f5f4;display:block;object-fit:contain;" />
+      </td>
+      <td style="padding:8px 0;vertical-align:middle;font-size:14px;color:${INK};font-weight:600;">
+        ${escapeHtml(it.name)}
+        <div style="color:#a8a29e;font-size:12px;font-weight:400;">${it.quantity} × ${formatMoney(
+          it.priceCents,
+        )}</div>
+      </td>
+      <td style="padding:8px 0;vertical-align:middle;text-align:right;font-size:14px;font-weight:700;color:${INK};white-space:nowrap;">
+        ${formatMoney(it.priceCents * it.quantity)}
+      </td>
+    </tr>`,
+      )
+      .join("")}
+  </table>`;
+}
+
+function totalsBox(order: OrderDTO): string {
+  const row = (label: string, value: string, strong = false) =>
+    `<tr>
+      <td style="padding:2px 0;color:${strong ? INK : MUTED};font-size:${strong ? "15px" : "13px"};font-weight:${strong ? "800" : "400"};">${label}</td>
+      <td style="padding:2px 0;text-align:right;color:${INK};font-size:${strong ? "15px" : "13px"};font-weight:${strong ? "800" : "600"};">${value}</td>
+    </tr>`;
+  return `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:14px;padding:14px 16px;margin-top:16px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      ${row("Subtotal", formatMoney(order.productsTotal))}
+      ${
+        order.shippingCents > 0
+          ? row("Envio", formatMoney(order.shippingCents))
+          : ""
+      }
+      ${row("Total", formatMoney(order.totalCents), true)}
+    </table>
+  </div>`;
 }
 
 /* ----------------------------- Correo al negocio ---------------------------- */
 
 function businessHtml(order: OrderDTO): string {
   const tracking = orderTrackingUrl(order.id);
-  const waLink = confirmWhatsAppLink(order);
-  const rows = order.items
-    .map(
-      (it) => `
-        <tr>
-          <td style="padding:8px 0;border-bottom:1px solid #e7e5e4;color:#44403c;font-size:14px;">
-            ${escapeHtml(it.name)} <span style="color:#a8a29e;">×${it.quantity}</span>
-          </td>
-          <td style="padding:8px 0;border-bottom:1px solid #e7e5e4;color:#44403c;font-size:14px;text-align:right;white-space:nowrap;">
-            ${formatMoney(it.priceCents * it.quantity)}
-          </td>
-        </tr>`,
-    )
-    .join("");
-
-  const detail = (label: string, value: string) => `
-    <tr>
-      <td style="padding:4px 0;color:#78716c;font-size:13px;">${label}</td>
-      <td style="padding:4px 0;color:#292524;font-size:13px;text-align:right;">${value}</td>
-    </tr>`;
-
-  return `<!doctype html>
-<html lang="es">
-  <body style="margin:0;background:#f5f5f4;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;">
-    <div style="max-width:560px;margin:0 auto;padding:24px 16px;">
-      <div style="background:#ffffff;border:1px solid #e7e5e4;border-radius:16px;padding:24px;">
-        <p style="margin:0 0 4px;color:#a8a29e;font-size:12px;text-transform:uppercase;letter-spacing:.05em;">JecsitoShop</p>
-        <h1 style="margin:0 0 16px;color:#1c1917;font-size:20px;">Nuevo pedido N° ${order.number}</h1>
-        <table style="width:100%;border-collapse:collapse;">
-          ${detail("Cliente", escapeHtml(order.customerName))}
-          ${detail("Telefono", escapeHtml(order.customerPhone))}
-          ${order.customerEmail ? detail("Correo", escapeHtml(order.customerEmail)) : ""}
-          ${detail("Entrega", DELIVERY_META[order.delivery].label)}
-          ${order.address ? detail("Direccion", escapeHtml(order.address)) : ""}
-          ${detail("Pago", PAYMENT_META[order.payment].label)}
-          ${order.notes ? detail("Notas", escapeHtml(order.notes)) : ""}
-        </table>
-        <table style="width:100%;border-collapse:collapse;margin-top:16px;">
-          ${rows}
-        </table>
-        <table style="width:100%;border-collapse:collapse;margin-top:12px;">
-          ${detail("Subtotal", formatMoney(order.productsTotal))}
-          ${
-            order.shippingCents > 0
-              ? detail("Envio", formatMoney(order.shippingCents))
-              : ""
-          }
-          <tr>
-            <td style="padding:8px 0 0;color:#1c1917;font-size:15px;font-weight:700;">Total</td>
-            <td style="padding:8px 0 0;color:#1c1917;font-size:15px;font-weight:700;text-align:right;">${formatMoney(order.totalCents)}</td>
-          </tr>
-        </table>
-        <div style="margin-top:20px;">
-          ${
-            tracking
-              ? `<a href="${tracking}" style="display:inline-block;background:#0ea5e9;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:10px 16px;border-radius:12px;margin:0 8px 8px 0;">Ver seguimiento</a>`
-              : ""
-          }
-          <a href="${waLink}" style="display:inline-block;background:#10b981;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:10px 16px;border-radius:12px;margin:0 8px 8px 0;">Escribir al cliente</a>
-          <a href="${siteOrigin()}/admin" style="display:inline-block;background:#ffffff;border:1px solid #e7e5e4;color:#57534e;text-decoration:none;font-size:14px;font-weight:600;padding:10px 16px;border-radius:12px;">Ir al panel</a>
-        </div>
-      </div>
-      <p style="text-align:center;color:#a8a29e;font-size:12px;margin-top:16px;">Notificacion automatica de JecsitoShop.</p>
+  const inner = `
+    <p style="margin:0 0 2px;color:${MUTED};font-size:13px;">Entro un pedido nuevo</p>
+    <h1 style="margin:0 0 16px;color:${INK};font-size:24px;font-weight:800;letter-spacing:-0.02em;">Pedido N° ${order.number}</h1>
+    ${card(
+      `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        ${detailRow("Cliente", escapeHtml(order.customerName))}
+        ${detailRow("Telefono", escapeHtml(order.customerPhone))}
+        ${order.customerEmail ? detailRow("Correo", escapeHtml(order.customerEmail)) : ""}
+        ${detailRow("Pago", PAYMENT_META[order.payment].label)}
+        ${detailRow("Entrega", DELIVERY_META[order.delivery].label)}
+        ${order.address ? detailRow("Direccion", escapeHtml(order.address)) : ""}
+      </table>`,
+    )}
+    ${
+      order.notes
+        ? `<div style="margin-top:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px 14px;color:#92400e;font-size:13px;"><strong>Nota:</strong> ${escapeHtml(
+            order.notes,
+          )}</div>`
+        : ""
+    }
+    <div style="margin-top:20px;">
+      ${sectionTitle("Productos")}
+      ${card(itemsTable(order))}
     </div>
-  </body>
-</html>`;
+    ${totalsBox(order)}
+    <div style="margin-top:20px;">
+      ${tracking ? button(tracking, "Ver seguimiento", "sky") : ""}
+      ${button(confirmWhatsAppLink(order), "Escribir al cliente", "solid")}
+      ${button(`${siteOrigin()}/admin`, "Ir al panel", "outline")}
+    </div>`;
+
+  return shell(
+    `Nuevo pedido N° ${order.number} de ${order.customerName}`,
+    inner,
+    "Notificacion automatica de JecsitoShop.",
+  );
 }
 
 function businessText(order: OrderDTO): string {
@@ -229,8 +297,12 @@ function businessText(order: OrderDTO): string {
     order.customerEmail ? `Correo: ${order.customerEmail}` : null,
     orderItemsSummary(order.items),
     "",
-    ...totalsText(order),
-    ...detailText(order),
+    `Subtotal: ${formatMoney(order.productsTotal)}`,
+    order.shippingCents > 0 ? `Envio: ${formatMoney(order.shippingCents)}` : null,
+    `Total: ${formatMoney(order.totalCents)}`,
+    `Pago: ${PAYMENT_META[order.payment].label}`,
+    `Entrega: ${DELIVERY_META[order.delivery].label}`,
+    order.address ? `Direccion: ${order.address}` : null,
     order.notes ? `Notas: ${order.notes}` : null,
     "",
     tracking ? `Seguimiento: ${tracking}` : null,
@@ -268,70 +340,64 @@ const CUSTOMER_STATUS_LINES: Record<OrderStatus, string> = {
   cancelled: "Tu pedido fue cancelado. Escribenos si tienes dudas.",
 };
 
+const CUSTOMER_STATUS_EMOJI: Record<OrderStatus, string> = {
+  new: "🧾",
+  confirmed: "✅",
+  in_transit: "🚚",
+  delivered: "🎉",
+  cancelled: "⚠️",
+};
+
 function customerHtml(order: OrderDTO, status: OrderStatus): string {
   const tracking = orderTrackingUrl(order.id);
-  const rows = order.items
-    .map(
-      (it) => `
-        <tr>
-          <td style="padding:8px 0;border-bottom:1px solid #e7e5e4;color:#44403c;font-size:14px;">
-            ${escapeHtml(it.name)} <span style="color:#a8a29e;">×${it.quantity}</span>
-          </td>
-          <td style="padding:8px 0;border-bottom:1px solid #e7e5e4;color:#44403c;font-size:14px;text-align:right;white-space:nowrap;">
-            ${formatMoney(it.priceCents * it.quantity)}
-          </td>
-        </tr>`,
-    )
-    .join("");
-
   const receiptNote =
     order.payment === "transferencia" &&
     status !== "delivered" &&
     status !== "cancelled"
-      ? `<p style="margin:16px 0 0;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px;color:#92400e;font-size:13px;">Recuerda enviarnos el comprobante de tu transferencia por WhatsApp para confirmar el pago.</p>`
+      ? `<div style="margin-top:16px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px 14px;color:#92400e;font-size:13px;">Recuerda enviarnos el comprobante de tu transferencia por WhatsApp para confirmar el pago.</div>`
       : "";
 
-  return `<!doctype html>
-<html lang="es">
-  <body style="margin:0;background:#f5f5f4;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;">
-    <div style="max-width:560px;margin:0 auto;padding:24px 16px;">
-      <div style="background:#ffffff;border:1px solid #e7e5e4;border-radius:16px;padding:24px;">
-        <p style="margin:0 0 4px;color:#a8a29e;font-size:12px;text-transform:uppercase;letter-spacing:.05em;">JecsitoShop</p>
-        <h1 style="margin:0 0 8px;color:#1c1917;font-size:20px;">${CUSTOMER_STATUS_TITLES[status]} · N° ${order.number}</h1>
-        <p style="margin:0 0 16px;color:#57534e;font-size:14px;">Hola ${escapeHtml(order.customerName)}, ${CUSTOMER_STATUS_LINES[status]}</p>
-        <table style="width:100%;border-collapse:collapse;">
-          ${rows}
-        </table>
-        <table style="width:100%;border-collapse:collapse;margin-top:12px;">
-          <tr>
-            <td style="padding:8px 0 0;color:#1c1917;font-size:15px;font-weight:700;">Total</td>
-            <td style="padding:8px 0 0;color:#1c1917;font-size:15px;font-weight:700;text-align:right;">${formatMoney(order.totalCents)}</td>
-          </tr>
-        </table>
-        ${receiptNote}
-        ${
-          tracking
-            ? `<div style="margin-top:20px;"><a href="${tracking}" style="display:inline-block;background:#0ea5e9;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:10px 16px;border-radius:12px;">Ver estado de mi pedido</a></div>`
-            : ""
-        }
-      </div>
-      <p style="text-align:center;color:#a8a29e;font-size:12px;margin-top:16px;">Recibes este correo porque pediste actualizaciones de tu pedido. JecsitoShop.</p>
+  const inner = `
+    <div style="text-align:center;margin-bottom:18px;">
+      <div style="font-size:34px;line-height:1;">${CUSTOMER_STATUS_EMOJI[status]}</div>
+      <h1 style="margin:10px 0 6px;color:${INK};font-size:21px;font-weight:800;letter-spacing:-0.02em;">${CUSTOMER_STATUS_TITLES[status]}</h1>
+      <p style="margin:0;color:${MUTED};font-size:14px;">Pedido N° ${order.number}</p>
     </div>
-  </body>
-</html>`;
+    <p style="margin:0 0 18px;color:#44403c;font-size:14px;line-height:1.6;text-align:center;">Hola ${escapeHtml(
+      order.customerName,
+    )}, ${CUSTOMER_STATUS_LINES[status]}</p>
+    ${sectionTitle("Tu pedido")}
+    ${card(itemsTable(order))}
+    ${totalsBox(order)}
+    ${receiptNote}
+    ${
+      tracking
+        ? `<div style="margin-top:20px;text-align:center;">${button(tracking, "Ver estado de mi pedido", "sky")}</div>`
+        : ""
+    }`;
+
+  return shell(
+    `${CUSTOMER_STATUS_TITLES[status]} · Pedido N° ${order.number}`,
+    inner,
+    "Recibes este correo porque pediste actualizaciones de tu pedido. JecsitoShop.",
+  );
 }
 
 function customerText(order: OrderDTO, status: OrderStatus): string {
   const tracking = orderTrackingUrl(order.id);
   return [
-    `${CUSTOMER_STATUS_TITLES[status]} · N° ${order.number}`,
+    `${CUSTOMER_STATUS_TITLES[status]} · Pedido N° ${order.number}`,
     "",
     `Hola ${order.customerName}, ${CUSTOMER_STATUS_LINES[status]}`,
     "",
     orderItemsSummary(order.items),
     "",
-    ...totalsText(order),
-    ...detailText(order),
+    `Subtotal: ${formatMoney(order.productsTotal)}`,
+    order.shippingCents > 0 ? `Envio: ${formatMoney(order.shippingCents)}` : null,
+    `Total: ${formatMoney(order.totalCents)}`,
+    `Pago: ${PAYMENT_META[order.payment].label}`,
+    `Entrega: ${DELIVERY_META[order.delivery].label}`,
+    order.address ? `Direccion: ${order.address}` : null,
     order.payment === "transferencia" &&
     status !== "delivered" &&
     status !== "cancelled"
