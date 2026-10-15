@@ -1,13 +1,14 @@
 import { NextResponse, after } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { productIdSchema } from "@/lib/validation";
 import { isSameOrigin, jsonError, getClientIp } from "@/lib/http";
 import { checkCancelRateLimit } from "@/lib/rate-limit";
+import { releaseStock } from "@/lib/inventory";
 import { sendCustomerOrderEmail, sendOrderCancelledEmail } from "@/lib/email";
-import { toOrderDTO, toPublicOrderDTO } from "@/lib/types";
+import { toOrderDTO, toPublicOrderDTO, type OrderItem } from "@/lib/types";
 
 export const runtime = "nodejs";
 
@@ -79,11 +80,23 @@ export async function POST(req: Request, { params }: Params) {
     return jsonError("El telefono no coincide con el del pedido", 403);
   }
 
-  const [updated] = await db
-    .update(orders)
-    .set({ status: "cancelled", updatedAt: new Date() })
-    .where(eq(orders.id, id))
-    .returning();
+  const updated = await db.transaction(async (tx) => {
+    const [row] = await tx
+      .update(orders)
+      .set({ status: "cancelled", updatedAt: new Date() })
+      .where(and(eq(orders.id, id), eq(orders.status, "new")))
+      .returning();
+    if (!row) return null;
+    await releaseStock(tx, row.items as OrderItem[]);
+    return row;
+  });
+
+  if (!updated) {
+    return jsonError(
+      "Este pedido ya no se puede cancelar aqui. Escribenos por WhatsApp.",
+      409,
+    );
+  }
 
   const dto = toOrderDTO(updated);
   after(async () => {

@@ -4,8 +4,9 @@ import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { productIdSchema, updateOrderSchema } from "@/lib/validation";
 import { requireAdmin, jsonError } from "@/lib/http";
+import { holdsStock, releaseStock, reserveStock } from "@/lib/inventory";
 import { sendCustomerOrderEmail } from "@/lib/email";
-import { toOrderDTO, toPublicOrderDTO } from "@/lib/types";
+import { toOrderDTO, toPublicOrderDTO, type OrderItem } from "@/lib/types";
 
 export const runtime = "nodejs";
 
@@ -55,13 +56,42 @@ export async function PATCH(req: Request, { params }: Params) {
   }
   patch.updatedAt = new Date();
 
-  const [updated] = await db
-    .update(orders)
-    .set(patch)
-    .where(eq(orders.id, id))
-    .returning();
+  const dto = await db
+    .transaction(async (tx) => {
+      const [updated] = await tx
+        .update(orders)
+        .set(patch)
+        .where(eq(orders.id, id))
+        .returning();
+      if (!updated) return null;
 
-  const dto = toOrderDTO(updated);
+      if (existing.status !== updated.status) {
+        const wasHolding = holdsStock(existing.status);
+        const nowHolding = holdsStock(updated.status);
+        if (wasHolding && !nowHolding) {
+          await releaseStock(tx, updated.items as OrderItem[]);
+        } else if (!wasHolding && nowHolding) {
+          const reserved = await reserveStock(tx, updated.items as OrderItem[]);
+          if (!reserved) throw new Error("STOCK_INSUFICIENTE");
+        }
+      }
+      return toOrderDTO(updated);
+    })
+    .catch((err) => {
+      if (err instanceof Error && err.message === "STOCK_INSUFICIENTE") {
+        return "STOCK" as const;
+      }
+      throw err;
+    });
+
+  if (dto === null) return jsonError("Pedido no encontrado", 404);
+  if (dto === "STOCK") {
+    return jsonError(
+      "No hay existencias suficientes para reactivar este pedido.",
+      409,
+    );
+  }
+
   if (parsed.data.status && parsed.data.status !== existing.status) {
     after(() => sendCustomerOrderEmail(dto));
   }
@@ -78,7 +108,14 @@ export async function DELETE(req: Request, { params }: Params) {
     return jsonError("Identificador no valido", 400);
   }
 
-  const [deleted] = await db.delete(orders).where(eq(orders.id, id)).returning();
+  const deleted = await db.transaction(async (tx) => {
+    const [row] = await tx.delete(orders).where(eq(orders.id, id)).returning();
+    if (row && holdsStock(row.status)) {
+      await releaseStock(tx, row.items as OrderItem[]);
+    }
+    return row;
+  });
+
   if (!deleted) return jsonError("Pedido no encontrado", 404);
 
   return NextResponse.json({ ok: true, id: deleted.id });

@@ -6,6 +6,7 @@ import { createOrderSchema } from "@/lib/validation";
 import { isSameOrigin, jsonError, getClientIp } from "@/lib/http";
 import { checkOrderRateLimit } from "@/lib/rate-limit";
 import { isOrderable } from "@/lib/orders";
+import { reserveStock } from "@/lib/inventory";
 import { sendNewOrderEmail, sendCustomerOrderEmail } from "@/lib/email";
 import { toOrderDTO, type OrderItem } from "@/lib/types";
 
@@ -76,25 +77,38 @@ export async function POST(req: Request) {
     productsTotal += product.priceCents * quantity;
   }
 
-  const [created] = await db
-    .insert(orders)
-    .values({
-      customerName: parsed.data.customerName,
-      customerPhone: parsed.data.customerPhone,
-      customerEmail: parsed.data.customerEmail ?? null,
-      notifyEmail: parsed.data.notifyEmail,
-      delivery: parsed.data.delivery,
-      address: parsed.data.address ?? null,
-      payment: parsed.data.payment,
-      notes: parsed.data.notes ?? null,
-      items,
-      productsTotal,
-      shippingCents: 0,
-      totalCents: productsTotal,
-    })
-    .returning();
+  const dto = await db.transaction(async (tx) => {
+    const reserved = await reserveStock(tx, items);
+    if (!reserved) return null;
 
-  const dto = toOrderDTO(created);
+    const [created] = await tx
+      .insert(orders)
+      .values({
+        customerName: parsed.data.customerName,
+        customerPhone: parsed.data.customerPhone,
+        customerEmail: parsed.data.customerEmail ?? null,
+        notifyEmail: parsed.data.notifyEmail,
+        delivery: parsed.data.delivery,
+        address: parsed.data.address ?? null,
+        payment: parsed.data.payment,
+        notes: parsed.data.notes ?? null,
+        items,
+        productsTotal,
+        shippingCents: 0,
+        totalCents: productsTotal,
+      })
+      .returning();
+
+    return toOrderDTO(created);
+  });
+
+  if (!dto) {
+    return jsonError(
+      "Uno de los productos ya no tiene existencias suficientes. Actualiza tu carrito.",
+      409,
+    );
+  }
+
   after(async () => {
     await sendNewOrderEmail(dto);
     await sendCustomerOrderEmail(dto);
