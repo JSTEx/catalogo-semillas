@@ -10,6 +10,7 @@ import {
   orderStatusStep,
   businessWhatsAppLink,
   orderTrackingUrl,
+  formatDateTime,
   DELIVERY_META,
   PAYMENT_META,
 } from "@/lib/orders";
@@ -152,15 +153,7 @@ export default function OrderTracker({
   const cancelled = order.status === "cancelled";
   const waText = `Hola! Consulto por mi pedido N° ${order.number}.`;
 
-  const created = order.createdAt
-    ? new Date(order.createdAt).toLocaleString("es", {
-        day: "2-digit",
-        month: "long",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : "";
+  const created = order.createdAt ? formatDateTime(order.createdAt, "long") : "";
 
   async function copyLink() {
     try {

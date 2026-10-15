@@ -8,6 +8,7 @@ import {
   PAYMENT_META,
   DELIVERY_META,
   ORDER_STATUS_META,
+  formatDateTime,
   type OrderStatus,
 } from "@/lib/orders";
 import { formatMoney } from "@/lib/money";
@@ -162,13 +163,7 @@ export default function MisPedidos() {
               {shown.map((order) => {
                 const status = live[order.id] ?? order.status;
                 const date = order.createdAt
-                  ? new Date(order.createdAt).toLocaleString("es", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })
+                  ? formatDateTime(order.createdAt, "short")
                   : "";
                 return (
                   <li

@@ -97,6 +97,40 @@ export const EXPENSE_CATEGORY_META: Record<
   otros: { label: "Otros" },
 };
 
+/**
+ * Formato de fecha/hora determinista (zona El Salvador). Evita que el servidor
+ * (UTC) y el navegador rendericen distinto y provoquen errores de hidratacion.
+ */
+const SV_DATE: Intl.DateTimeFormatOptions = {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  timeZone: "America/El_Salvador",
+};
+
+const SV_DATE_LONG: Intl.DateTimeFormatOptions = {
+  ...SV_DATE,
+  month: "long",
+};
+
+export function formatDateTime(
+  value: string | number | Date,
+  variant: "short" | "long" = "short",
+): string {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  try {
+    return new Intl.DateTimeFormat(
+      "es-SV",
+      variant === "long" ? SV_DATE_LONG : SV_DATE,
+    ).format(date);
+  } catch {
+    return date.toISOString().slice(0, 16).replace("T", " ");
+  }
+}
+
 export function orderItemsSummary(items: OrderItem[]): string {
   return items
     .map((it) => `- ${it.name} x${it.quantity} (${formatMoney(it.priceCents * it.quantity)})`)
