@@ -1,4 +1,6 @@
 import { Resend } from "resend";
+import nodemailer from "nodemailer";
+import type { Transporter } from "nodemailer";
 import type { OrderDTO } from "./types";
 import { formatMoney } from "./money";
 import type { OrderStatus } from "./orders";
@@ -12,32 +14,66 @@ import {
 } from "./orders";
 
 /**
- * Notificaciones por correo (Resend).
+ * Notificaciones por correo.
+ *
+ * Dos proveedores, en orden de prioridad:
+ * 1. Gmail SMTP (nodemailer) si estan GMAIL_USER + GMAIL_APP_PASSWORD.
+ *    Permite enviar a cualquier cliente sin dominio propio.
+ * 2. Resend si esta RESEND_API_KEY (con el remitente de pruebas solo llega
+ *    al correo dueno de la cuenta; para clientes requiere dominio verificado).
  *
  * Variables de entorno:
- * - RESEND_API_KEY       API key de Resend (si falta, no se envia nada).
- * - NOTIFY_EMAIL_TO      correo(s) del negocio separados por coma.
- * - EMAIL_FROM           remitente (por defecto Resend onboarding).
+ * - GMAIL_USER / GMAIL_APP_PASSWORD   envio por Gmail (recomendado, gratis).
+ * - RESEND_API_KEY / NOTIFY_EMAIL_TO / EMAIL_FROM   envio por Resend.
  *
- * Nota: enviar a clientes (direcciones arbitrarias) requiere tener un dominio
- * verificado en Resend. Con el remitente de pruebas solo llega al correo dueno
- * de la cuenta.
+ * Si no hay proveedor configurado, no se envia nada (la app sigue normal).
  */
 let client: Resend | null = null;
+let smtp: Transporter | null = null;
 
 function apiKey(): string | undefined {
   return process.env.RESEND_API_KEY;
 }
 
+function gmailUser(): string | undefined {
+  return process.env.GMAIL_USER;
+}
+
+function gmailPass(): string | undefined {
+  const raw = process.env.GMAIL_APP_PASSWORD;
+  return raw ? raw.replace(/\s+/g, "") : undefined;
+}
+
+function smtpConfigured(): boolean {
+  return Boolean(gmailUser() && gmailPass());
+}
+
 function businessRecipients(): string[] {
-  return (process.env.NOTIFY_EMAIL_TO ?? "")
+  const list = (process.env.NOTIFY_EMAIL_TO ?? "")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
+  if (list.length === 0 && gmailUser()) return [gmailUser()!];
+  return list;
 }
 
-function sender(): string {
+function gmailFrom(): string {
+  return `JecsitoShop <${gmailUser()}>`;
+}
+
+function resendFrom(): string {
   return process.env.EMAIL_FROM || "JecsitoShop <onboarding@resend.dev>";
+}
+
+function getSmtp(): Transporter {
+  if (smtp) return smtp;
+  smtp = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: { user: gmailUser(), pass: gmailPass() },
+  });
+  return smtp;
 }
 
 function escapeHtml(value: string): string {
@@ -51,20 +87,37 @@ function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (c) => map[c]!);
 }
 
-/** Envio de bajo nivel: nunca lanza, solo registra errores. */
+/** Envio de bajo nivel: elige proveedor; nunca lanza, solo registra errores. */
 async function sendEmail(
   to: string[],
   subject: string,
   html: string,
   text: string,
 ): Promise<void> {
+  if (to.length === 0) return;
+
+  if (smtpConfigured()) {
+    try {
+      await getSmtp().sendMail({
+        from: gmailFrom(),
+        to: to.join(", "),
+        subject,
+        html,
+        text,
+      });
+    } catch (err) {
+      console.error("[email] No se pudo enviar por SMTP de Gmail", err);
+    }
+    return;
+  }
+
   const key = apiKey();
-  if (!key || to.length === 0) return;
+  if (!key) return;
 
   client ??= new Resend(key);
   try {
     const { error } = await client.emails.send({
-      from: sender(),
+      from: resendFrom(),
       to,
       subject,
       html,
