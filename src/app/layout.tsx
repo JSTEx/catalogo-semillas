@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     locale: "es_SV",
     url: process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") || "/",
     siteName: "JecsitoShop",
-    title: "JecsitoShop · Catálogo de semillas y productos",
+    title: "JecsitoShop · Tienda online",
     description:
       "Catálogo en línea de JecsitoShop: consulta productos y disponibilidad en tiempo real.",
     images: [
@@ -36,7 +36,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "JecsitoShop · Catálogo de semillas y productos",
+    title: "JecsitoShop · Tienda online",
     description:
       "Catálogo en línea de JecsitoShop: consulta productos y disponibilidad en tiempo real.",
     images: ["/og.png"],
