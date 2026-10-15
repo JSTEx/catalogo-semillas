@@ -25,17 +25,30 @@ import {
  * Variables de entorno:
  * - GMAIL_USER / GMAIL_APP_PASSWORD   envio por Gmail (recomendado, gratis).
  * - RESEND_API_KEY / NOTIFY_EMAIL_TO / EMAIL_FROM   envio por Resend.
+ * - EMAIL_LOGO_URL   URL absoluta del logo (por defecto <sitio>/logo.png).
  *
+ * El diseno usa el modo nocturno del sitio (fondo carbon + esmeralda).
  * Si no hay proveedor configurado, no se envia nada (la app sigue normal).
  */
 let client: Resend | null = null;
 let smtp: Transporter | null = null;
 
-const BRAND = "#059669";
-const BRAND_DARK = "#047857";
-const INK = "#1c1917";
-const MUTED = "#78716c";
-const LINE = "#e7e5e4";
+/* Paleta basada en el modo oscuro del sitio (globals.css + brand esmeralda). */
+const PAGE = "#0c0a09";
+const CARD = "#1c1917";
+const SURFACE = "#292524";
+const LINE = "#292524";
+const INK = "#f5f5f4";
+const TEXT = "#e7e5e4";
+const MUTED = "#a8a29e";
+const BRAND = "#10b981";
+const BRAND_SOFT = "#34d399";
+const BRAND_INK = "#064e3b";
+const TRACKING = "#38bdf8";
+const TRACKING_INK = "#082f49";
+const NOTE_BG = "#3f2d0a";
+const NOTE_LINE = "#78350f";
+const NOTE_TEXT = "#fde68a";
 
 function apiKey(): string | undefined {
   return process.env.RESEND_API_KEY;
@@ -52,6 +65,11 @@ function gmailPass(): string | undefined {
 
 function smtpConfigured(): boolean {
   return Boolean(gmailUser() && gmailPass());
+}
+
+function logoUrl(): string {
+  const explicit = process.env.EMAIL_LOGO_URL?.trim();
+  return explicit || `${siteOrigin()}/logo.png`;
 }
 
 function businessRecipients(): string[] {
@@ -142,16 +160,17 @@ async function sendEmail(
 const FONT =
   "system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 
-/** Marco visual comun: fondo, encabezado de marca y pie. */
+/** Marco visual comun: fondo oscuro, encabezado de marca y pie. */
 function shell(preheader: string, inner: string, footer: string): string {
   return `<!doctype html>
 <html lang="es">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="color-scheme" content="light only" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="supported-color-schemes" content="dark" />
   </head>
-  <body style="margin:0;padding:0;background:#f5f5f4;font-family:${FONT};">
+  <body style="margin:0;padding:0;background:${PAGE};font-family:${FONT};">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${escapeHtml(
       preheader,
     )}</div>
@@ -159,17 +178,27 @@ function shell(preheader: string, inner: string, footer: string): string {
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;">
         <tr>
           <td>
-            <div style="background:${BRAND};border-radius:18px 18px 0 0;padding:22px 26px;">
-              <span style="color:#ffffff;font-size:19px;font-weight:800;letter-spacing:-0.02em;">JecsitoShop</span>
-              <span style="float:right;color:#d1fae5;font-size:11px;font-weight:600;line-height:26px;text-transform:uppercase;letter-spacing:.08em;">Tienda</span>
+            <div style="background:${CARD};border:1px solid ${LINE};border-bottom:2px solid ${BRAND};border-radius:18px 18px 0 0;padding:20px 26px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="vertical-align:middle;">
+                    <img src="${escapeHtml(
+                      logoUrl(),
+                    )}" alt="JecsitoShop" height="40" style="display:block;height:40px;width:auto;border:0;outline:none;" />
+                  </td>
+                  <td style="vertical-align:middle;text-align:right;">
+                    <span style="color:${BRAND_SOFT};font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;">Tienda</span>
+                  </td>
+                </tr>
+              </table>
             </div>
-            <div style="background:#ffffff;border:1px solid ${LINE};border-top:0;border-radius:0 0 18px 18px;padding:26px;">
+            <div style="background:${CARD};border:1px solid ${LINE};border-top:0;border-radius:0 0 18px 18px;padding:26px;">
               ${inner}
             </div>
           </td>
         </tr>
       </table>
-      <p style="max-width:560px;margin:18px auto 0;text-align:center;color:#a8a29e;font-size:12px;line-height:1.5;">${footer}</p>
+      <p style="max-width:560px;margin:18px auto 0;text-align:center;color:#57534e;font-size:12px;line-height:1.5;">${footer}</p>
     </div>
   </body>
 </html>`;
@@ -181,11 +210,11 @@ function button(
   variant: "solid" | "sky" | "outline",
 ): string {
   const style = {
-    solid: `background:${BRAND};color:#ffffff;border:1px solid ${BRAND};`,
-    sky: "background:#0284c7;color:#ffffff;border:1px solid #0284c7;",
-    outline: `background:#ffffff;color:${BRAND_DARK};border:1px solid #a7f3d0;`,
+    solid: `background:${BRAND};color:${BRAND_INK};border:1px solid ${BRAND};`,
+    sky: `background:${TRACKING};color:${TRACKING_INK};border:1px solid ${TRACKING};`,
+    outline: `background:${SURFACE};color:${TEXT};border:1px solid #44403c;`,
   }[variant];
-  return `<a href="${href}" style="display:inline-block;${style}text-decoration:none;font-size:14px;font-weight:600;padding:12px 20px;border-radius:12px;margin:0 8px 8px 0;">${label}</a>`;
+  return `<a href="${href}" style="display:inline-block;${style}text-decoration:none;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;margin:0 8px 8px 0;">${label}</a>`;
 }
 
 function sectionTitle(label: string): string {
@@ -193,7 +222,7 @@ function sectionTitle(label: string): string {
 }
 
 function card(inner: string): string {
-  return `<div style="border:1px solid ${LINE};border-radius:14px;padding:16px;">${inner}</div>`;
+  return `<div style="background:${SURFACE};border:1px solid #44403c;border-radius:14px;padding:16px;">${inner}</div>`;
 }
 
 function detailRow(label: string, value: string): string {
@@ -209,11 +238,13 @@ function itemsTable(order: OrderDTO): string {
       .map(
         (it) => `<tr>
       <td width="54" style="padding:8px 12px 8px 0;vertical-align:middle;">
-        <img src="${escapeHtml(it.imageUrl)}" width="44" height="44" alt="" style="border-radius:10px;background:#f5f5f4;display:block;object-fit:contain;" />
+        <img src="${escapeHtml(
+          it.imageUrl,
+        )}" width="44" height="44" alt="" style="border-radius:10px;background:#0c0a09;display:block;object-fit:contain;" />
       </td>
       <td style="padding:8px 0;vertical-align:middle;font-size:14px;color:${INK};font-weight:600;">
         ${escapeHtml(it.name)}
-        <div style="color:#a8a29e;font-size:12px;font-weight:400;">${it.quantity} × ${formatMoney(
+        <div style="color:${MUTED};font-size:12px;font-weight:400;">${it.quantity} × ${formatMoney(
           it.priceCents,
         )}</div>
       </td>
@@ -229,10 +260,10 @@ function itemsTable(order: OrderDTO): string {
 function totalsBox(order: OrderDTO): string {
   const row = (label: string, value: string, strong = false) =>
     `<tr>
-      <td style="padding:2px 0;color:${strong ? INK : MUTED};font-size:${strong ? "15px" : "13px"};font-weight:${strong ? "800" : "400"};">${label}</td>
-      <td style="padding:2px 0;text-align:right;color:${INK};font-size:${strong ? "15px" : "13px"};font-weight:${strong ? "800" : "600"};">${value}</td>
+      <td style="padding:2px 0;color:${strong ? "#a7f3d0" : MUTED};font-size:${strong ? "15px" : "13px"};font-weight:${strong ? "800" : "400"};">${label}</td>
+      <td style="padding:2px 0;text-align:right;color:${strong ? "#ecfdf5" : TEXT};font-size:${strong ? "15px" : "13px"};font-weight:${strong ? "800" : "600"};">${value}</td>
     </tr>`;
-  return `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:14px;padding:14px 16px;margin-top:16px;">
+  return `<div style="background:${BRAND_INK};border:1px solid #047857;border-radius:14px;padding:14px 16px;margin-top:16px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       ${row("Subtotal", formatMoney(order.productsTotal))}
       ${
@@ -243,6 +274,10 @@ function totalsBox(order: OrderDTO): string {
       ${row("Total", formatMoney(order.totalCents), true)}
     </table>
   </div>`;
+}
+
+function note(text: string): string {
+  return `<div style="margin-top:16px;background:${NOTE_BG};border:1px solid ${NOTE_LINE};border-radius:12px;padding:12px 14px;color:${NOTE_TEXT};font-size:13px;">${text}</div>`;
 }
 
 /* ----------------------------- Correo al negocio ---------------------------- */
@@ -264,9 +299,7 @@ function businessHtml(order: OrderDTO): string {
     )}
     ${
       order.notes
-        ? `<div style="margin-top:12px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px 14px;color:#92400e;font-size:13px;"><strong>Nota:</strong> ${escapeHtml(
-            order.notes,
-          )}</div>`
+        ? note(`<strong>Nota:</strong> ${escapeHtml(order.notes)}`)
         : ""
     }
     <div style="margin-top:20px;">
@@ -354,7 +387,9 @@ function customerHtml(order: OrderDTO, status: OrderStatus): string {
     order.payment === "transferencia" &&
     status !== "delivered" &&
     status !== "cancelled"
-      ? `<div style="margin-top:16px;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:12px 14px;color:#92400e;font-size:13px;">Recuerda enviarnos el comprobante de tu transferencia por WhatsApp para confirmar el pago.</div>`
+      ? note(
+          "Recuerda enviarnos el comprobante de tu transferencia por WhatsApp para confirmar el pago.",
+        )
       : "";
 
   const inner = `
@@ -363,7 +398,7 @@ function customerHtml(order: OrderDTO, status: OrderStatus): string {
       <h1 style="margin:10px 0 6px;color:${INK};font-size:21px;font-weight:800;letter-spacing:-0.02em;">${CUSTOMER_STATUS_TITLES[status]}</h1>
       <p style="margin:0;color:${MUTED};font-size:14px;">Pedido N° ${order.number}</p>
     </div>
-    <p style="margin:0 0 18px;color:#44403c;font-size:14px;line-height:1.6;text-align:center;">Hola ${escapeHtml(
+    <p style="margin:0 0 18px;color:${TEXT};font-size:14px;line-height:1.6;text-align:center;">Hola ${escapeHtml(
       order.customerName,
     )}, ${CUSTOMER_STATUS_LINES[status]}</p>
     ${sectionTitle("Tu pedido")}
@@ -372,7 +407,11 @@ function customerHtml(order: OrderDTO, status: OrderStatus): string {
     ${receiptNote}
     ${
       tracking
-        ? `<div style="margin-top:20px;text-align:center;">${button(tracking, "Ver estado de mi pedido", "sky")}</div>`
+        ? `<div style="margin-top:20px;text-align:center;">${button(
+            tracking,
+            "Ver estado de mi pedido",
+            "sky",
+          )}</div>`
         : ""
     }`;
 
