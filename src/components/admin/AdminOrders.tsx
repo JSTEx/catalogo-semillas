@@ -10,6 +10,7 @@ import {
   confirmWhatsAppLink,
   statusNotifyWhatsAppLink,
   orderTrackingUrl,
+  formatDateTime,
   type OrderStatus,
 } from "@/lib/orders";
 import { formatMoney } from "@/lib/money";
@@ -202,12 +203,7 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {filtered.map((order) => {
-            const date = new Date(order.createdAt).toLocaleString("es", {
-              day: "2-digit",
-              month: "short",
-              hour: "2-digit",
-              minute: "2-digit",
-            });
+            const date = formatDateTime(order.createdAt, "short");
             return (
               <article
                 key={order.id}
