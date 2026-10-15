@@ -6,6 +6,7 @@ import { createOrderSchema } from "@/lib/validation";
 import { isSameOrigin, jsonError, getClientIp } from "@/lib/http";
 import { checkOrderRateLimit } from "@/lib/rate-limit";
 import { isOrderable } from "@/lib/orders";
+import { sendNewOrderEmail, sendCustomerOrderEmail } from "@/lib/email";
 import { toOrderDTO, type OrderItem } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -80,6 +81,8 @@ export async function POST(req: Request) {
     .values({
       customerName: parsed.data.customerName,
       customerPhone: parsed.data.customerPhone,
+      customerEmail: parsed.data.customerEmail ?? null,
+      notifyEmail: parsed.data.notifyEmail,
       delivery: parsed.data.delivery,
       address: parsed.data.address ?? null,
       payment: parsed.data.payment,
@@ -91,5 +94,9 @@ export async function POST(req: Request) {
     })
     .returning();
 
-  return NextResponse.json({ order: toOrderDTO(created) }, { status: 201 });
+  const dto = toOrderDTO(created);
+  await sendNewOrderEmail(dto);
+  await sendCustomerOrderEmail(dto);
+
+  return NextResponse.json({ order: dto }, { status: 201 });
 }

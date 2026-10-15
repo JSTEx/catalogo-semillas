@@ -235,6 +235,14 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
                     {order.customerName}
                   </p>
                   <p className="text-stone-500 dark:text-stone-400">{order.customerPhone}</p>
+                  {order.customerEmail && (
+                    <p className="text-xs text-stone-500 dark:text-stone-400">
+                      {order.customerEmail}
+                      {order.notifyEmail
+                        ? " · recibe actualizaciones por correo"
+                        : ""}
+                    </p>
+                  )}
                   <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
                     {DELIVERY_META[order.delivery].label}
                     {order.delivery === "domicilio" && order.address

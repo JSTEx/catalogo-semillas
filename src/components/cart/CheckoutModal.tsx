@@ -24,6 +24,8 @@ export default function CheckoutModal({ open, onClose }: Props) {
   const { items, totalCents, clear } = useCart();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [notifyEmail, setNotifyEmail] = useState(false);
   const [delivery, setDelivery] = useState<Delivery>("retiro");
   const [address, setAddress] = useState("");
   const [payment, setPayment] = useState<Payment>("efectivo");
@@ -38,6 +40,8 @@ export default function CheckoutModal({ open, onClose }: Props) {
   function reset() {
     setName("");
     setPhone("");
+    setEmail("");
+    setNotifyEmail(false);
     setDelivery("retiro");
     setAddress("");
     setPayment("efectivo");
@@ -56,6 +60,12 @@ export default function CheckoutModal({ open, onClose }: Props) {
   function validate(): string | null {
     if (name.trim().length < 2) return "Escribe tu nombre";
     if (phone.trim().length < 7) return "Escribe un telefono valido";
+    if (
+      (notifyEmail || email.trim().length > 0) &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+    ) {
+      return "Escribe un correo valido";
+    }
     if (delivery === "domicilio" && address.trim().length < 5) {
       return "Para domicilio indica una direccion exacta";
     }
@@ -83,6 +93,8 @@ export default function CheckoutModal({ open, onClose }: Props) {
         body: JSON.stringify({
           customerName: name.trim(),
           customerPhone: phone.trim(),
+          customerEmail: email.trim() || undefined,
+          notifyEmail: notifyEmail && email.trim().length > 0,
           delivery,
           address: delivery === "domicilio" ? address.trim() : undefined,
           payment,
@@ -219,6 +231,17 @@ export default function CheckoutModal({ open, onClose }: Props) {
                   {phone}
                 </dd>
               </div>
+              {email.trim() && (
+                <div className="flex items-start justify-between gap-3 rounded-2xl bg-stone-50/80 px-4 py-3 dark:bg-stone-800/50">
+                  <dt className="text-stone-500 dark:text-stone-400">Correo</dt>
+                  <dd className="text-right font-medium text-stone-800 dark:text-stone-100">
+                    {email}
+                    {notifyEmail && email.trim()
+                      ? " · con actualizaciones"
+                      : ""}
+                  </dd>
+                </div>
+              )}
               <div className="flex items-start justify-between gap-3 rounded-2xl bg-stone-50/80 px-4 py-3 dark:bg-stone-800/50">
                 <dt className="text-stone-500 dark:text-stone-400">Entrega</dt>
                 <dd className="text-right font-medium text-stone-800 dark:text-stone-100">
@@ -331,6 +354,39 @@ export default function CheckoutModal({ open, onClose }: Props) {
                   maxLength={20}
                   className={inputClass}
                 />
+              </div>
+
+              <div className="space-y-2">
+                <input
+                  value={email}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setEmail(v);
+                    if (v.trim().length === 0) setNotifyEmail(false);
+                  }}
+                  placeholder="Tu correo (opcional)"
+                  aria-label="Tu correo"
+                  inputMode="email"
+                  maxLength={254}
+                  className={inputClass}
+                />
+                {email.trim().length > 0 && (
+                  <label className="flex items-start gap-2 rounded-2xl border border-stone-200 bg-white/60 px-4 py-3 text-sm text-stone-600 dark:border-stone-700 dark:bg-stone-800/60 dark:text-stone-300">
+                    <input
+                      type="checkbox"
+                      checked={notifyEmail}
+                      onChange={(e) => setNotifyEmail(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 accent-brand-500"
+                    />
+                    <span>
+                      Quiero recibir actualizaciones de mi pedido por correo
+                      <span className="block text-xs text-stone-400 dark:text-stone-500">
+                        Te avisamos cuando cambie el estado (confirmado, en
+                        camino, entregado).
+                      </span>
+                    </span>
+                  </label>
+                )}
               </div>
 
               <div className="space-y-2">

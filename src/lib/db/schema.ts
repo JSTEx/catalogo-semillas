@@ -1,5 +1,6 @@
 import {
   bigserial,
+  boolean,
   index,
   integer,
   jsonb,
@@ -86,6 +87,8 @@ export const orders = pgTable(
     number: bigserial("number", { mode: "number" }).unique().notNull(),
     customerName: text("customer_name").notNull(),
     customerPhone: text("customer_phone").notNull(),
+    customerEmail: text("customer_email"),
+    notifyEmail: boolean("notify_email").default(false).notNull(),
     delivery: deliveryTypeEnum("delivery").default("retiro").notNull(),
     address: text("address"),
     payment: paymentMethodEnum("payment").default("efectivo").notNull(),

@@ -46,6 +46,8 @@ export interface OrderDTO {
   number: number;
   customerName: string;
   customerPhone: string;
+  customerEmail: string | null;
+  notifyEmail: boolean;
   delivery: "retiro" | "domicilio";
   address: string | null;
   payment: "efectivo" | "transferencia";
@@ -65,6 +67,8 @@ export function toOrderDTO(o: Order): OrderDTO {
     number: o.number,
     customerName: o.customerName,
     customerPhone: o.customerPhone,
+    customerEmail: o.customerEmail,
+    notifyEmail: o.notifyEmail,
     delivery: o.delivery,
     address: o.address,
     payment: o.payment,

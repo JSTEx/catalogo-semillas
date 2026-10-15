@@ -101,6 +101,13 @@ export const SUGGESTED_CATEGORIES = [
 
 export const productIdSchema = z.string().uuid("Identificador no valido");
 
+const customerEmailSchema = z
+  .string()
+  .trim()
+  .toLowerCase()
+  .email("El correo no es valido")
+  .max(254, "El correo es demasiado largo");
+
 export const cartItemSchema = z.object({
   productId: z.string().uuid("Producto no valido"),
   quantity: z.number().int().min(1, "Cantidad minima: 1").max(99, "Cantidad maxima: 99"),
@@ -110,6 +117,8 @@ export const createOrderSchema = z
   .object({
     customerName: sanitizedString(2, 80, "El nombre"),
     customerPhone: sanitizedString(7, 20, "El telefono"),
+    customerEmail: customerEmailSchema.optional(),
+    notifyEmail: z.boolean().default(false),
     delivery: z.enum(["retiro", "domicilio"]).default("retiro"),
     address: sanitizedString(1, 200, "La direccion").optional(),
     payment: z.enum(["efectivo", "transferencia"]).default("efectivo"),
@@ -122,6 +131,10 @@ export const createOrderSchema = z
   .refine((data) => data.delivery !== "domicilio" || (data.address ?? "").length > 0, {
     path: ["address"],
     message: "Para envio a domicilio es obligatorio indicar la direccion",
+  })
+  .refine((data) => !data.notifyEmail || !!data.customerEmail, {
+    path: ["customerEmail"],
+    message: "Escribe tu correo para recibir actualizaciones",
   });
 
 export const updateOrderSchema = z

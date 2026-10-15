@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { productIdSchema, updateOrderSchema } from "@/lib/validation";
 import { requireAdmin, jsonError } from "@/lib/http";
+import { sendCustomerOrderEmail } from "@/lib/email";
 import { toOrderDTO, toPublicOrderDTO } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -60,7 +61,12 @@ export async function PATCH(req: Request, { params }: Params) {
     .where(eq(orders.id, id))
     .returning();
 
-  return NextResponse.json({ order: toOrderDTO(updated) });
+  const dto = toOrderDTO(updated);
+  if (parsed.data.status && parsed.data.status !== existing.status) {
+    await sendCustomerOrderEmail(dto);
+  }
+
+  return NextResponse.json({ order: dto });
 }
 
 export async function DELETE(req: Request, { params }: Params) {
