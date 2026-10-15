@@ -12,7 +12,7 @@ jobs:
       # Valores de relleno: las paginas son dinamicas y no consultan la base
       # durante el build, solo se necesita la variable definida.
       DATABASE_URL: postgres://ci:ci@localhost:5432/ci
-      NEXT_PUBLIC_SITE_URL: https://catalogo-semillas.vercel.app
+      NEXT_PUBLIC_SITE_URL: https://jecsitoshop.vercel.app
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
