@@ -232,7 +232,34 @@ export default function OrderTracker({
         </p>
       </section>
 
+      {order.payment === "transferencia" &&
+        order.status !== "delivered" &&
+        order.status !== "cancelled" && (
+          <section className="rounded-3xl border border-amber-200 bg-amber-50 p-5 text-sm dark:border-amber-500/30 dark:bg-amber-500/10">
+            <h2 className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+              Pago por transferencia
+            </h2>
+            <p className="mt-1 text-amber-700 dark:text-amber-300/90">
+              Aun no confirmamos tu pago. Envia el comprobante de transferencia
+              por WhatsApp para agilizar la entrega.
+            </p>
+          </section>
+        )}
+
       <div className="flex flex-col gap-2">
+        {order.payment === "transferencia" && order.status !== "cancelled" && (
+          <a
+            href={businessWhatsAppLink(
+              `Hola! Adjunto el comprobante de transferencia de mi pedido N° ${order.number}.`,
+            )}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
+          >
+            <WhatsAppIcon />
+            Enviar comprobante de pago
+          </a>
+        )}
         <a
           href={businessWhatsAppLink(waText)}
           target="_blank"
@@ -241,6 +268,12 @@ export default function OrderTracker({
         >
           <WhatsAppIcon />
           Escribir por WhatsApp
+        </a>
+        <a
+          href="/mis-pedidos"
+          className="inline-flex w-full items-center justify-center rounded-2xl border border-stone-200 bg-white px-5 py-3 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
+        >
+          Ver mis pedidos
         </a>
         <a
           href="/"

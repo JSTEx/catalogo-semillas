@@ -13,6 +13,7 @@ import {
   type OrderStatus,
 } from "@/lib/orders";
 import { formatMoney } from "@/lib/money";
+import { normalizeSearch } from "@/lib/search";
 
 interface Props {
   orders: OrderDTO[];
@@ -29,6 +30,7 @@ function WhatsAppIcon() {
 
 export default function AdminOrders({ orders, onOrdersChange }: Props) {
   const [filter, setFilter] = useState<"all" | OrderStatus>("all");
+  const [query, setQuery] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [shippingDraft, setShippingDraft] = useState<Record<string, string>>({});
@@ -41,10 +43,20 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
     return c;
   }, [orders]);
 
-  const filtered = useMemo(
-    () => (filter === "all" ? orders : orders.filter((o) => o.status === filter)),
-    [orders, filter],
-  );
+  const filtered = useMemo(() => {
+    const q = normalizeSearch(query.trim());
+    return orders.filter((o) => {
+      const inFilter = filter === "all" || o.status === filter;
+      if (!inFilter) return false;
+      if (q === "") return true;
+      return (
+        String(o.number).includes(q) ||
+        normalizeSearch(o.customerName).includes(q) ||
+        normalizeSearch(o.customerPhone).includes(q) ||
+        o.items.some((it) => normalizeSearch(it.name).includes(q))
+      );
+    });
+  }, [orders, filter, query]);
 
   async function patch(id: string, body: Record<string, unknown>) {
     setError(null);
@@ -111,6 +123,32 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
 
   return (
     <div>
+      <div className="mb-3">
+        <div className="relative w-full sm:max-w-sm">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400 dark:text-stone-500"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.3-4.3" />
+          </svg>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar por N°, nombre, telefono o producto"
+            aria-label="Buscar pedidos"
+            className="w-full rounded-2xl border border-stone-200 bg-white/80 py-3 pl-11 pr-4 text-sm text-stone-800 outline-none backdrop-blur-md transition-all duration-300 placeholder:text-stone-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
+          />
+        </div>
+      </div>
+
       <div className="mb-5 flex flex-wrap items-center gap-2">
         <button
           type="button"

@@ -46,3 +46,40 @@ export async function checkLoginRateLimit(
   const { success, limit, remaining, reset } = await l.limit(identifier);
   return { success, limit, remaining, reset };
 }
+
+/**
+ * Limite para crear pedidos: maximo 5 pedidos cada 10 minutos por IP.
+ * Mitiga el spam (clientes enviando pedidos en masa).
+ */
+let orderLimiter: Ratelimit | null | undefined;
+
+function getOrderLimiter(): Ratelimit | null {
+  if (orderLimiter !== undefined) return orderLimiter;
+
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (!url || !token) {
+    orderLimiter = null;
+    return orderLimiter;
+  }
+
+  orderLimiter = new Ratelimit({
+    redis: new Redis({ url, token }),
+    limiter: Ratelimit.slidingWindow(5, "10 m"),
+    analytics: true,
+    prefix: "rl:orders",
+  });
+  return orderLimiter;
+}
+
+export async function checkOrderRateLimit(
+  identifier: string,
+): Promise<RateLimitResult> {
+  const l = getOrderLimiter();
+  if (!l) {
+    return { success: true, limit: 5, remaining: 5, reset: 0 };
+  }
+  const { success, limit, remaining, reset } = await l.limit(identifier);
+  return { success, limit, remaining, reset };
+}

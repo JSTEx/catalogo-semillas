@@ -91,6 +91,7 @@ export interface PublicOrderDTO {
   id: string;
   number: number;
   delivery: "retiro" | "domicilio";
+  payment: "efectivo" | "transferencia";
   status: "new" | "confirmed" | "in_transit" | "delivered" | "cancelled";
   items: OrderItem[];
   productsTotal: number;
@@ -105,6 +106,7 @@ export function toPublicOrderDTO(o: Order): PublicOrderDTO {
     id: o.id,
     number: o.number,
     delivery: o.delivery,
+    payment: o.payment,
     status: o.status,
     items: (o.items ?? []) as OrderItem[],
     productsTotal: o.productsTotal,

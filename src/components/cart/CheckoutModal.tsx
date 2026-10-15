@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { useCart } from "./CartProvider";
 import { formatMoney } from "@/lib/money";
-import { customerWhatsAppLink, orderTrackingPath } from "@/lib/orders";
+import {
+  businessWhatsAppLink,
+  customerWhatsAppLink,
+  orderTrackingPath,
+} from "@/lib/orders";
 import { saveMyOrder } from "@/lib/my-order";
 import type { OrderDTO } from "@/lib/types";
 
@@ -14,6 +18,7 @@ interface Props {
 
 type Delivery = "retiro" | "domicilio";
 type Payment = "efectivo" | "transferencia";
+type Step = "form" | "review";
 
 export default function CheckoutModal({ open, onClose }: Props) {
   const { items, totalCents, clear } = useCart();
@@ -23,6 +28,7 @@ export default function CheckoutModal({ open, onClose }: Props) {
   const [address, setAddress] = useState("");
   const [payment, setPayment] = useState<Payment>("efectivo");
   const [notes, setNotes] = useState("");
+  const [step, setStep] = useState<Step>("form");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<OrderDTO | null>(null);
@@ -36,6 +42,7 @@ export default function CheckoutModal({ open, onClose }: Props) {
     setAddress("");
     setPayment("efectivo");
     setNotes("");
+    setStep("form");
     setError(null);
     setSuccess(null);
   }
@@ -46,15 +53,28 @@ export default function CheckoutModal({ open, onClose }: Props) {
     onClose();
   }
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    if (name.trim().length < 2) return setError("Escribe tu nombre");
-    if (phone.trim().length < 7) return setError("Escribe un telefono valido");
+  function validate(): string | null {
+    if (name.trim().length < 2) return "Escribe tu nombre";
+    if (phone.trim().length < 7) return "Escribe un telefono valido";
     if (delivery === "domicilio" && address.trim().length < 5) {
-      return setError("Para domicilio indica una direccion");
+      return "Para domicilio indica una direccion exacta";
     }
+    return null;
+  }
 
+  function goReview(e: React.FormEvent) {
+    e.preventDefault();
+    const err = validate();
+    if (err) {
+      setError(err);
+      return;
+    }
+    setError(null);
+    setStep("review");
+  }
+
+  async function sendOrder() {
+    setError(null);
     setSubmitting(true);
     try {
       const res = await fetch("/api/orders", {
@@ -80,7 +100,12 @@ export default function CheckoutModal({ open, onClose }: Props) {
         throw new Error(data?.error ?? "No se pudo enviar el pedido");
       }
       setSuccess(data.order);
-      saveMyOrder({ id: data.order.id, number: data.order.number });
+      saveMyOrder({
+        id: data.order.id,
+        number: data.order.number,
+        totalCents: data.order.totalCents,
+        payment: data.order.payment,
+      });
       clear();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al enviar el pedido");
@@ -98,6 +123,10 @@ export default function CheckoutModal({ open, onClose }: Props) {
         ? "border-brand-400 bg-brand-50 text-brand-700 shadow-sm dark:border-brand-500/50 dark:bg-brand-500/15 dark:text-brand-300"
         : "border-stone-200 bg-white/60 text-stone-600 hover:border-brand-200 dark:border-stone-700 dark:bg-stone-800/60 dark:text-stone-300",
     ].join(" ");
+
+  const deliveryLabel =
+    delivery === "domicilio" ? "Domicilio (Uber)" : "Retiro / Entrega directa";
+  const paymentLabel = payment === "transferencia" ? "Transferencia" : "Efectivo";
 
   return (
     <div
@@ -119,11 +148,32 @@ export default function CheckoutModal({ open, onClose }: Props) {
             </h2>
             <p className="max-w-sm text-sm text-stone-500 dark:text-stone-400">
               {success.delivery === "domicilio"
-                ? "Te contactaremos para confirmar el costo del envio a domicilio."
+                ? "Te contactaremos para confirmar el costo del envio segun tu zona."
                 : "Te contactaremos para coordinar la entrega."}{" "}
               Total: <strong>{formatMoney(success.totalCents)}</strong>.
             </p>
-            <div className="mt-2 flex w-full flex-col gap-2">
+
+            {success.payment === "transferencia" && (
+              <div className="w-full rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-left text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
+                <p className="font-semibold">Pago por transferencia</p>
+                <p className="mt-1">
+                  Recuerda enviar tu comprobante de transferencia por WhatsApp
+                  para confirmar el pago.
+                </p>
+                <a
+                  href={businessWhatsAppLink(
+                    `Hola! Adjunto el comprobante de transferencia de mi pedido N° ${success.number}.`,
+                  )}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-300 bg-white px-4 py-2.5 text-xs font-semibold text-amber-800 transition-colors hover:bg-amber-100 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200"
+                >
+                  Enviar comprobante por WhatsApp
+                </a>
+              </div>
+            )}
+
+            <div className="mt-1 flex w-full flex-col gap-2">
               <a
                 href={orderTrackingPath(success.id)}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-brand-600"
@@ -147,6 +197,111 @@ export default function CheckoutModal({ open, onClose }: Props) {
               </button>
             </div>
           </div>
+        ) : step === "review" ? (
+          <>
+            <h2 className="mb-1 text-xl font-bold tracking-tight text-stone-900 dark:text-stone-100">
+              Revisa tus datos
+            </h2>
+            <p className="mb-5 text-sm text-stone-500 dark:text-stone-400">
+              Verifica que todo este correcto antes de enviar el pedido.
+            </p>
+
+            <dl className="space-y-3 text-sm">
+              <div className="flex items-start justify-between gap-3 rounded-2xl bg-stone-50/80 px-4 py-3 dark:bg-stone-800/50">
+                <dt className="text-stone-500 dark:text-stone-400">Nombre</dt>
+                <dd className="text-right font-medium text-stone-800 dark:text-stone-100">
+                  {name}
+                </dd>
+              </div>
+              <div className="flex items-start justify-between gap-3 rounded-2xl bg-stone-50/80 px-4 py-3 dark:bg-stone-800/50">
+                <dt className="text-stone-500 dark:text-stone-400">Telefono</dt>
+                <dd className="text-right font-medium text-stone-800 dark:text-stone-100">
+                  {phone}
+                </dd>
+              </div>
+              <div className="flex items-start justify-between gap-3 rounded-2xl bg-stone-50/80 px-4 py-3 dark:bg-stone-800/50">
+                <dt className="text-stone-500 dark:text-stone-400">Entrega</dt>
+                <dd className="text-right font-medium text-stone-800 dark:text-stone-100">
+                  {deliveryLabel}
+                  {delivery === "domicilio" && address ? ` · ${address}` : ""}
+                </dd>
+              </div>
+              <div className="flex items-start justify-between gap-3 rounded-2xl bg-stone-50/80 px-4 py-3 dark:bg-stone-800/50">
+                <dt className="text-stone-500 dark:text-stone-400">Pago</dt>
+                <dd className="text-right font-medium text-stone-800 dark:text-stone-100">
+                  {paymentLabel}
+                </dd>
+              </div>
+              {notes.trim() && (
+                <div className="flex items-start justify-between gap-3 rounded-2xl bg-stone-50/80 px-4 py-3 dark:bg-stone-800/50">
+                  <dt className="text-stone-500 dark:text-stone-400">Notas</dt>
+                  <dd className="text-right font-medium text-stone-800 dark:text-stone-100">
+                    {notes}
+                  </dd>
+                </div>
+              )}
+            </dl>
+
+            <ul className="mt-4 flex flex-col gap-1 rounded-2xl border border-stone-200/70 px-4 py-3 text-sm dark:border-stone-700/70">
+              {items.map((it) => (
+                <li
+                  key={it.product.id}
+                  className="flex items-center justify-between gap-2 text-stone-600 dark:text-stone-300"
+                >
+                  <span className="min-w-0 truncate">
+                    {it.quantity}× {it.product.name}
+                  </span>
+                  <span className="shrink-0">
+                    {formatMoney(it.product.priceCents * it.quantity)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-3 flex items-center justify-between px-1">
+              <span className="text-sm text-stone-500 dark:text-stone-400">
+                Subtotal
+              </span>
+              <span className="text-lg font-bold text-stone-900 dark:text-stone-100">
+                {formatMoney(totalCents)}
+              </span>
+            </div>
+
+            {delivery === "domicilio" && (
+              <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-2.5 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                El costo del envio depende de tu zona y se confirma al
+                contactarte.
+              </p>
+            )}
+
+            {error && (
+              <p
+                role="alert"
+                className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300"
+              >
+                {error}
+              </p>
+            )}
+
+            <div className="mt-5 flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setStep("form")}
+                disabled={submitting}
+                className="flex-1 rounded-2xl border border-stone-200 bg-white px-5 py-3 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50 disabled:opacity-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
+              >
+                Editar datos
+              </button>
+              <button
+                type="button"
+                onClick={sendOrder}
+                disabled={submitting}
+                className="flex-1 rounded-2xl bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-brand-600 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {submitting ? "Enviando..." : "Confirmar y enviar"}
+              </button>
+            </div>
+          </>
         ) : (
           <>
             <h2 className="mb-1 text-xl font-bold tracking-tight text-stone-900 dark:text-stone-100">
@@ -157,7 +312,7 @@ export default function CheckoutModal({ open, onClose }: Props) {
               linea: coordinas el pago al contactarte.
             </p>
 
-            <form onSubmit={submit} className="space-y-4">
+            <form onSubmit={goReview} className="space-y-4">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <input
                   value={name}
@@ -203,14 +358,21 @@ export default function CheckoutModal({ open, onClose }: Props) {
               </div>
 
               {delivery === "domicilio" && (
-                <input
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder="Direccion de entrega"
-                  aria-label="Direccion de entrega"
-                  maxLength={200}
-                  className={inputClass}
-                />
+                <div className="space-y-1.5">
+                  <input
+                    value={address}
+                    onChange={(e) => setAddress(e.target.value)}
+                    placeholder="Direccion exacta con punto de referencia"
+                    aria-label="Direccion exacta de entrega"
+                    maxLength={200}
+                    className={inputClass}
+                  />
+                  <p className="text-xs text-amber-700 dark:text-amber-300">
+                    Escribe la direccion completa (calle, casa, colonia y una
+                    referencia). El costo del envio depende de la zona y se
+                    confirma al contactarte.
+                  </p>
+                </div>
               )}
 
               <div className="space-y-2">
@@ -235,6 +397,12 @@ export default function CheckoutModal({ open, onClose }: Props) {
                     Transferencia
                   </button>
                 </div>
+                {payment === "transferencia" && (
+                  <p className="text-xs text-amber-700 dark:text-amber-300">
+                    Si pagas por transferencia, despues de enviar el pedido
+                    podras enviarnos el comprobante por WhatsApp.
+                  </p>
+                )}
               </div>
 
               <textarea
@@ -270,7 +438,7 @@ export default function CheckoutModal({ open, onClose }: Props) {
                   disabled={submitting || items.length === 0}
                   className="rounded-2xl bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-brand-600 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {submitting ? "Enviando..." : "Enviar pedido"}
+                  Revisar y continuar
                 </button>
               </div>
             </form>

@@ -149,7 +149,7 @@ export default function CatalogClient({ initialProducts }: Props) {
           </div>
         </div>
 
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 pb-4 sm:px-6">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 gap-y-3 px-4 pb-4 sm:px-6">
           {filters.map((f) => (
             <button
               key={f.key}
@@ -175,7 +175,7 @@ export default function CatalogClient({ initialProducts }: Props) {
               </span>
             </button>
           ))}
-          <div className="ml-auto flex items-center gap-2">
+          <div className="flex w-full items-center justify-end gap-2 sm:ml-auto sm:w-auto">
             <MyOrderLink />
             <ViewToggle value={view} onChange={setView} />
             <a

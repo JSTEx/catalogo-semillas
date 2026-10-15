@@ -3,7 +3,8 @@ import { inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orders, products } from "@/lib/db/schema";
 import { createOrderSchema } from "@/lib/validation";
-import { isSameOrigin, jsonError } from "@/lib/http";
+import { isSameOrigin, jsonError, getClientIp } from "@/lib/http";
+import { checkOrderRateLimit } from "@/lib/rate-limit";
 import { isOrderable } from "@/lib/orders";
 import { toOrderDTO, type OrderItem } from "@/lib/types";
 
@@ -12,6 +13,20 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   if (!isSameOrigin(req)) {
     return jsonError("Origen no permitido", 403);
+  }
+
+  const ip = getClientIp(req);
+  const rl = await checkOrderRateLimit(`ip:${ip}`);
+  if (!rl.success) {
+    const retryAfter = Math.max(1, Math.ceil((rl.reset - Date.now()) / 1000));
+    return jsonError(
+      "Hiciste muchos pedidos seguidos. Espera unos minutos e intentalo de nuevo.",
+      429,
+      {
+        "Retry-After": String(retryAfter),
+        "X-RateLimit-Remaining": "0",
+      },
+    );
   }
 
   let json: unknown;
