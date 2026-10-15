@@ -194,6 +194,9 @@ export function siteOrigin(): string {
   const configured = process.env.NEXT_PUBLIC_SITE_URL;
   if (configured) return configured.replace(/\/+$/, "");
   if (typeof window !== "undefined") return window.location.origin;
+  const vercel =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL || process.env.VERCEL_URL;
+  if (vercel) return `https://${vercel}`.replace(/\/+$/, "");
   return "";
 }
 
