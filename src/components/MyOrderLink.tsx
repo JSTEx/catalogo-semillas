@@ -33,7 +33,7 @@ export default function MyOrderLink({ className }: { className?: string }) {
       href="/mis-pedidos"
       title="Ver mis pedidos"
       className={[
-        "inline-flex h-10 items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 text-sm font-semibold text-emerald-700 shadow-sm backdrop-blur-md transition-all duration-300 hover:border-emerald-300 hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20",
+        "relative inline-flex h-10 items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 text-sm font-semibold text-emerald-700 shadow-sm backdrop-blur-md transition-all duration-300 hover:border-emerald-300 hover:bg-emerald-100 sm:px-4 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20",
         className ?? "",
       ].join(" ")}
     >
@@ -55,7 +55,11 @@ export default function MyOrderLink({ className }: { className?: string }) {
       <span className="hidden sm:inline">
         {active > 0 ? `Mis pedidos (${active})` : "Mis pedidos"}
       </span>
-      <span className="sm:hidden">Mis pedidos</span>
+      {active > 0 && (
+        <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white sm:hidden">
+          {active}
+        </span>
+      )}
     </a>
   );
 }

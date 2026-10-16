@@ -97,7 +97,7 @@ export default function CatalogClient({ initialProducts }: Props) {
     <CartProvider>
       <div className="min-h-dvh">
       <header className="sticky top-0 z-40 border-b border-stone-200/60 bg-white/70 backdrop-blur-md dark:border-stone-800/60 dark:bg-stone-900/70">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500 shadow-sm">
               <Image
@@ -119,7 +119,7 @@ export default function CatalogClient({ initialProducts }: Props) {
             </div>
           </div>
 
-          <div className="relative w-full lg:max-w-md">
+          <div className="relative order-last w-full min-w-0 lg:order-none lg:w-auto lg:max-w-md lg:flex-1">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
@@ -142,40 +142,17 @@ export default function CatalogClient({ initialProducts }: Props) {
               className="w-full rounded-2xl border border-stone-200 bg-white/80 py-3 pl-11 pr-4 text-sm text-stone-800 shadow-sm outline-none backdrop-blur-md transition-all duration-300 placeholder:text-stone-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
             />
           </div>
-        </div>
 
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 gap-y-3 px-4 pb-4 sm:px-6">
-          {filters.map((f) => (
-            <button
-              key={f.key}
-              type="button"
-              onClick={() => setFilter(f.key)}
-              className={[
-                "inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-medium transition-all duration-300",
-                filter === f.key
-                  ? "border-brand-500 bg-brand-500 text-white shadow-sm"
-                  : "border-stone-200 bg-white/70 text-stone-600 hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:border-brand-500/40 dark:hover:text-brand-300",
-              ].join(" ")}
-            >
-              {f.label}
-              <span
-                className={[
-                  "rounded-full px-1.5 text-xs",
-                  filter === f.key
-                    ? "bg-white/25 text-white"
-                    : "bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400",
-                ].join(" ")}
-              >
-                {f.count}
-              </span>
-            </button>
-          ))}
-          <div className="flex w-full items-center justify-end gap-2 sm:ml-auto sm:w-auto">
+          <div className="ml-auto flex shrink-0 items-center gap-2">
             <MyOrderLink />
-            <ViewToggle value={view} onChange={setView} />
+            <div className="hidden sm:block">
+              <ViewToggle value={view} onChange={setView} />
+            </div>
             <a
               href="/admin"
-              className="inline-flex h-10 items-center gap-2 rounded-2xl border border-brand-200 bg-brand-50 px-4 text-sm font-semibold text-brand-700 shadow-sm backdrop-blur-md transition-all duration-300 hover:border-brand-300 hover:bg-brand-100 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300 dark:hover:border-brand-500/50 dark:hover:bg-brand-500/20"
+              title="Panel de administracion"
+              aria-label="Panel de administracion"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-brand-200 bg-brand-50 text-brand-700 shadow-sm backdrop-blur-md transition-all duration-300 hover:border-brand-300 hover:bg-brand-100 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300 dark:hover:border-brand-500/50 dark:hover:bg-brand-500/20"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -185,55 +162,79 @@ export default function CatalogClient({ initialProducts }: Props) {
                 strokeWidth="2"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="h-4 w-4"
+                className="h-5 w-5"
                 aria-hidden="true"
               >
-                <path d="M12 5v14M5 12h14" />
+                <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                <circle cx="12" cy="12" r="3" />
               </svg>
-              Productos
             </a>
             <ThemeToggle />
           </div>
         </div>
 
-        {categories.length > 0 && (
-          <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-2 px-4 pb-4 sm:px-6">
-            <span className="mr-1 text-xs font-medium text-stone-400 dark:text-stone-500">
-              Categoria
-            </span>
-            {[
-              { key: null as string | null, label: "Todas", count: initialProducts.length },
-              ...categories,
-            ].map((c) => {
-              const active = category === c.key;
-              return (
-                <button
-                  key={c.key ?? "all"}
-                  type="button"
-                  onClick={() => setCategory(c.key)}
+        <div className="mx-auto flex max-w-7xl items-center gap-2 px-4 pb-3 sm:px-6">
+          <div className="no-scrollbar flex flex-1 items-center gap-2 overflow-x-auto">
+            {filters.map((f) => (
+              <button
+                key={f.key}
+                type="button"
+                onClick={() => setFilter(f.key)}
+                className={[
+                  "inline-flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full border px-4 py-1.5 text-sm font-medium transition-all duration-300",
+                  filter === f.key
+                    ? "border-brand-500 bg-brand-500 text-white shadow-sm"
+                    : "border-stone-200 bg-white/70 text-stone-600 hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:border-brand-500/40 dark:hover:text-brand-300",
+                ].join(" ")}
+              >
+                {f.label}
+                <span
                   className={[
-                    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-all duration-300",
-                    active
-                      ? "border-brand-500 bg-brand-500 text-white shadow-sm"
-                      : "border-stone-200 bg-white/70 text-stone-600 hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:border-brand-500/40 dark:hover:text-brand-300",
+                    "rounded-full px-1.5 text-xs",
+                    filter === f.key
+                      ? "bg-white/25 text-white"
+                      : "bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400",
                   ].join(" ")}
                 >
-                  {c.label}
-                  <span
-                    className={[
-                      "rounded-full px-1.5 text-[10px]",
-                      active
-                        ? "bg-white/25 text-white"
-                        : "bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400",
-                    ].join(" ")}
-                  >
-                    {c.count}
-                  </span>
-                </button>
-              );
-            })}
+                  {f.count}
+                </span>
+              </button>
+            ))}
           </div>
-        )}
+
+          {categories.length > 0 && (
+            <label className="relative shrink-0">
+              <span className="sr-only">Filtrar por categoria</span>
+              <select
+                value={category ?? ""}
+                onChange={(e) =>
+                  setCategory(e.target.value === "" ? null : e.target.value)
+                }
+                className="h-9 cursor-pointer appearance-none rounded-full border border-stone-200 bg-white/70 pl-4 pr-9 text-sm font-medium text-stone-600 shadow-sm outline-none backdrop-blur-md transition-all duration-300 hover:border-brand-200 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
+              >
+                <option value="">Todas las categorias</option>
+                {categories.map((c) => (
+                  <option key={c.key} value={c.key}>
+                    {c.label} ({c.count})
+                  </option>
+                ))}
+              </select>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400"
+                aria-hidden="true"
+              >
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+            </label>
+          )}
+        </div>
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
