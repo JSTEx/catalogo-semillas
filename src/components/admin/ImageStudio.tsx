@@ -123,12 +123,10 @@ export default function ImageStudio({
       aria-modal="true"
       aria-label="Editor de imagen"
       className="animate-fade-in fixed inset-0 z-[70] flex items-center justify-center p-4"
-      onClick={() => !busy && onClose()}
     >
       <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm dark:bg-black/60" />
 
       <div
-        onClick={(e) => e.stopPropagation()}
         className="animate-scale-in relative z-10 max-h-[92dvh] w-full max-w-3xl overflow-y-auto rounded-3xl border border-white/50 bg-white/85 p-6 shadow-2xl backdrop-blur-md sm:p-8 dark:border-stone-700/60 dark:bg-stone-900/90"
       >
         <div className="mb-6 flex items-start justify-between gap-4">

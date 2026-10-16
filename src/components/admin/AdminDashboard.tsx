@@ -953,16 +953,38 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
       {form && (
         <div
           className="animate-fade-in fixed inset-0 z-50 flex items-center justify-center p-4"
-          onClick={() => !saving && !uploading && setForm(null)}
         >
           <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm dark:bg-black/60" />
           <div
-            onClick={(e) => e.stopPropagation()}
             className="animate-scale-in relative z-10 max-h-[90dvh] w-full max-w-lg overflow-y-auto rounded-3xl border border-white/50 bg-white/85 p-6 shadow-2xl backdrop-blur-md sm:p-8 dark:border-stone-700/60 dark:bg-stone-900/90"
           >
-            <h2 className="mb-6 text-xl font-bold tracking-tight text-stone-900 dark:text-stone-100">
-              {form.id ? "Editar producto" : "Nuevo producto"}
-            </h2>
+            <div className="mb-6 flex items-start justify-between gap-3">
+              <h2 className="text-xl font-bold tracking-tight text-stone-900 dark:text-stone-100">
+                {form.id ? "Editar producto" : "Nuevo producto"}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setForm(null)}
+                disabled={saving || uploading}
+                aria-label="Cerrar"
+                title="Cerrar"
+                className="-mr-1 -mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-stone-400 transition-colors hover:bg-stone-100 hover:text-stone-700 disabled:opacity-50 dark:hover:bg-stone-800 dark:hover:text-stone-200"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4"
+                  aria-hidden="true"
+                >
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
             <form onSubmit={save} className="space-y-5">
               <div className="space-y-2">
