@@ -476,34 +476,50 @@ export default function OrderTracker({
 
       {order.payment === "transferencia" && !cancelled && (
         <section className="rounded-3xl border border-amber-200 bg-amber-50 p-5 text-sm dark:border-amber-500/30 dark:bg-amber-500/10">
-          <h2 className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+          <h2 className="flex items-center gap-2 text-base font-bold text-amber-900 dark:text-amber-200">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-5 w-5"
+              aria-hidden="true"
+            >
+              <rect width="20" height="14" x="2" y="5" rx="2" />
+              <path d="M2 10h20" />
+            </svg>
             Pago por transferencia
           </h2>
           {order.receiptUrl ? (
             <>
-              <p className="mt-1 text-amber-700 dark:text-amber-300/90">
-                Recibimos tu comprobante de pago. Lo estamos verificando.
+              <p className="mt-1 text-sm text-amber-800 dark:text-amber-300/90">
+                {order.status === "delivered"
+                  ? "Gracias por tu pago. Comprobante registrado."
+                  : "Ya subiste el comprobante. Te avisaremos cuando lo confirmemos."}
               </p>
               <a
                 href={order.receiptUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-3 rounded-2xl border border-amber-200 bg-white/80 p-2 pr-4 text-xs font-semibold text-amber-800 transition-colors hover:bg-white dark:border-amber-500/30 dark:bg-stone-900/60 dark:text-amber-300 dark:hover:bg-stone-900"
+                className="mt-3 inline-flex items-center gap-3 rounded-2xl border border-amber-300 bg-white/80 p-2 pr-4 text-sm font-semibold text-amber-800 shadow-sm transition-colors hover:bg-white dark:border-amber-400/40 dark:bg-stone-900/60 dark:text-amber-200 dark:hover:bg-stone-900"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={order.receiptUrl}
                   alt="Comprobante de pago"
-                  className="h-12 w-12 rounded-xl object-cover"
+                  className="h-14 w-14 rounded-xl object-cover"
                 />
-                Ver comprobante
+                Ver comprobante subido
               </a>
             </>
           ) : (
-            <p className="mt-1 text-amber-700 dark:text-amber-300/90">
+            <p className="mt-1 text-sm text-amber-800 dark:text-amber-300/90">
               {order.status === "delivered"
                 ? "Gracias por tu pago."
-                : "Sube el comprobante de transferencia para agilizar la entrega."}
+                : "Sube el comprobante de transferencia aquí para agilizar la entrega."}
             </p>
           )}
 
