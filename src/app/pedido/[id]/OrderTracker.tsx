@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { PublicOrderDTO } from "@/lib/types";
 import type { OrderStatus } from "@/lib/orders";
 import { formatMoney } from "@/lib/money";
@@ -112,6 +112,9 @@ export default function OrderTracker({
   const [cancelPhone, setCancelPhone] = useState("");
   const [cancelError, setCancelError] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
+  const [uploadingReceipt, setUploadingReceipt] = useState(false);
+  const [receiptError, setReceiptError] = useState<string | null>(null);
+  const receiptInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -151,6 +154,10 @@ export default function OrderTracker({
   const hero = HERO[order.status];
   const step = orderStatusStep(order.status);
   const cancelled = order.status === "cancelled";
+  const canUploadReceipt =
+    order.payment === "transferencia" &&
+    !cancelled &&
+    order.status !== "delivered";
   const waText = `Hola! Consulto por mi pedido N° ${order.number}.`;
 
   const created = order.createdAt ? formatDateTime(order.createdAt, "long") : "";
@@ -189,6 +196,33 @@ export default function OrderTracker({
       setCancelError("No se pudo cancelar el pedido");
     } finally {
       setCancelling(false);
+    }
+  }
+
+  async function uploadReceipt(file: File) {
+    setReceiptError(null);
+    setUploadingReceipt(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const res = await fetch(`/api/orders/${order.id}/receipt`, {
+        method: "POST",
+        body: fd,
+      });
+      const data = (await res.json().catch(() => null)) as
+        | { order?: PublicOrderDTO; error?: string }
+        | null;
+      if (!res.ok || !data?.order) {
+        throw new Error(data?.error ?? "No se pudo subir el comprobante");
+      }
+      setOrder(data.order);
+      updateMyOrderStatus(data.order.id, data.order.status);
+    } catch (e) {
+      setReceiptError(
+        e instanceof Error ? e.message : "No se pudo subir el comprobante",
+      );
+    } finally {
+      setUploadingReceipt(false);
     }
   }
 
@@ -445,11 +479,82 @@ export default function OrderTracker({
           <h2 className="text-sm font-semibold text-amber-800 dark:text-amber-300">
             Pago por transferencia
           </h2>
-          <p className="mt-1 text-amber-700 dark:text-amber-300/90">
-            {order.status === "delivered"
-              ? "Gracias por tu pago."
-              : "Aun no confirmamos tu pago. Envia el comprobante de transferencia por WhatsApp para agilizar la entrega."}
-          </p>
+          {order.receiptUrl ? (
+            <>
+              <p className="mt-1 text-amber-700 dark:text-amber-300/90">
+                Recibimos tu comprobante de pago. Lo estamos verificando.
+              </p>
+              <a
+                href={order.receiptUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex items-center gap-3 rounded-2xl border border-amber-200 bg-white/80 p-2 pr-4 text-xs font-semibold text-amber-800 transition-colors hover:bg-white dark:border-amber-500/30 dark:bg-stone-900/60 dark:text-amber-300 dark:hover:bg-stone-900"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={order.receiptUrl}
+                  alt="Comprobante de pago"
+                  className="h-12 w-12 rounded-xl object-cover"
+                />
+                Ver comprobante
+              </a>
+            </>
+          ) : (
+            <p className="mt-1 text-amber-700 dark:text-amber-300/90">
+              {order.status === "delivered"
+                ? "Gracias por tu pago."
+                : "Sube el comprobante de transferencia para agilizar la entrega."}
+            </p>
+          )}
+
+          {canUploadReceipt && (
+            <div className="mt-3">
+              <input
+                ref={receiptInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                disabled={uploadingReceipt}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (file) void uploadReceipt(file);
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => receiptInputRef.current?.click()}
+                disabled={uploadingReceipt}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-300 bg-white/80 px-4 py-2.5 text-xs font-semibold text-amber-800 transition-colors hover:bg-white disabled:opacity-60 dark:border-amber-500/30 dark:bg-stone-900/60 dark:text-amber-300 dark:hover:bg-stone-900"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4"
+                  aria-hidden="true"
+                >
+                  <path d="M12 3v12" />
+                  <path d="m7 8 5-5 5 5" />
+                  <path d="M5 21h14" />
+                </svg>
+                {uploadingReceipt
+                  ? "Subiendo..."
+                  : order.receiptUrl
+                    ? "Cambiar comprobante"
+                    : "Subir comprobante"}
+              </button>
+              {receiptError && (
+                <p className="mt-2 text-xs font-medium text-rose-600 dark:text-rose-400">
+                  {receiptError}
+                </p>
+              )}
+            </div>
+          )}
         </section>
       )}
 

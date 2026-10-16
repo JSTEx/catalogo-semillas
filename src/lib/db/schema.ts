@@ -102,6 +102,7 @@ export const orders = pgTable(
     shippingCents: integer("shipping_cents").default(0).notNull(),
     totalCents: integer("total_cents").default(0).notNull(),
     notes: text("notes"),
+    receiptUrl: text("receipt_url"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

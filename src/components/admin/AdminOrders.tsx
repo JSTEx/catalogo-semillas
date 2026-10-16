@@ -122,6 +122,26 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
     }
   }
 
+  async function uploadReceipt(order: OrderDTO, file: File) {
+    setError(null);
+    setBusyId(order.id);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const upRes = await fetch("/api/upload", { method: "POST", body: fd });
+      const upData = (await upRes.json().catch(() => null)) as
+        | { url?: string; error?: string }
+        | null;
+      if (!upRes.ok || !upData?.url) {
+        throw new Error(upData?.error ?? "No se pudo subir el comprobante");
+      }
+      await patch(order.id, { receiptUrl: upData.url });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al subir el comprobante");
+      setBusyId(null);
+    }
+  }
+
   return (
     <div>
       <div className="mb-3">
@@ -270,6 +290,55 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
                     Nota: {order.notes}
                   </p>
                 )}
+
+                <div className="flex items-center gap-3 rounded-2xl bg-stone-50/80 px-3 py-2 dark:bg-stone-800/50">
+                  {order.receiptUrl ? (
+                    <>
+                      <a
+                        href={order.receiptUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 text-xs font-semibold text-stone-700 hover:text-brand-700 dark:text-stone-200 dark:hover:text-brand-300"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={order.receiptUrl}
+                          alt="Comprobante de pago"
+                          className="h-10 w-10 rounded-xl border border-stone-200 object-cover dark:border-stone-700"
+                        />
+                        Ver comprobante
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => patch(order.id, { receiptUrl: null })}
+                        disabled={busyId === order.id}
+                        className="ml-auto text-xs font-medium text-stone-400 transition-colors hover:text-red-500 disabled:opacity-50"
+                      >
+                        Quitar
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-xs text-stone-500 dark:text-stone-400">
+                        Sin comprobante
+                      </span>
+                      <label className="ml-auto cursor-pointer text-xs font-semibold text-stone-600 transition-colors hover:text-brand-700 dark:text-stone-300 dark:hover:text-brand-300">
+                        Subir comprobante
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          className="hidden"
+                          disabled={busyId === order.id}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            e.target.value = "";
+                            if (file) void uploadReceipt(order, file);
+                          }}
+                        />
+                      </label>
+                    </>
+                  )}
+                </div>
 
                 <div className="flex items-center justify-between border-t border-stone-200/60 pt-3 text-sm dark:border-stone-800/60">
                   <div className="flex items-center gap-2">

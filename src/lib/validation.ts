@@ -167,6 +167,7 @@ export const updateOrderSchema = z
       .max(10_000_000)
       .optional(),
     notes: sanitizedString(1, 300, "Las notas").optional(),
+    receiptUrl: imageUrlSchema.nullable().optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: "No se envio ningun campo para actualizar",

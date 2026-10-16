@@ -73,6 +73,7 @@ export interface OrderDTO {
   shippingCents: number;
   totalCents: number;
   notes: string | null;
+  receiptUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -94,6 +95,7 @@ export function toOrderDTO(o: Order): OrderDTO {
     shippingCents: o.shippingCents,
     totalCents: o.totalCents,
     notes: o.notes,
+    receiptUrl: o.receiptUrl ?? null,
     createdAt: o.createdAt.toISOString(),
     updatedAt: o.updatedAt.toISOString(),
   };
@@ -117,6 +119,7 @@ export interface PublicOrderDTO {
   productsTotal: number;
   shippingCents: number;
   totalCents: number;
+  receiptUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -132,6 +135,7 @@ export function toPublicOrderDTO(o: Order): PublicOrderDTO {
     productsTotal: o.productsTotal,
     shippingCents: o.shippingCents,
     totalCents: o.totalCents,
+    receiptUrl: o.receiptUrl ?? null,
     createdAt: o.createdAt.toISOString(),
     updatedAt: o.updatedAt.toISOString(),
   };

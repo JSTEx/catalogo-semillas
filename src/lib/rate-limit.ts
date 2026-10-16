@@ -120,3 +120,40 @@ export async function checkCancelRateLimit(
   const { success, limit, remaining, reset } = await l.limit(identifier);
   return { success, limit, remaining, reset };
 }
+
+/**
+ * Limite para subir comprobantes de pago: 10 intentos cada 10 minutos por IP.
+ * Mitiga el abuso del almacenamiento subiendo imagenes en masa.
+ */
+let receiptLimiter: Ratelimit | null | undefined;
+
+function getReceiptLimiter(): Ratelimit | null {
+  if (receiptLimiter !== undefined) return receiptLimiter;
+
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  if (!url || !token) {
+    receiptLimiter = null;
+    return receiptLimiter;
+  }
+
+  receiptLimiter = new Ratelimit({
+    redis: new Redis({ url, token }),
+    limiter: Ratelimit.slidingWindow(10, "10 m"),
+    analytics: true,
+    prefix: "rl:receipt",
+  });
+  return receiptLimiter;
+}
+
+export async function checkReceiptRateLimit(
+  identifier: string,
+): Promise<RateLimitResult> {
+  const l = getReceiptLimiter();
+  if (!l) {
+    return { success: true, limit: 10, remaining: 10, reset: 0 };
+  }
+  const { success, limit, remaining, reset } = await l.limit(identifier);
+  return { success, limit, remaining, reset };
+}
