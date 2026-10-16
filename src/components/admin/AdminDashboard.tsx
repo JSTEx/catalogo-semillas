@@ -8,7 +8,7 @@ import type { ProductStatus } from "@/lib/product-status";
 import { normalizeSearch } from "@/lib/search";
 import { useViewMode } from "@/lib/use-view-mode";
 import { formatMoney } from "@/lib/money";
-import { SUGGESTED_CATEGORIES } from "@/lib/validation";
+import { MAX_PRODUCT_IMAGES, SUGGESTED_CATEGORIES } from "@/lib/validation";
 import AvailabilityBadge from "@/components/AvailabilityBadge";
 import ThemeToggle from "@/components/ThemeToggle";
 import ViewToggle from "@/components/ViewToggle";
@@ -31,7 +31,7 @@ interface FormState {
   category: string;
   description: string;
   status: ProductStatus;
-  imageUrl: string;
+  images: string[];
   priceCents: number;
   priceText: string;
   stock: number;
@@ -45,7 +45,7 @@ const emptyForm: FormState = {
   category: "otros",
   description: "",
   status: "available",
-  imageUrl: "",
+  images: [],
   priceCents: 0,
   priceText: "",
   stock: 0,
@@ -131,7 +131,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
         if (item.type.startsWith("image/")) {
           e.preventDefault();
           const file = item.getAsFile();
-          if (file) onFileChangeRef.current(file);
+          if (file) onFileChangeRef.current([file]);
           return;
         }
       }
@@ -192,7 +192,12 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
       category: product.category,
       description: product.description ?? "",
       status: product.status,
-      imageUrl: product.imageUrl,
+      images:
+        product.imageUrls?.length > 0
+          ? product.imageUrls
+          : product.imageUrl
+            ? [product.imageUrl]
+            : [],
       priceCents: product.priceCents,
       priceText: centsToText(product.priceCents),
       stock: product.stock,
@@ -331,22 +336,58 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
     }
   }
 
-  async function onFileChange(file: File | undefined) {
-    if (!file || !form) return;
+  async function onFileChange(files: File[]) {
+    if (files.length === 0 || !form) return;
     setError(null);
+    const room = MAX_PRODUCT_IMAGES - form.images.length;
+    if (room <= 0) {
+      setError(`Maximo ${MAX_PRODUCT_IMAGES} imagenes por producto`);
+      return;
+    }
+    const selected = files.slice(0, room);
+    if (files.length > room) {
+      setError(`Solo se agregaron ${room} (maximo ${MAX_PRODUCT_IMAGES} imagenes)`);
+    }
     setUploading(true);
     try {
-      const body = new FormData();
-      body.append("file", file);
-      const res = await api("/api/upload", { method: "POST", body });
-      const data = (await res.json()) as { url: string };
-      setForm((prev) => (prev ? { ...prev, imageUrl: data.url } : prev));
+      const uploaded: string[] = [];
+      for (const file of selected) {
+        const body = new FormData();
+        body.append("file", file);
+        const res = await api("/api/upload", { method: "POST", body });
+        const data = (await res.json()) as { url: string };
+        uploaded.push(data.url);
+      }
+      setForm((prev) =>
+        prev
+          ? {
+              ...prev,
+              images: [...prev.images, ...uploaded].slice(0, MAX_PRODUCT_IMAGES),
+            }
+          : prev,
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al subir la imagen");
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
     }
+  }
+
+  function removeImage(url: string) {
+    setForm((prev) =>
+      prev ? { ...prev, images: prev.images.filter((u) => u !== url) } : prev,
+    );
+  }
+
+  function makeCover(index: number) {
+    setForm((prev) => {
+      if (!prev || index <= 0) return prev;
+      const images = [...prev.images];
+      const [img] = images.splice(index, 1);
+      images.unshift(img);
+      return { ...prev, images };
+    });
   }
 
   async function save(e: React.FormEvent) {
@@ -364,7 +405,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
             category: form.category,
             description: form.description,
             status: form.status,
-            imageUrl: form.imageUrl,
+            imageUrls: form.images,
             priceCents,
             stock: form.stock,
           }),
@@ -381,7 +422,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
             category: form.category,
             description: form.description,
             status: form.status,
-            imageUrl: form.imageUrl,
+            imageUrls: form.images,
             priceCents,
             stock: form.stock,
           }),
@@ -401,9 +442,14 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
     setError(null);
     setStudioOpen(false);
     if (targetId === "new") {
-      setForm((prev) =>
-        prev ? { ...prev, imageUrl: url } : { ...emptyForm, imageUrl: url },
-      );
+      setForm((prev) => {
+        const base = prev ?? { ...emptyForm };
+        const images = [url, ...base.images.filter((u) => u !== url)].slice(
+          0,
+          MAX_PRODUCT_IMAGES,
+        );
+        return { ...base, images };
+      });
       return;
     }
     try {
@@ -417,7 +463,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
       );
       setForm((prev) =>
         prev && prev.id === targetId
-          ? { ...prev, imageUrl: url }
+          ? { ...prev, images: data.product.imageUrls }
           : prev,
       );
     } catch (e) {
@@ -908,67 +954,115 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
               </div>
 
               <div className="space-y-2">
-                <span className="block text-sm font-medium text-stone-700 dark:text-stone-300">
-                  Imagen
-                </span>
-                <div className="flex items-center gap-4">
-                  <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-2xl border border-stone-200 bg-stone-100 dark:border-stone-700 dark:bg-stone-800">
-                    {form.imageUrl ? (
-                      <SeedImage
-                        src={form.imageUrl}
-                        alt="Vista previa"
-                        fill
-                        sizes="80px"
-                        className="object-contain"
-                      />
-                    ) : (
-                      <span className="flex h-full w-full items-center justify-center text-xs text-stone-400 dark:text-stone-500">
-                        Sin imagen
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <input
-                      ref={fileRef}
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      onChange={(e) =>
-                        onFileChange(e.target.files?.[0] ?? undefined)
-                      }
-                      className="block w-full text-xs text-stone-500 file:mr-3 file:rounded-full file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-brand-700 hover:file:bg-brand-100 dark:text-stone-400 dark:file:bg-brand-500/15 dark:file:text-brand-300 dark:hover:file:bg-brand-500/25"
-                    />
-                    <p className="text-xs text-stone-400 dark:text-stone-500">
-                      {uploading ? (
-                        <Loader label="Subiendo..." />
-                      ) : (
-                        "JPG, PNG o WEBP. Maximo 3MB. Tambien puedes pegar una imagen (Ctrl+V)."
-                      )}
-                    </p>
-                    {form.imageUrl && (
-                      <button
-                        type="button"
-                        disabled={saving || uploading}
-                        onClick={() => setStudioOpen(true)}
-                        className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 transition-all duration-300 hover:bg-brand-100 disabled:opacity-50 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300 dark:hover:bg-brand-500/20"
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="h-3.5 w-3.5"
-                          aria-hidden="true"
-                        >
-                          <path d="m12 3 1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3Z" />
-                        </svg>
-                        Quitar fondo
-                      </button>
-                    )}
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="block text-sm font-medium text-stone-700 dark:text-stone-300">
+                    Imagenes
+                  </span>
+                  <span className="text-xs text-stone-400 dark:text-stone-500">
+                    {form.images.length}/{MAX_PRODUCT_IMAGES}
+                  </span>
                 </div>
+
+                {form.images.length > 0 && (
+                  <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                    {form.images.map((url, i) => (
+                      <div
+                        key={url}
+                        className="group relative aspect-square overflow-hidden rounded-2xl border border-stone-200 bg-stone-100 dark:border-stone-700 dark:bg-stone-800"
+                      >
+                        <SeedImage
+                          src={url}
+                          alt={`Imagen ${i + 1}`}
+                          fill
+                          sizes="120px"
+                          className="object-contain"
+                        />
+                        {i === 0 && (
+                          <span className="absolute left-1 top-1 rounded-full bg-brand-500 px-1.5 py-0.5 text-[9px] font-semibold text-white shadow-sm">
+                            Portada
+                          </span>
+                        )}
+                        <div className="absolute inset-x-1 bottom-1 flex items-center justify-between gap-1">
+                          {i > 0 ? (
+                            <button
+                              type="button"
+                              disabled={saving || uploading}
+                              onClick={() => makeCover(i)}
+                              title="Usar como portada"
+                              className="rounded-full bg-white/85 px-1.5 py-0.5 text-[9px] font-semibold text-stone-600 shadow-sm backdrop-blur-md transition-colors hover:text-brand-700 disabled:opacity-50 dark:bg-stone-800/85 dark:text-stone-300 dark:hover:text-brand-300"
+                            >
+                              Portada
+                            </button>
+                          ) : (
+                            <span />
+                          )}
+                          <button
+                            type="button"
+                            disabled={saving || uploading}
+                            onClick={() => removeImage(url)}
+                            aria-label={`Quitar imagen ${i + 1}`}
+                            className="flex h-6 w-6 items-center justify-center rounded-full bg-white/85 text-stone-500 shadow-sm backdrop-blur-md transition-colors hover:text-red-600 disabled:opacity-50 dark:bg-stone-800/85 dark:text-stone-300 dark:hover:text-red-300"
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              className="h-3.5 w-3.5"
+                              aria-hidden="true"
+                            >
+                              <path d="M18 6 6 18M6 6l12 12" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <input
+                  ref={fileRef}
+                  type="file"
+                  multiple
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={form.images.length >= MAX_PRODUCT_IMAGES}
+                  onChange={(e) =>
+                    onFileChange(Array.from(e.target.files ?? []))
+                  }
+                  className="block w-full text-xs text-stone-500 file:mr-3 file:rounded-full file:border-0 file:bg-brand-50 file:px-4 file:py-2 file:text-xs file:font-semibold file:text-brand-700 hover:file:bg-brand-100 disabled:opacity-50 dark:text-stone-400 dark:file:bg-brand-500/15 dark:file:text-brand-300 dark:hover:file:bg-brand-500/25"
+                />
+                <p className="text-xs text-stone-400 dark:text-stone-500">
+                  {uploading ? (
+                    <Loader label="Subiendo..." />
+                  ) : (
+                    `Puedes subir varias imagenes a la vez (hasta ${MAX_PRODUCT_IMAGES}). JPG, PNG o WEBP, maximo 3MB. La primera es la portada. Tambien puedes pegar (Ctrl+V).`
+                  )}
+                </p>
+                {form.images.length > 0 && (
+                  <button
+                    type="button"
+                    disabled={saving || uploading}
+                    onClick={() => setStudioOpen(true)}
+                    className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 transition-all duration-300 hover:bg-brand-100 disabled:opacity-50 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300 dark:hover:bg-brand-500/20"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-3.5 w-3.5"
+                      aria-hidden="true"
+                    >
+                      <path d="m12 3 1.9 5.8a2 2 0 0 0 1.3 1.3L21 12l-5.8 1.9a2 2 0 0 0-1.3 1.3L12 21l-1.9-5.8a2 2 0 0 0-1.3-1.3L3 12l5.8-1.9a2 2 0 0 0 1.3-1.3Z" />
+                    </svg>
+                    Quitar fondo (portada)
+                  </button>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -1071,7 +1165,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                 </button>
                 <button
                   type="submit"
-                  disabled={saving || uploading || !form.imageUrl}
+                  disabled={saving || uploading || form.images.length === 0}
                   className="rounded-2xl bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-brand-600 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {saving ? (

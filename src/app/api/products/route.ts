@@ -34,6 +34,13 @@ export async function POST(req: Request) {
     return jsonError(parsed.error.issues[0]?.message ?? "Datos invalidos", 400);
   }
 
+  const imageUrls =
+    parsed.data.imageUrls && parsed.data.imageUrls.length > 0
+      ? parsed.data.imageUrls
+      : parsed.data.imageUrl
+        ? [parsed.data.imageUrl]
+        : [];
+
   const [created] = await db
     .insert(products)
     .values({
@@ -41,7 +48,8 @@ export async function POST(req: Request) {
       category: parsed.data.category,
       description: parsed.data.description ?? null,
       status: parsed.data.status,
-      imageUrl: parsed.data.imageUrl,
+      imageUrl: imageUrls[0],
+      imageUrls,
       priceCents: parsed.data.priceCents,
       stock: parsed.data.stock,
     })

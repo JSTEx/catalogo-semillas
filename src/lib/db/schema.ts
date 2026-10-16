@@ -64,6 +64,10 @@ export const products = pgTable(
     description: text("description"),
     status: productStatusEnum("status").default("available").notNull(),
     imageUrl: text("image_url").notNull(),
+    imageUrls: jsonb("image_urls")
+      .$type<string[]>()
+      .default(sql`'[]'::jsonb`)
+      .notNull(),
     priceCents: integer("price_cents").default(0).notNull(),
     stock: integer("stock").default(0).notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })

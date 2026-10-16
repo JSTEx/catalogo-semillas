@@ -208,6 +208,21 @@ export default function MisPedidos() {
     [live],
   );
 
+  const handleRemove = useCallback(
+    (id: string) => {
+      const order = orders.find((o) => o.id === id);
+      const label = order ? `el pedido N° ${order.number}` : "este pedido";
+      if (
+        window.confirm(
+          `Se quitara ${label} de este dispositivo. ¿Quieres continuar?`,
+        )
+      ) {
+        removeMyOrder(id);
+      }
+    },
+    [orders],
+  );
+
   const activeOrders = orders.filter((o) => isActiveOrder(statusOf(o)));
   const pastOrders = orders.filter((o) => !isActiveOrder(statusOf(o)));
   const activeShown = activeOrders.slice(0, visible);
@@ -327,7 +342,7 @@ export default function MisPedidos() {
                       key={order.id}
                       order={order}
                       status={statusOf(order)}
-                      onRemove={removeMyOrder}
+                      onRemove={handleRemove}
                     />
                   ))}
                 </ul>
@@ -345,7 +360,7 @@ export default function MisPedidos() {
                       key={order.id}
                       order={order}
                       status={statusOf(order)}
-                      onRemove={removeMyOrder}
+                      onRemove={handleRemove}
                     />
                   ))}
                 </ul>

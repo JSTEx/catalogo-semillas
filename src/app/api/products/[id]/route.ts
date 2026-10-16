@@ -30,9 +30,30 @@ export async function PATCH(req: Request, { params }: Params) {
     return jsonError(parsed.error.issues[0]?.message ?? "Datos invalidos", 400);
   }
 
+  const update: Partial<typeof products.$inferInsert> = {
+    ...parsed.data,
+    updatedAt: new Date(),
+  };
+
+  if (parsed.data.imageUrls && parsed.data.imageUrls.length > 0) {
+    // La portada es siempre la primera imagen de la galeria.
+    update.imageUrl = parsed.data.imageUrls[0];
+  } else if (parsed.data.imageUrl) {
+    // Solo se actualizo la portada (p. ej. desde el editor de imagen):
+    // conserva el resto de la galeria y evita duplicar la portada.
+    const [current] = await db
+      .select({ imageUrls: products.imageUrls })
+      .from(products)
+      .where(eq(products.id, id));
+    const rest = (current?.imageUrls ?? []).filter(
+      (u) => u !== parsed.data.imageUrl,
+    );
+    update.imageUrls = [parsed.data.imageUrl, ...rest];
+  }
+
   const [updated] = await db
     .update(products)
-    .set({ ...parsed.data, updatedAt: new Date() })
+    .set(update)
     .where(eq(products.id, id))
     .returning();
 

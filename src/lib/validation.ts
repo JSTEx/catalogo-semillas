@@ -44,6 +44,17 @@ export const imageUrlSchema = z
   .max(2048, "URL de imagen demasiado larga")
   .refine((v) => v.startsWith("https://"), "La imagen debe usar HTTPS");
 
+export const MAX_PRODUCT_IMAGES = 8;
+
+/** Galeria de un producto: entre 1 y 8 imagenes, sin repetidas. */
+export const imageUrlsSchema = z
+  .array(imageUrlSchema)
+  .min(1, "Agrega al menos una imagen")
+  .max(MAX_PRODUCT_IMAGES, `Maximo ${MAX_PRODUCT_IMAGES} imagenes por producto`)
+  .refine((urls) => new Set(urls).size === urls.length, {
+    message: "No repitas la misma imagen",
+  });
+
 const categorySchema = sanitizedString(1, 40, "La categoria");
 
 const descriptionSchema = z
@@ -54,15 +65,21 @@ const descriptionSchema = z
   })
   .transform((v) => (v.length > 0 ? v : null));
 
-export const createProductSchema = z.object({
-  name: sanitizedString(2, 100, "El nombre"),
-  category: categorySchema.default("otros"),
-  description: descriptionSchema.optional(),
-  status: z.enum(PRODUCT_STATUSES).default("available"),
-  imageUrl: imageUrlSchema,
-  priceCents: z.number().int("El precio debe ser un numero entero").min(0).max(100_000_000),
-  stock: z.number().int("El stock debe ser un numero entero").min(0).max(1_000_000),
-});
+export const createProductSchema = z
+  .object({
+    name: sanitizedString(2, 100, "El nombre"),
+    category: categorySchema.default("otros"),
+    description: descriptionSchema.optional(),
+    status: z.enum(PRODUCT_STATUSES).default("available"),
+    imageUrl: imageUrlSchema.optional(),
+    imageUrls: imageUrlsSchema.optional(),
+    priceCents: z.number().int("El precio debe ser un numero entero").min(0).max(100_000_000),
+    stock: z.number().int("El stock debe ser un numero entero").min(0).max(1_000_000),
+  })
+  .refine((data) => (data.imageUrls?.length ?? 0) > 0 || Boolean(data.imageUrl), {
+    path: ["imageUrls"],
+    message: "Agrega al menos una imagen",
+  });
 
 export const updateProductSchema = z
   .object({
@@ -71,6 +88,7 @@ export const updateProductSchema = z
     description: descriptionSchema.optional(),
     status: z.enum(PRODUCT_STATUSES).optional(),
     imageUrl: imageUrlSchema.optional(),
+    imageUrls: imageUrlsSchema.optional(),
     priceCents: z
       .number()
       .int("El precio debe ser un numero entero")

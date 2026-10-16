@@ -19,6 +19,7 @@ export default function SeedModal({ product, onClose, onOpenCart }: Props) {
   const { add, items } = useCart();
   const [zoom, setZoom] = useState(false);
   const [origin, setOrigin] = useState("50% 50%");
+  const [active, setActive] = useState(0);
   const [pointerKind, setPointerKind] = useState<"mouse" | "touch" | "pen">(
     () =>
       typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches
@@ -42,11 +43,19 @@ export default function SeedModal({ product, onClose, onOpenCart }: Props) {
   useEffect(() => {
     setZoom(false);
     setOrigin("50% 50%");
+    setActive(0);
   }, [product]);
 
   if (!product) return null;
 
   const inCart = items.some((it) => it.product.id === product.id);
+  const images =
+    product.imageUrls && product.imageUrls.length > 0
+      ? product.imageUrls
+      : product.imageUrl
+        ? [product.imageUrl]
+        : [];
+  const current = images[active] ?? images[0] ?? product.imageUrl;
 
   function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
     if (e.pointerType !== "mouse") return;
@@ -94,57 +103,96 @@ export default function SeedModal({ product, onClose, onOpenCart }: Props) {
         </button>
 
         <div className="grid gap-0 md:grid-cols-2">
-          <div
-            className="group relative aspect-square w-full touch-manipulation bg-stone-100 dark:bg-stone-800"
-            onPointerMove={handlePointerMove}
-            onPointerLeave={(e) => {
-              if (e.pointerType === "mouse") setZoom(false);
-            }}
-            onPointerDown={(e) => {
-              setPointerKind(e.pointerType);
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              if (pointerKind !== "mouse") {
-                setZoom((z) => !z);
-                setOrigin("50% 50%");
-              }
-            }}
-          >
+          <div className="flex flex-col bg-stone-100 dark:bg-stone-800">
             <div
-              className={[
-                "absolute inset-0 transition-transform duration-500 ease-out",
-                zoom ? "scale-[2]" : "scale-100",
-              ].join(" ")}
-              style={{ transformOrigin: origin }}
+              className="group relative aspect-square w-full touch-manipulation"
+              onPointerMove={handlePointerMove}
+              onPointerLeave={(e) => {
+                if (e.pointerType === "mouse") setZoom(false);
+              }}
+              onPointerDown={(e) => {
+                setPointerKind(e.pointerType);
+              }}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (pointerKind !== "mouse") {
+                  setZoom((z) => !z);
+                  setOrigin("50% 50%");
+                }
+              }}
             >
-              <SeedImage
-                src={product.imageUrl}
-                alt={product.name}
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-contain"
-                priority
-              />
+              <div
+                className={[
+                  "absolute inset-0 transition-transform duration-500 ease-out",
+                  zoom ? "scale-[2]" : "scale-100",
+                ].join(" ")}
+                style={{ transformOrigin: origin }}
+              >
+                <SeedImage
+                  src={current}
+                  alt={product.name}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                  className="object-contain"
+                  priority
+                />
+              </div>
+
+              <span className="pointer-events-none absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-medium text-stone-600 shadow-sm backdrop-blur-md dark:bg-stone-800/80 dark:text-stone-300">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-3 w-3"
+                  aria-hidden="true"
+                >
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.3-4.3M11 8v6M8 11h6" />
+                </svg>
+                {pointerKind === "mouse" ? "Pasa el mouse" : "Toca para ampliar"}
+              </span>
+
+              {images.length > 1 && (
+                <span className="pointer-events-none absolute left-3 top-3 rounded-full bg-stone-900/55 px-2 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-sm">
+                  {active + 1}/{images.length}
+                </span>
+              )}
             </div>
 
-            <span className="pointer-events-none absolute bottom-3 right-3 flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-medium text-stone-600 shadow-sm backdrop-blur-md dark:bg-stone-800/80 dark:text-stone-300">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-3 w-3"
-                aria-hidden="true"
-              >
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.3-4.3M11 8v6M8 11h6" />
-              </svg>
-              {pointerKind === "mouse" ? "Pasa el mouse" : "Toca para ampliar"}
-            </span>
+            {images.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto p-3">
+                {images.map((url, i) => (
+                  <button
+                    key={url}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActive(i);
+                      setZoom(false);
+                    }}
+                    aria-label={`Ver imagen ${i + 1}`}
+                    className={[
+                      "relative h-14 w-14 shrink-0 overflow-hidden rounded-xl border-2 bg-white transition-all duration-200 dark:bg-stone-900",
+                      i === active
+                        ? "border-brand-500"
+                        : "border-transparent opacity-70 hover:opacity-100",
+                    ].join(" ")}
+                  >
+                    <SeedImage
+                      src={url}
+                      alt=""
+                      fill
+                      sizes="56px"
+                      className="object-contain"
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex max-h-[45vh] flex-col justify-between gap-6 overflow-y-auto p-6 md:max-h-none md:p-8">

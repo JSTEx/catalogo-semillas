@@ -12,20 +12,36 @@ export interface ProductDTO {
   description: string | null;
   status: ProductStatus;
   imageUrl: string;
+  /** Galeria completa (la primera es la portada que se usa en las tarjetas). */
+  imageUrls: string[];
   priceCents: number;
   stock: number;
   createdAt: string;
   updatedAt: string;
 }
 
+/**
+ * Devuelve la galeria de un producto garantizando al menos la portada.
+ * Es tolerante a productos antiguos sin galeria guardada.
+ */
+export function productImages(p: Pick<Product, "imageUrl" | "imageUrls">): string[] {
+  const list = Array.isArray(p.imageUrls)
+    ? p.imageUrls.filter((u) => typeof u === "string" && u.length > 0)
+    : [];
+  if (list.length > 0) return list;
+  return p.imageUrl ? [p.imageUrl] : [];
+}
+
 export function toProductDTO(p: Product): ProductDTO {
+  const imageUrls = productImages(p);
   return {
     id: p.id,
     name: p.name,
     category: p.category,
     description: p.description,
     status: p.status,
-    imageUrl: p.imageUrl,
+    imageUrl: imageUrls[0] ?? p.imageUrl,
+    imageUrls,
     priceCents: p.priceCents,
     stock: p.stock,
     createdAt: p.createdAt.toISOString(),
