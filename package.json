@@ -14,6 +14,7 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:clear-orders": "node scripts/clear-orders.mjs",
     "create-admin": "node scripts/create-admin.mjs"
   },
   "dependencies": {
