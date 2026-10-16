@@ -26,6 +26,14 @@ import {
  * - GMAIL_USER / GMAIL_APP_PASSWORD   envio por Gmail (recomendado, gratis).
  * - RESEND_API_KEY / NOTIFY_EMAIL_TO / EMAIL_FROM   envio por Resend.
  * - EMAIL_LOGO_URL   URL absoluta del logo (por defecto <sitio>/logo.png).
+ * - BUSINESS_LEGAL_NAME / BUSINESS_ADDRESS   razon social y direccion fisica
+ *   que se muestran en el pie de cada correo (requisito anti-spam / RFC 2142).
+ *
+ * Anti-spam:
+ * - Los correos al cliente (notifyEmail) incluyen la cabecera List-Unsubscribe
+ *   con un mailto: al remitente, para poder darse de baja desde el propio
+ *   cliente de correo.
+ * - El pie lleva razon social y direccion fisica (identificacion del remitente).
  *
  * El diseno usa el modo nocturno del sitio (fondo carbon + esmeralda).
  * Si no hay proveedor configurado, no se envia nada (la app sigue normal).
@@ -111,12 +119,38 @@ function escapeHtml(value: string): string {
   return value.replace(/[&<>"']/g, (c) => map[c]!);
 }
 
+/** Cabeceras extra (p. ej. List-Unsubscribe) opcionales en cada envio. */
+type EmailHeaders = Record<string, string>;
+
+/**
+ * Direccion usada como destino del mailto: de List-Unsubscribe.
+ * Prefiere la parte <correo> de EMAIL_FROM; si no, GMAIL_USER.
+ */
+function unsubscribeAddress(): string | undefined {
+  const from = process.env.EMAIL_FROM?.trim();
+  const angled = from?.match(/<([^>]+)>/);
+  if (angled?.[1]) return angled[1];
+  if (from && from.includes("@")) return from;
+  return gmailUser();
+}
+
+/** Cabeceras anti-spam para correos al cliente (baja en un clic/mensaje). */
+function unsubscribeHeaders(order: OrderDTO): EmailHeaders {
+  const headers: EmailHeaders = {};
+  const addr = unsubscribeAddress();
+  if (addr) {
+    headers["List-Unsubscribe"] = `<mailto:${addr}?subject=Baja%20pedido%20${encodeURIComponent(order.number)}>`;
+  }
+  return headers;
+}
+
 /** Envio de bajo nivel: elige proveedor; nunca lanza, solo registra errores. */
 async function sendEmail(
   to: string[],
   subject: string,
   html: string,
   text: string,
+  headers?: EmailHeaders,
 ): Promise<void> {
   if (to.length === 0) return;
 
@@ -128,6 +162,7 @@ async function sendEmail(
         subject,
         html,
         text,
+        headers,
       });
       console.log(`[email] enviado (gmail) a ${to.join(", ")}: ${subject}`);
     } catch (err) {
@@ -147,6 +182,7 @@ async function sendEmail(
       subject,
       html,
       text,
+      headers,
     });
     if (error) {
       console.error("[email] Resend respondio con error", error);
