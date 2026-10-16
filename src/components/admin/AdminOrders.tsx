@@ -291,20 +291,39 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
                   </p>
                 )}
 
-                <div className="flex items-center gap-3 rounded-2xl bg-stone-50/80 px-3 py-2 dark:bg-stone-800/50">
+                <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50/80 p-3 dark:border-amber-500/40 dark:bg-amber-500/10">
+                  <div className="flex items-center gap-2">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="h-4 w-4 text-amber-700 dark:text-amber-300"
+                      aria-hidden="true"
+                    >
+                      <rect width="20" height="14" x="2" y="5" rx="2" />
+                      <path d="M2 10h20" />
+                    </svg>
+                    <span className="text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+                      Comprobante de pago
+                    </span>
+                  </div>
                   {order.receiptUrl ? (
-                    <>
+                    <div className="flex flex-col gap-3">
                       <a
                         href={order.receiptUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 text-xs font-semibold text-stone-700 hover:text-brand-700 dark:text-stone-200 dark:hover:text-brand-300"
+                        className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-white/80 p-2 pr-4 text-sm font-semibold text-stone-700 transition-colors hover:bg-white dark:border-amber-400/40 dark:bg-stone-900/60 dark:text-stone-200"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={order.receiptUrl}
                           alt="Comprobante de pago"
-                          className="h-10 w-10 rounded-xl border border-stone-200 object-cover dark:border-stone-700"
+                          className="h-14 w-14 rounded-xl object-cover"
                         />
                         Ver comprobante
                       </a>
@@ -312,17 +331,17 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
                         type="button"
                         onClick={() => patch(order.id, { receiptUrl: null })}
                         disabled={busyId === order.id}
-                        className="ml-auto text-xs font-medium text-stone-400 transition-colors hover:text-red-500 disabled:opacity-50"
+                        className="self-start text-xs font-medium text-stone-500 transition-colors hover:text-red-500 disabled:opacity-50"
                       >
-                        Quitar
+                        Quitar comprobante
                       </button>
-                    </>
+                    </div>
                   ) : (
-                    <>
-                      <span className="text-xs text-stone-500 dark:text-stone-400">
-                        Sin comprobante
+                    <div className="flex flex-col gap-2">
+                      <span className="text-xs text-stone-600 dark:text-stone-300/80">
+                        Sin comprobante subido
                       </span>
-                      <label className="ml-auto cursor-pointer text-xs font-semibold text-stone-600 transition-colors hover:text-brand-700 dark:text-stone-300 dark:hover:text-brand-300">
+                      <label className="self-start cursor-pointer rounded-2xl border border-amber-300 bg-amber-500/90 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-amber-500 disabled:opacity-50">
                         Subir comprobante
                         <input
                           type="file"
@@ -336,7 +355,7 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
                           }}
                         />
                       </label>
-                    </>
+                    </div>
                   )}
                 </div>
 
