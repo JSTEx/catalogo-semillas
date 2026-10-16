@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import type { ExpenseDTO, OrderDTO, ProductDTO } from "@/lib/types";
 import { PRODUCT_STATUSES, STATUS_META, sortByStatus } from "@/lib/product-status";
 import type { ProductStatus } from "@/lib/product-status";
@@ -498,22 +499,15 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
       <header className="sticky top-0 z-40 border-b border-stone-200/60 bg-white/70 backdrop-blur-md dark:border-stone-800/60 dark:bg-stone-900/70">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500 text-white shadow-sm">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-5 w-5"
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500 shadow-sm">
+              <Image
+                src="/logo.png"
+                alt=""
+                width={146}
+                height={96}
                 aria-hidden="true"
-              >
-                <path d="M12 22V12" />
-                <path d="M12 12c0-4 3-7 8-7 0 5-3 8-8 8Z" />
-                <path d="M12 12C12 8 9 5 4 5c0 5 3 8 8 8Z" />
-              </svg>
+                className="h-5 w-auto"
+              />
             </span>
             <div>
               <h1 className="text-lg font-bold tracking-tight text-stone-900 dark:text-stone-100">
@@ -551,9 +545,26 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
             <button
               type="button"
               onClick={logout}
-              className="rounded-2xl border border-stone-200 bg-white/70 px-4 py-2 text-sm font-medium text-stone-600 transition-all duration-300 hover:border-red-200 hover:text-red-600 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:border-red-500/40 dark:hover:text-red-300"
+              aria-label="Cerrar sesion"
+              title="Cerrar sesion"
+              className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-white/70 px-3 py-2 text-sm font-medium text-stone-600 transition-all duration-300 hover:border-red-200 hover:text-red-600 sm:px-4 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:border-red-500/40 dark:hover:text-red-300"
             >
-              Cerrar sesion
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <path d="m16 17 5-5-5-5" />
+                <path d="M21 12H9" />
+              </svg>
+              <span className="hidden sm:inline">Cerrar sesion</span>
             </button>
           </div>
         </div>
@@ -562,9 +573,45 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
       <nav className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 pt-5 sm:px-6">
         {(
           [
-            { key: "products", label: "Productos", badge: 0 },
-            { key: "orders", label: "Pedidos", badge: pendingOrders },
-            { key: "stats", label: "Resumen", badge: 0 },
+            {
+              key: "products",
+              label: "Productos",
+              badge: 0,
+              icon: (
+                <>
+                  <path d="m7.5 4.27 9 5.15" />
+                  <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+                  <path d="m3.3 7 8.7 5 8.7-5" />
+                  <path d="M12 22V12" />
+                </>
+              ),
+            },
+            {
+              key: "orders",
+              label: "Pedidos",
+              badge: pendingOrders,
+              icon: (
+                <>
+                  <path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" />
+                  <path d="M8 7h8" />
+                  <path d="M8 11h8" />
+                  <path d="M8 15h5" />
+                </>
+              ),
+            },
+            {
+              key: "stats",
+              label: "Resumen",
+              badge: 0,
+              icon: (
+                <>
+                  <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+                  <path d="M18 17V9" />
+                  <path d="M13 17V5" />
+                  <path d="M8 17v-3" />
+                </>
+              ),
+            },
           ] as const
         ).map((t) => (
           <button
@@ -578,6 +625,19 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                 : "text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800",
             ].join(" ")}
           >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-4 w-4"
+              aria-hidden="true"
+            >
+              {t.icon}
+            </svg>
             {t.label}
             {t.badge > 0 && (
               <span
