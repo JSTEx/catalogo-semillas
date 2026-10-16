@@ -252,7 +252,7 @@ export default function OrderTracker({
             type="button"
             onClick={copyLink}
             title="Copiar enlace de seguimiento"
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-2xl bg-brand-500 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 dark:bg-brand-500 dark:hover:bg-brand-600"
+            className="inline-flex shrink-0 items-center gap-2 rounded-2xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-300 dark:bg-brand-500 dark:hover:bg-brand-600"
           >
             {copied ? (
               <svg
