@@ -576,19 +576,6 @@ export default function OrderTracker({
       )}
 
       <div className="flex flex-col gap-2">
-        {order.payment === "transferencia" && !cancelled && order.status !== "delivered" && (
-          <a
-            href={businessWhatsAppLink(
-              `Hola! Adjunto el comprobante de transferencia de mi pedido N° ${order.number}.`,
-            )}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-amber-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-amber-600"
-          >
-            <WhatsAppIcon />
-            Enviar comprobante de pago
-          </a>
-        )}
         <a
           href={businessWhatsAppLink(waText)}
           target="_blank"
@@ -623,18 +610,20 @@ export default function OrderTracker({
             Cancelar pedido
           </button>
         )}
-        <a
-          href="/mis-pedidos"
-          className="inline-flex w-full items-center justify-center rounded-2xl border border-stone-200 bg-white px-5 py-3 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
-        >
-          Ver mis pedidos
-        </a>
-        <Link
-          href="/"
-          className="inline-flex w-full items-center justify-center rounded-2xl border border-stone-200 bg-white px-5 py-3 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
-        >
-          Volver al catalogo
-        </Link>
+        <div className="grid grid-cols-2 gap-2">
+          <Link
+            href="/mis-pedidos"
+            className="inline-flex w-full items-center justify-center rounded-2xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
+          >
+            Ver mis pedidos
+          </Link>
+          <Link
+            href="/"
+            className="inline-flex w-full items-center justify-center rounded-2xl border border-stone-200 bg-white px-4 py-2.5 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
+          >
+            Volver al catalogo
+          </Link>
+        </div>
       </div>
 
       {cancelOpen && (
