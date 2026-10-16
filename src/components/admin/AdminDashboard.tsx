@@ -90,6 +90,8 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [studioOpen, setStudioOpen] = useState(false);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [overIndex, setOverIndex] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const onFileChangeRef = useRef(onFileChange);
 
@@ -386,6 +388,19 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
       const images = [...prev.images];
       const [img] = images.splice(index, 1);
       images.unshift(img);
+      return { ...prev, images };
+    });
+  }
+
+  function moveImage(from: number, to: number) {
+    if (from === to) return;
+    setForm((prev) => {
+      if (!prev) return prev;
+      if (from < 0 || from >= prev.images.length) return prev;
+      const target = Math.max(0, Math.min(to, prev.images.length - 1));
+      const images = [...prev.images];
+      const [img] = images.splice(from, 1);
+      images.splice(target, 0, img);
       return { ...prev, images };
     });
   }
@@ -968,20 +983,75 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                     {form.images.map((url, i) => (
                       <div
                         key={url}
-                        className="group relative aspect-square overflow-hidden rounded-2xl border border-stone-200 bg-stone-100 dark:border-stone-700 dark:bg-stone-800"
+                        draggable={!saving && !uploading}
+                        onDragStart={(e) => {
+                          setDragIndex(i);
+                          e.dataTransfer.effectAllowed = "move";
+                          e.dataTransfer.setData("text/plain", String(i));
+                        }}
+                        onDragOver={(e) => {
+                          if (dragIndex === null) return;
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = "move";
+                          if (overIndex !== i) setOverIndex(i);
+                        }}
+                        onDragLeave={() =>
+                          setOverIndex((cur) => (cur === i ? null : cur))
+                        }
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const from = dragIndex ?? Number(e.dataTransfer.getData("text/plain"));
+                          if (!Number.isNaN(from)) moveImage(from, i);
+                          setDragIndex(null);
+                          setOverIndex(null);
+                        }}
+                        onDragEnd={() => {
+                          setDragIndex(null);
+                          setOverIndex(null);
+                        }}
+                        className={`group relative aspect-square overflow-hidden rounded-2xl border border-stone-200 bg-stone-100 transition-all duration-200 dark:border-stone-700 dark:bg-stone-800 ${
+                          !saving && !uploading
+                            ? "cursor-grab active:cursor-grabbing"
+                            : ""
+                        } ${dragIndex === i ? "opacity-40" : ""} ${
+                          overIndex === i &&
+                          dragIndex !== null &&
+                          dragIndex !== i
+                            ? "ring-2 ring-brand-400 ring-offset-2 ring-offset-white dark:ring-offset-stone-900"
+                            : ""
+                        }`}
+                        title="Arrastra para reordenar"
                       >
                         <SeedImage
                           src={url}
                           alt={`Imagen ${i + 1}`}
                           fill
                           sizes="120px"
-                          className="object-contain"
+                          className="pointer-events-none object-contain"
                         />
                         {i === 0 && (
                           <span className="absolute left-1 top-1 rounded-full bg-brand-500 px-1.5 py-0.5 text-[9px] font-semibold text-white shadow-sm">
                             Portada
                           </span>
                         )}
+                        <span
+                          aria-hidden="true"
+                          className="absolute right-1 top-1 text-stone-400/80 drop-shadow-sm dark:text-stone-300/80"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="h-4 w-4"
+                          >
+                            <circle cx="9" cy="6" r="1.4" />
+                            <circle cx="15" cy="6" r="1.4" />
+                            <circle cx="9" cy="12" r="1.4" />
+                            <circle cx="15" cy="12" r="1.4" />
+                            <circle cx="9" cy="18" r="1.4" />
+                            <circle cx="15" cy="18" r="1.4" />
+                          </svg>
+                        </span>
                         <div className="absolute inset-x-1 bottom-1 flex items-center justify-between gap-1">
                           {i > 0 ? (
                             <button
@@ -1037,7 +1107,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                   {uploading ? (
                     <Loader label="Subiendo..." />
                   ) : (
-                    `Puedes subir varias imagenes a la vez (hasta ${MAX_PRODUCT_IMAGES}). JPG, PNG o WEBP, maximo 3MB. La primera es la portada. Tambien puedes pegar (Ctrl+V).`
+                    `Puedes subir varias imagenes a la vez (hasta ${MAX_PRODUCT_IMAGES}). JPG, PNG o WEBP, maximo 3MB. La primera es la portada. Arrastra las imagenes para reordenarlas. Tambien puedes pegar (Ctrl+V).`
                   )}
                 </p>
                 {form.images.length > 0 && (
