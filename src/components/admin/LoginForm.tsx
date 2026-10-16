@@ -53,7 +53,7 @@ export default function LoginForm({ redirectTo }: Props) {
     <main className="relative flex min-h-dvh flex-col items-center justify-center gap-6 bg-gradient-to-br from-stone-50 via-white to-brand-50/60 px-4 dark:from-stone-950 dark:via-stone-900 dark:to-stone-950">
       <div className="animate-fade-in-up w-full max-w-md rounded-3xl border border-white/60 bg-white/70 p-8 shadow-xl backdrop-blur-md dark:border-stone-700/60 dark:bg-stone-900/70">
         <div className="mb-8 flex flex-col items-center gap-3 text-center">
-          <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-500 text-white shadow-sm">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-500 text-white shadow-sm">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
