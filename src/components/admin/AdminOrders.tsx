@@ -15,6 +15,7 @@ import {
 import { formatMoney } from "@/lib/money";
 import { normalizeSearch } from "@/lib/search";
 import { useViewMode } from "@/lib/use-view-mode";
+import { useBackdropClose } from "@/lib/use-backdrop-close";
 import ViewToggle from "@/components/ViewToggle";
 
 interface Props {
@@ -64,6 +65,7 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [view, setView] = useViewMode("admin-orders-view", "grid");
   const [openId, setOpenId] = useState<string | null>(null);
+  const backdrop = useBackdropClose(() => setOpenId(null));
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: orders.length };
@@ -397,7 +399,7 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
       {active && (
         <div
           className="animate-fade-in fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-stone-900/60 p-4 backdrop-blur-sm dark:bg-black/70"
-          onClick={() => setOpenId(null)}
+          {...backdrop}
           role="dialog"
           aria-modal="true"
           aria-label={`Detalle del pedido N° ${active.number}`}

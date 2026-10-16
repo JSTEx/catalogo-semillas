@@ -8,6 +8,7 @@ import { isOrderable } from "@/lib/orders";
 import { useCart } from "./cart/CartProvider";
 import AvailabilityBadge from "./AvailabilityBadge";
 import SeedImage from "./SeedImage";
+import { useBackdropClose } from "@/lib/use-backdrop-close";
 
 interface Props {
   product: ProductDTO | null;
@@ -20,6 +21,7 @@ export default function SeedModal({ product, onClose, onOpenCart }: Props) {
   const [zoom, setZoom] = useState(false);
   const [origin, setOrigin] = useState("50% 50%");
   const [active, setActive] = useState(0);
+  const backdrop = useBackdropClose(onClose);
   const [pointerKind, setPointerKind] = useState<"mouse" | "touch" | "pen">(
     () =>
       typeof window !== "undefined" && window.matchMedia("(hover: hover)").matches
@@ -74,7 +76,7 @@ export default function SeedModal({ product, onClose, onOpenCart }: Props) {
       aria-modal="true"
       aria-label={product.name}
       className="animate-fade-in fixed inset-0 z-50 flex items-center justify-center p-4"
-      onClick={onClose}
+      {...backdrop}
     >
       <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm dark:bg-black/60" />
 

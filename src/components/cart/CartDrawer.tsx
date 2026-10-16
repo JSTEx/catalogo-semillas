@@ -3,6 +3,7 @@
 import { useCart } from "./CartProvider";
 import SeedImage from "../SeedImage";
 import { formatMoney } from "@/lib/money";
+import { useBackdropClose } from "@/lib/use-backdrop-close";
 
 interface Props {
   open: boolean;
@@ -12,13 +13,14 @@ interface Props {
 
 export default function CartDrawer({ open, onClose, onCheckout }: Props) {
   const { items, count, totalCents, setQuantity, remove, clear } = useCart();
+  const backdrop = useBackdropClose(onClose);
 
   if (!open) return null;
 
   return (
     <div
       className="animate-fade-in fixed inset-0 z-50 flex justify-end"
-      onClick={onClose}
+      {...backdrop}
     >
       <div className="absolute inset-0 bg-stone-900/40 backdrop-blur-sm dark:bg-black/60" />
       <aside
