@@ -98,7 +98,7 @@ export default function CatalogClient({ initialProducts }: Props) {
       <header className="sticky top-0 z-40 border-b border-stone-200/60 bg-white/70 backdrop-blur-md dark:border-stone-800/60 dark:bg-stone-900/70">
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-brand-500 shadow-sm">
+            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500 shadow-sm">
               <Image
                 src="/logo.png"
                 alt=""
