@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import Link from "next/link";
 import type { PublicOrderDTO } from "@/lib/types";
 import type { OrderStatus } from "@/lib/orders";
 import { formatMoney } from "@/lib/money";
@@ -628,12 +629,12 @@ export default function OrderTracker({
         >
           Ver mis pedidos
         </a>
-        <a
+        <Link
           href="/"
           className="inline-flex w-full items-center justify-center rounded-2xl border border-stone-200 bg-white px-5 py-3 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
         >
           Volver al catalogo
-        </a>
+        </Link>
       </div>
 
       {cancelOpen && (

@@ -164,6 +164,7 @@ export default function SeedImage(props: ImageProps) {
       </div>
       <Image
         {...props}
+        alt={props.alt}
         ref={imgRef}
         onLoad={() => setLoaded(true)}
         onError={() => setLoaded(true)}

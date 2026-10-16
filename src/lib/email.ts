@@ -496,6 +496,7 @@ export async function sendCustomerOrderEmail(order: OrderDTO): Promise<void> {
     `${CUSTOMER_STATUS_TITLES[order.status]} · Pedido N° ${order.number}`,
     customerHtml(order, order.status),
     customerText(order, order.status),
+    unsubscribeHeaders(order),
   );
 }
 

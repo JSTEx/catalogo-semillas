@@ -1,4 +1,5 @@
 import { eq } from "drizzle-orm";
+import Link from "next/link";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { productIdSchema } from "@/lib/validation";
@@ -32,12 +33,12 @@ function NotFound() {
       <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
         El enlace no es valido o el pedido ya no existe.
       </p>
-      <a
+      <Link
         href="/"
         className="mt-5 inline-flex items-center justify-center rounded-2xl bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-600"
       >
         Volver al catalogo
-      </a>
+      </Link>
     </div>
   );
 }

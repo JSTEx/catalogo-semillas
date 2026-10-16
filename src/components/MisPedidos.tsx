@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   MY_ORDER_EVENT,
   clearMyOrders,
@@ -233,7 +234,7 @@ export default function MisPedidos() {
     <div className="min-h-dvh">
       <header className="sticky top-0 z-40 border-b border-stone-200/60 bg-white/70 backdrop-blur-md dark:border-stone-800/60 dark:bg-stone-900/70">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
-          <a
+          <Link
             href="/"
             className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-white/70 px-3 py-2 text-sm font-medium text-stone-600 transition-colors hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300"
           >
@@ -253,7 +254,7 @@ export default function MisPedidos() {
             </svg>
             <span className="hidden sm:inline">Volver al catalogo</span>
             <span className="sm:hidden">Catalogo</span>
-          </a>
+          </Link>
           <div className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-brand-500 shadow-sm">
               <Image
@@ -299,12 +300,12 @@ export default function MisPedidos() {
               Los pedidos que hagas desde este dispositivo apareceran aqui para
               que puedas seguir su estado.
             </p>
-            <a
+            <Link
               href="/"
               className="mt-2 rounded-2xl bg-brand-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-600"
             >
               Ir al catalogo
-            </a>
+            </Link>
           </div>
         ) : (
           <>

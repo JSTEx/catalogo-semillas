@@ -8,7 +8,6 @@ import { PRODUCT_STATUSES } from "./product-status";
 export function sanitizeText(value: string): string {
   return value
     .replace(/<[^>]*>/g, "")
-    // eslint-disable-next-line no-control-regex
     .replace(/[\u0000-\u001F\u007F]/g, "")
     .trim();
 }

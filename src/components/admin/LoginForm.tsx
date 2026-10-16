@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Loader from "@/components/Loader";
 
 interface Props {
@@ -133,7 +134,7 @@ export default function LoginForm({ redirectTo }: Props) {
         </form>
       </div>
 
-      <a
+      <Link
         href="/"
         className="inline-flex h-10 items-center gap-2 rounded-2xl border border-stone-200 bg-white/70 px-4 text-sm font-medium text-stone-600 shadow-sm backdrop-blur-md transition-all duration-300 hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:border-brand-500/40 dark:hover:text-brand-300"
       >
@@ -152,7 +153,7 @@ export default function LoginForm({ redirectTo }: Props) {
           <path d="M19 12H5" />
         </svg>
         Volver al catalogo
-      </a>
+      </Link>
     </main>
   );
 }

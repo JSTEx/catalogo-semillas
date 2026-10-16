@@ -3,9 +3,54 @@ import path from "node:path";
 import sharp from "sharp";
 import { uploadImage } from "@/lib/storage";
 import { jsonError, requireAdmin } from "@/lib/http";
+import { detectImageMime } from "@/lib/file-validation";
+import { MAX_IMAGE_BYTES } from "@/lib/validation";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
+
+// SSRF: solo descargamos imagenes de los hosts de almacenamiento conocidos
+// (mismos que permite next.config para next/image).
+const ALLOWED_IMAGE_HOSTS = ["res.cloudinary.com"];
+const ALLOWED_IMAGE_HOST_SUFFIXES = [".supabase.co", ".supabase.in"];
+const FETCH_TIMEOUT_MS = 15_000;
+
+function isAllowedImageHost(hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  return (
+    ALLOWED_IMAGE_HOSTS.includes(host) ||
+    ALLOWED_IMAGE_HOST_SUFFIXES.some((suffix) => host.endsWith(suffix))
+  );
+}
+
+/**
+ * Descarga el cuerpo de una respuesta limitando el tamano leido, para no
+ * cargar en memoria imagenes enormes (DoS). Lanza si supera `max`.
+ */
+async function readCapped(res: Response, max: number): Promise<Buffer> {
+  const declared = Number(res.headers.get("content-length") ?? "");
+  if (Number.isFinite(declared) && declared > max) {
+    throw new Error("IMAGE_TOO_LARGE");
+  }
+  const reader = res.body?.getReader();
+  if (!reader) throw new Error("IMAGE_EMPTY");
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (value) {
+      total += value.byteLength;
+      if (total > max) {
+        await reader.cancel().catch(() => {});
+        throw new Error("IMAGE_TOO_LARGE");
+      }
+      chunks.push(value);
+    }
+  }
+  if (total === 0) throw new Error("IMAGE_EMPTY");
+  return Buffer.concat(chunks, total);
+}
 
 // Limpia el halo de color del borde: en pixeles semitransparentes el canal RGB
 // aun conserva restos del fondo eliminado. Para cada borde, se mezcla con el
@@ -70,21 +115,31 @@ export async function POST(req: Request) {
   if (parsed.protocol !== "https:") {
     return jsonError("La URL debe usar HTTPS", 400);
   }
+  if (!isAllowedImageHost(parsed.hostname)) {
+    return jsonError("El origen de la imagen no esta permitido", 400);
+  }
 
   try {
-    const image = await fetch(parsed).then((r) => {
-      if (!r.ok) throw new Error("No se pudo descargar la imagen");
-      return r.arrayBuffer();
-    });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    let image: Buffer;
+    try {
+      const response = await fetch(parsed, { signal: controller.signal });
+      if (!response.ok) throw new Error("No se pudo descargar la imagen");
+      image = await readCapped(response, MAX_IMAGE_BYTES);
+    } finally {
+      clearTimeout(timer);
+    }
+
+    if (!detectImageMime(image)) {
+      return jsonError("El archivo descargado no es una imagen valida", 400);
+    }
 
     // Limitar el lado mayor a 2048 para acelerar el modelo y evitar memoria.
-    const decoded = sharp(Buffer.from(image)).rotate().resize(2048, 2048, {
+    const decoded = sharp(image).rotate().resize(2048, 2048, {
       fit: "inside",
       withoutEnlargement: true,
     });
-    const meta = await decoded.metadata();
-    const w = Math.max(1, meta.width ?? 0);
-    const h = Math.max(1, meta.height ?? 0);
     const conv = Buffer.from(await decoded.png().toBuffer());
 
     const { removeBackground } = await import(
@@ -139,6 +194,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ url: uploaded }, { status: 201 });
   } catch (e) {
     console.error("remove-background", e);
+    if (e instanceof Error && e.message === "IMAGE_TOO_LARGE") {
+      return jsonError(
+        `La imagen supera el limite de ${MAX_IMAGE_BYTES / 1024 / 1024}MB`,
+        413,
+      );
+    }
+    if (e instanceof Error && e.message === "IMAGE_EMPTY") {
+      return jsonError("La imagen descargada esta vacia", 400);
+    }
     return jsonError(
       "No se pudo eliminar el fondo. Reintenta en un momento (la primera vez tarda).",
       502,

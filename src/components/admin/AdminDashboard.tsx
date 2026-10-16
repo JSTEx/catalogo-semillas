@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import type { ExpenseDTO, OrderDTO, ProductDTO } from "@/lib/types";
 import { PRODUCT_STATUSES, STATUS_META, sortByStatus } from "@/lib/product-status";
 import type { ProductStatus } from "@/lib/product-status";
@@ -140,7 +141,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
     };
     document.addEventListener("paste", onPaste);
     return () => document.removeEventListener("paste", onPaste);
-  }, [Boolean(form)]);
+  }, [form]);
 
   const filtered = useMemo(() => {
     const q = normalizeSearch(query.trim());
@@ -524,7 +525,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <a
+            <Link
               href="/"
               aria-label="Ver catalogo"
               title="Ver catalogo"
@@ -546,7 +547,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                 <path d="M16 10a4 4 0 0 1-8 0" />
               </svg>
               <span className="hidden sm:inline">Ver catalogo</span>
-            </a>
+            </Link>
             <button
               type="button"
               onClick={logout}
