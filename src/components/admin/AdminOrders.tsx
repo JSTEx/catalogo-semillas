@@ -7,8 +7,7 @@ import {
   ORDER_STATUS_META,
   PAYMENT_META,
   DELIVERY_META,
-  confirmWhatsAppLink,
-  statusNotifyWhatsAppLink,
+  notifyCustomerWhatsAppLink,
   orderTrackingUrl,
   formatDateTime,
   type OrderStatus,
@@ -413,24 +412,18 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
                       {copiedId === order.id ? "Copiado" : "Copiar enlace"}
                     </button>
                     <a
-                      href={confirmWhatsAppLink(order)}
+                      href={notifyCustomerWhatsAppLink(order)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      title="Enviar confirmacion del pedido con el enlace de seguimiento"
+                      title={
+                        order.status === "new"
+                          ? "Confirmar el pedido con el cliente"
+                          : `Avisar al cliente que el pedido esta "${ORDER_STATUS_META[order.status].label}"`
+                      }
                       className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
                     >
                       <WhatsAppIcon />
-                      Confirmar
-                    </a>
-                    <a
-                      href={statusNotifyWhatsAppLink(order)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title={`Avisar al cliente que el pedido esta "${ORDER_STATUS_META[order.status].label}"`}
-                      className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-700 transition-colors hover:bg-sky-100 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300"
-                    >
-                      <WhatsAppIcon />
-                      Avisar
+                      {order.status === "new" ? "Confirmar" : "Avisar"}
                     </a>
                     <button
                       type="button"

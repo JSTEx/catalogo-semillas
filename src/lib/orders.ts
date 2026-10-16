@@ -218,6 +218,19 @@ export function statusNotifyWhatsAppLink(order: OrderDTO): string {
   return waLink(order.customerPhone, statusNotifyMessage(order));
 }
 
+/**
+ * Enlace de WhatsApp al cliente con el mensaje adecuado segun el estado:
+ * en pedidos nuevos confirma con el detalle completo y el enlace de
+ * seguimiento; en el resto avisa del estado actual.
+ */
+export function notifyCustomerWhatsAppLink(order: OrderDTO): string {
+  const message =
+    order.status === "new"
+      ? confirmOrderToCustomerMessage(order)
+      : statusNotifyMessage(order);
+  return waLink(order.customerPhone, message);
+}
+
 /** Ruta publica de seguimiento para el cliente. */
 export function orderTrackingPath(id: string): string {
   return `/pedido/${id}`;
