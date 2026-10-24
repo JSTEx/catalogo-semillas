@@ -101,12 +101,20 @@ export default function CatalogClient({ initialProducts }: Props) {
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
               <Image
+                src="/logo.png"
+                alt=""
+                width={720}
+                height={720}
+                aria-hidden="true"
+                className="h-7 w-7 dark:hidden"
+              />
+              <Image
                 src="/logo-dark.png"
                 alt=""
                 width={720}
                 height={720}
                 aria-hidden="true"
-                className="h-7 w-7"
+                className="hidden h-7 w-7 dark:block"
               />
             </span>
             <div>

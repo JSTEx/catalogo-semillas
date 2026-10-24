@@ -258,12 +258,20 @@ export default function MisPedidos() {
           <div className="flex items-center gap-2.5">
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
               <Image
+                src="/logo.png"
+                alt=""
+                width={720}
+                height={720}
+                aria-hidden="true"
+                className="h-6 w-6 dark:hidden"
+              />
+              <Image
                 src="/logo-dark.png"
                 alt=""
                 width={720}
                 height={720}
                 aria-hidden="true"
-                className="h-6 w-6"
+                className="hidden h-6 w-6 dark:block"
               />
             </span>
             <h1 className="text-lg font-bold tracking-tight text-stone-900 dark:text-stone-100">
