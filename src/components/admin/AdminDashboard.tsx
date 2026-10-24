@@ -1190,7 +1190,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                   {uploading ? (
                     <Loader label="Subiendo..." />
                   ) : (
-                    `Puedes subir varias imagenes a la vez (hasta ${MAX_PRODUCT_IMAGES}). JPG, PNG o WEBP, maximo 3MB. La primera es la portada. Arrastra las imagenes para reordenarlas. Tambien puedes pegar (Ctrl+V).`
+                    `Puedes subir varias imagenes a la vez (hasta ${MAX_PRODUCT_IMAGES}). JPG, PNG o WEBP, maximo 6MB. Las imagenes se optimizan automaticamente a WebP (max 2000px). La primera es la portada. Arrastra las imagenes para reordenarlas. Tambien puedes pegar (Ctrl+V).`
                   )}
                 </p>
                 {form.images.length > 0 && (
