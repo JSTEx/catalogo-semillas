@@ -128,7 +128,10 @@ export default function SeedImage(props: ImageProps) {
     let timer: ReturnType<typeof setTimeout> | undefined;
 
     if (typeof src === "string" && visible) {
-      const conn = (navigator as any).connection;
+      const nav = navigator as Navigator & {
+        connection?: { saveData?: boolean; effectiveType?: string };
+      };
+      const conn = nav.connection;
       const saveData = conn?.saveData;
       const slow = conn?.effectiveType && /2g|slow-2g/.test(conn.effectiveType);
       if (saveData || slow) {
