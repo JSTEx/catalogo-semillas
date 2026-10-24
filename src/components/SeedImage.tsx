@@ -33,7 +33,7 @@ async function extractDominantColors(
     const blob = await res.blob();
     const img = await createImageBitmap(blob);
 
-    const maxDim = 48;
+    const maxDim = 32;
     const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
     const w = Math.max(1, Math.round(img.width * scale));
     const h = Math.max(1, Math.round(img.height * scale));
@@ -97,23 +97,52 @@ async function extractDominantColors(
 export default function SeedImage(props: ImageProps) {
   const src = props.src;
   const imgRef = useRef<HTMLImageElement | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [colors, setColors] = useState<[string, string] | null>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === "undefined") {
+      setVisible(true);
+      return;
+    }
+    const obs = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisible(true);
+          obs.disconnect();
+        }
+      },
+      { rootMargin: "200px" },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   useEffect(() => {
     setLoaded(false);
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
 
-    if (typeof src === "string") {
-      const cached = colorCache.get(src);
-      if (cached !== undefined) {
-        setColors(cached);
+    if (typeof src === "string" && visible) {
+      const conn = (navigator as any).connection;
+      const saveData = conn?.saveData;
+      const slow = conn?.effectiveType && /2g|slow-2g/.test(conn.effectiveType);
+      if (saveData || slow) {
+        setColors(null);
       } else {
-        extractDominantColors(src).then((c) => {
-          if (c) colorCache.set(src, c);
-          if (!cancelled) setColors(c);
-        });
+        const cached = colorCache.get(src);
+        if (cached !== undefined) {
+          setColors(cached);
+        } else {
+          extractDominantColors(src).then((c) => {
+            if (c) colorCache.set(src, c);
+            if (!cancelled) setColors(c);
+          });
+        }
       }
     }
 
@@ -131,10 +160,10 @@ export default function SeedImage(props: ImageProps) {
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [src]);
+  }, [src, visible]);
 
   return (
-    <div className="absolute inset-0 overflow-hidden">
+    <div ref={containerRef} className="absolute inset-0 overflow-hidden">
       <div
         aria-hidden="true"
         className={[
@@ -166,6 +195,7 @@ export default function SeedImage(props: ImageProps) {
         {...props}
         alt={props.alt}
         ref={imgRef}
+        loading={props.loading ?? "lazy"}
         onLoad={() => setLoaded(true)}
         onError={() => setLoaded(true)}
         className={[
