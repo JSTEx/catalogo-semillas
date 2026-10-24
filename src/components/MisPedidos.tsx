@@ -256,14 +256,14 @@ export default function MisPedidos() {
             <span className="sm:hidden">Catalogo</span>
           </Link>
           <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-black shadow-sm">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
               <Image
                 src="/logo-dark.png"
                 alt=""
-                width={146}
-                height={96}
+                width={720}
+                height={720}
                 aria-hidden="true"
-                className="h-4 w-auto"
+                className="h-6 w-6"
               />
             </span>
             <h1 className="text-lg font-bold tracking-tight text-stone-900 dark:text-stone-100">
