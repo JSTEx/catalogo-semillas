@@ -1,8 +1,8 @@
 export const PRODUCT_STATUSES = [
   "available",
   "low_stock",
-  "out_of_stock",
   "coming_soon",
+  "out_of_stock",
 ] as const;
 
 export type ProductStatus = (typeof PRODUCT_STATUSES)[number];
@@ -43,18 +43,6 @@ export const STATUS_META: Record<ProductStatus, StatusMeta> = {
     solid: "bg-amber-500",
     rank: 1,
   },
-  out_of_stock: {
-    label: "Agotado",
-    short: "Agotado",
-    description:
-      "Por el momento esta variedad no tiene existencias. Vuelve pronto o consulta otras opciones.",
-    availability: "Sin existencias",
-    badge:
-      "border-rose-200/70 bg-rose-50/80 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300",
-    dot: "bg-rose-500",
-    solid: "bg-rose-500",
-    rank: 3,
-  },
   coming_soon: {
     label: "Proximamente",
     short: "Proximamente",
@@ -66,6 +54,18 @@ export const STATUS_META: Record<ProductStatus, StatusMeta> = {
     dot: "bg-sky-500",
     solid: "bg-sky-500",
     rank: 2,
+  },
+  out_of_stock: {
+    label: "Agotado",
+    short: "Agotado",
+    description:
+      "Por el momento esta variedad no tiene existencias. Vuelve pronto o consulta otras opciones.",
+    availability: "Sin existencias",
+    badge:
+      "border-rose-200/70 bg-rose-50/80 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300",
+    dot: "bg-rose-500",
+    solid: "bg-rose-500",
+    rank: 3,
   },
 };
 
