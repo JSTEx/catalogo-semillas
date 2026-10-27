@@ -6,12 +6,14 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import type { AdapterAccountType } from "next-auth/adapters";
 
 export const productStatusEnum = pgEnum("product_status", [
   "available",
@@ -89,6 +91,7 @@ export const orders = pgTable(
   {
     id: uuid("id").primaryKey().default(sql`uuid_generate_v4()`),
     number: bigserial("number", { mode: "number" }).unique().notNull(),
+    customerId: uuid("customer_id"),
     customerName: text("customer_name").notNull(),
     customerPhone: text("customer_phone").notNull(),
     customerEmail: text("customer_email"),
@@ -113,6 +116,7 @@ export const orders = pgTable(
   (table) => [
     index("idx_orders_status").on(table.status),
     index("idx_orders_created_at").on(table.createdAt),
+    index("idx_orders_customer_id").on(table.customerId),
   ],
 );
 
@@ -130,6 +134,63 @@ export const expenses = pgTable(
   (table) => [index("idx_expenses_created_at").on(table.createdAt)],
 );
 
+export const customers = pgTable("customers", {
+  id: uuid("id").primaryKey().default(sql`uuid_generate_v4()`),
+  email: varchar("email", { length: 254 }).unique().notNull(),
+  name: text("name"),
+  image: text("image"),
+  phone: text("phone"),
+  emailVerified: timestamp("email_verified", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+export const accounts = pgTable(
+  "accounts",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => customers.id, { onDelete: "cascade" }),
+    type: text("type").$type<AdapterAccountType>().notNull(),
+    provider: text("provider").notNull(),
+    providerAccountId: text("provider_account_id").notNull(),
+    refresh_token: text("refresh_token"),
+    access_token: text("access_token"),
+    expires_at: integer("expires_at"),
+    token_type: text("token_type"),
+    scope: text("scope"),
+    id_token: text("id_token"),
+    session_state: text("session_state"),
+  },
+  (account) => [
+    primaryKey({
+      columns: [account.provider, account.providerAccountId],
+    }),
+  ],
+);
+
+export const sessions = pgTable("sessions", {
+  sessionToken: text("session_token").primaryKey(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => customers.id, { onDelete: "cascade" }),
+  expires: timestamp("expires", { withTimezone: true }).notNull(),
+});
+
+export const verificationTokens = pgTable(
+  "verification_tokens",
+  {
+    identifier: text("identifier").notNull(),
+    token: text("token").notNull(),
+    expires: timestamp("expires", { withTimezone: true }).notNull(),
+  },
+  (vt) => [primaryKey({ columns: [vt.identifier, vt.token] })],
+);
+
 export type AdminUser = typeof adminUsers.$inferSelect;
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
@@ -137,3 +198,5 @@ export type Order = typeof orders.$inferSelect;
 export type NewOrder = typeof orders.$inferInsert;
 export type Expense = typeof expenses.$inferSelect;
 export type NewExpense = typeof expenses.$inferInsert;
+export type Customer = typeof customers.$inferSelect;
+export type NewCustomer = typeof customers.$inferInsert;
