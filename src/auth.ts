@@ -11,7 +11,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     accountsTable: accounts,
     sessionsTable: sessions,
     verificationTokensTable: verificationTokens,
-  }) as any,
+  }) as ReturnType<typeof DrizzleAdapter>,
   session: { strategy: "database" },
   ...authConfig,
   events: {
