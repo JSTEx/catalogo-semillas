@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
 import { productIdSchema, updateProductSchema } from "@/lib/validation";
 import { requireAdmin, jsonError } from "@/lib/http";
+import { deleteUnusedImages } from "@/lib/image-cleanup";
 import { toProductDTO } from "@/lib/types";
 
 export const runtime = "nodejs";
@@ -73,6 +74,18 @@ export async function PATCH(req: Request, { params }: Params) {
 
   if (!updated) return jsonError("Producto no encontrado", 404);
 
+  // Limpia imagenes que se quitaron del producto y ya no usa nadie.
+  const before = new Set(
+    [current.imageUrl, ...(current.imageUrls ?? [])].filter(Boolean),
+  );
+  const afterSet = new Set(
+    [updated.imageUrl, ...(updated.imageUrls ?? [])].filter(Boolean),
+  );
+  const removed = [...before].filter((url) => !afterSet.has(url));
+  if (removed.length > 0) {
+    after(() => deleteUnusedImages(removed));
+  }
+
   return NextResponse.json({ product: toProductDTO(updated) });
 }
 
@@ -91,6 +104,12 @@ export async function DELETE(req: Request, { params }: Params) {
     .returning();
 
   if (!deleted) return jsonError("Producto no encontrado", 404);
+
+  // Borra sus imagenes si no estan referenciadas por pedidos u otros productos.
+  const urls = [deleted.imageUrl, ...(deleted.imageUrls ?? [])].filter(Boolean);
+  if (urls.length > 0) {
+    after(() => deleteUnusedImages(urls));
+  }
 
   return NextResponse.json({ ok: true, id: deleted.id });
 }

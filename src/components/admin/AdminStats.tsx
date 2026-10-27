@@ -20,6 +20,7 @@ import {
   EXPENSE_CATEGORIES,
   EXPENSE_CATEGORY_META,
   PAYMENT_META,
+  formatDate,
   type ExpenseCategory,
 } from "@/lib/orders";
 import { formatMoney } from "@/lib/money";
@@ -33,8 +34,25 @@ interface Props {
 const ACTIVE_STATUSES = ["new", "confirmed", "in_transit"];
 const CHART_COLORS = ["#10b981", "#f59e0b", "#0ea5e9", "#8b5cf6", "#f43f5e", "#14b8a6"];
 
+const SV_TZ = "America/El_Salvador";
+const SV_PARTS = new Intl.DateTimeFormat("en-US", {
+  timeZone: SV_TZ,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+/** Partes de fecha en hora de El Salvador (evita depender del TZ del equipo). */
+function svParts(d: Date): { year: number; month: number; day: number } {
+  const parts = SV_PARTS.formatToParts(d);
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((p) => p.type === type)?.value);
+  return { year: value("year"), month: value("month"), day: value("day") };
+}
+
 function monthKey(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+  const p = svParts(d);
+  return `${p.year}-${String(p.month).padStart(2, "0")}`;
 }
 
 const MONTH_LABELS = [
@@ -67,16 +85,22 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
   }, [orders, expenses]);
 
   const monthly = useMemo(() => {
-    const now = new Date();
+    const now = svParts(new Date());
     const buckets: { key: string; label: string }[] = [];
     for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      buckets.push({ key: monthKey(d), label: MONTH_LABELS[d.getMonth()] });
+      const total = now.year * 12 + (now.month - 1) - i;
+      const year = Math.floor(total / 12);
+      const month = (total % 12) + 1;
+      buckets.push({
+        key: `${year}-${String(month).padStart(2, "0")}`,
+        label: MONTH_LABELS[month - 1],
+      });
     }
     const ingByMonth: Record<string, number> = {};
     for (const o of orders) {
       if (o.status !== "delivered") continue;
-      const k = monthKey(new Date(o.createdAt));
+      // Ingreso contabilizado cuando se entrego (fallback a creacion).
+      const k = monthKey(new Date(o.deliveredAt ?? o.createdAt));
       ingByMonth[k] = (ingByMonth[k] ?? 0) + o.totalCents;
     }
     const gasByMonth: Record<string, number> = {};
@@ -121,17 +145,18 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
     const now = new Date();
     const days: { key: string; label: string; pedidos: number }[] = [];
     for (let i = 13; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      const p = svParts(d);
       days.push({
-        key: `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`,
-        label: `${d.getDate()}/${d.getMonth() + 1}`,
+        key: `${p.year}-${p.month}-${p.day}`,
+        label: `${p.day}/${p.month}`,
         pedidos: 0,
       });
     }
     const idx = new Map(days.map((d, i) => [d.key, i]));
     for (const o of orders) {
-      const d = new Date(o.createdAt);
-      const k = `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+      const p = svParts(new Date(o.createdAt));
+      const k = `${p.year}-${p.month}-${p.day}`;
       const i = idx.get(k);
       if (i !== undefined) days[i].pedidos += 1;
     }
@@ -382,7 +407,7 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
                   </span>
                   <span className="text-xs text-stone-400 dark:text-stone-500">
                     {EXPENSE_CATEGORY_META[e.category].label} ·{" "}
-                    {new Date(e.createdAt).toLocaleDateString("es")}
+                    {formatDate(e.createdAt)}
                   </span>
                 </span>
                 <span className="font-semibold text-rose-600 dark:text-rose-400">

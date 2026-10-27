@@ -115,8 +115,10 @@ export async function POST(req: Request) {
   }
 
   after(async () => {
-    await sendNewOrderEmail(dto);
-    await sendCustomerOrderEmail(dto);
+    await Promise.allSettled([
+      sendNewOrderEmail(dto),
+      sendCustomerOrderEmail(dto),
+    ]);
   });
 
   return NextResponse.json({ order: dto }, { status: 201 });

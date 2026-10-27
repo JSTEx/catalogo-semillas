@@ -76,6 +76,7 @@ export interface OrderDTO {
   receiptUrl: string | null;
   createdAt: string;
   updatedAt: string;
+  deliveredAt: string | null;
 }
 
 export function toOrderDTO(o: Order): OrderDTO {
@@ -98,6 +99,7 @@ export function toOrderDTO(o: Order): OrderDTO {
     receiptUrl: o.receiptUrl ?? null,
     createdAt: o.createdAt.toISOString(),
     updatedAt: o.updatedAt.toISOString(),
+    deliveredAt: o.deliveredAt ? o.deliveredAt.toISOString() : null,
   };
 }
 

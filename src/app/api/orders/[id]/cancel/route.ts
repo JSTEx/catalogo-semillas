@@ -100,8 +100,10 @@ export async function POST(req: Request, { params }: Params) {
 
   const dto = toOrderDTO(updated);
   after(async () => {
-    await sendCustomerOrderEmail(dto);
-    await sendOrderCancelledEmail(dto);
+    await Promise.allSettled([
+      sendCustomerOrderEmail(dto),
+      sendOrderCancelledEmail(dto),
+    ]);
   });
 
   return NextResponse.json({ order: toPublicOrderDTO(updated) });

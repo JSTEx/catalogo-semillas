@@ -58,3 +58,35 @@ export async function uploadImage(
   const { data } = client.storage.from(bucket).getPublicUrl(objectPath);
   return data.publicUrl;
 }
+
+/**
+ * Extrae la ruta del objeto a partir de su URL publica de Supabase. Devuelve
+ * null si la URL no pertenece al bucket configurado.
+ */
+function objectPathFromPublicUrl(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    const marker = "/storage/v1/object/public/";
+    const index = parsed.pathname.indexOf(marker);
+    if (index === -1) return null;
+    const rest = parsed.pathname.slice(index + marker.length);
+    const [bucket, ...parts] = rest.split("/");
+    if (bucket !== getBucket() || parts.length === 0) return null;
+    return decodeURIComponent(parts.join("/"));
+  } catch {
+    return null;
+  }
+}
+
+/** Elimina una imagen del bucket a partir de su URL publica. */
+export async function deleteImageByUrl(url: string): Promise<boolean> {
+  const objectPath = objectPathFromPublicUrl(url);
+  if (!objectPath) return false;
+
+  const client = getAdminClient();
+  const { error } = await client.storage.from(getBucket()).remove([objectPath]);
+  if (error) {
+    throw new Error(`Error al borrar la imagen: ${error.message}`);
+  }
+  return true;
+}

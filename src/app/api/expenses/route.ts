@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { desc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { expenses } from "@/lib/db/schema";
 import { createExpenseSchema } from "@/lib/validation";
@@ -7,18 +6,6 @@ import { requireAdmin, jsonError } from "@/lib/http";
 import { toExpenseDTO } from "@/lib/types";
 
 export const runtime = "nodejs";
-
-export async function GET(req: Request) {
-  const guard = await requireAdmin(req);
-  if (!guard.authorized) return guard.response;
-
-  const rows = await db
-    .select()
-    .from(expenses)
-    .orderBy(desc(expenses.createdAt));
-
-  return NextResponse.json({ expenses: rows.map(toExpenseDTO) });
-}
 
 export async function POST(req: Request) {
   const guard = await requireAdmin(req);

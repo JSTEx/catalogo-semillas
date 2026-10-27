@@ -86,12 +86,29 @@ export const products = pgTable(
   ],
 );
 
+export const customers = pgTable("customers", {
+  id: uuid("id").primaryKey().default(sql`uuid_generate_v4()`),
+  email: varchar("email", { length: 254 }).unique().notNull(),
+  name: text("name"),
+  image: text("image"),
+  phone: text("phone"),
+  emailVerified: timestamp("email_verified", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
 export const orders = pgTable(
   "orders",
   {
     id: uuid("id").primaryKey().default(sql`uuid_generate_v4()`),
     number: bigserial("number", { mode: "number" }).unique().notNull(),
-    customerId: uuid("customer_id"),
+    customerId: uuid("customer_id").references(() => customers.id, {
+      onDelete: "set null",
+    }),
     customerName: text("customer_name").notNull(),
     customerPhone: text("customer_phone").notNull(),
     customerEmail: text("customer_email"),
@@ -112,10 +129,12 @@ export const orders = pgTable(
     updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
+    deliveredAt: timestamp("delivered_at", { withTimezone: true }),
   },
   (table) => [
     index("idx_orders_status").on(table.status),
     index("idx_orders_created_at").on(table.createdAt),
+    index("idx_orders_delivered_at").on(table.deliveredAt),
     index("idx_orders_customer_id").on(table.customerId),
   ],
 );
@@ -133,21 +152,6 @@ export const expenses = pgTable(
   },
   (table) => [index("idx_expenses_created_at").on(table.createdAt)],
 );
-
-export const customers = pgTable("customers", {
-  id: uuid("id").primaryKey().default(sql`uuid_generate_v4()`),
-  email: varchar("email", { length: 254 }).unique().notNull(),
-  name: text("name"),
-  image: text("image"),
-  phone: text("phone"),
-  emailVerified: timestamp("email_verified", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
 
 export const accounts = pgTable(
   "accounts",

@@ -5,6 +5,7 @@ import { orders } from "@/lib/db/schema";
 import { productIdSchema, updateOrderSchema } from "@/lib/validation";
 import { requireAdmin, jsonError } from "@/lib/http";
 import { holdsStock, releaseStock, reserveStock } from "@/lib/inventory";
+import { deleteUnusedImages } from "@/lib/image-cleanup";
 import { sendCustomerOrderEmail } from "@/lib/email";
 import { toOrderDTO, toPublicOrderDTO, type OrderItem } from "@/lib/types";
 
@@ -54,6 +55,15 @@ export async function PATCH(req: Request, { params }: Params) {
   if (parsed.data.shippingCents !== undefined) {
     patch.totalCents = existing.productsTotal + parsed.data.shippingCents;
   }
+  if (parsed.data.status !== undefined) {
+    if (parsed.data.status === "delivered") {
+      if (existing.status !== "delivered" || !existing.deliveredAt) {
+        patch.deliveredAt = new Date();
+      }
+    } else {
+      patch.deliveredAt = null;
+    }
+  }
   patch.updatedAt = new Date();
 
   const dto = await db
@@ -96,6 +106,14 @@ export async function PATCH(req: Request, { params }: Params) {
     after(() => sendCustomerOrderEmail(dto));
   }
 
+  if (
+    parsed.data.receiptUrl !== undefined &&
+    existing.receiptUrl &&
+    existing.receiptUrl !== dto.receiptUrl
+  ) {
+    after(() => deleteUnusedImages([existing.receiptUrl!]));
+  }
+
   return NextResponse.json({ order: dto });
 }
 
@@ -117,6 +135,10 @@ export async function DELETE(req: Request, { params }: Params) {
   });
 
   if (!deleted) return jsonError("Pedido no encontrado", 404);
+
+  if (deleted.receiptUrl) {
+    after(() => deleteUnusedImages([deleted.receiptUrl!]));
+  }
 
   return NextResponse.json({ ok: true, id: deleted.id });
 }

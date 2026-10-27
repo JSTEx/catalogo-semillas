@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import type { ProductDTO } from "@/lib/types";
 import { statusMeta } from "@/lib/product-status";
 import { formatMoney } from "@/lib/money";
-import { isOrderable } from "@/lib/orders";
+import { isOrderable, formatDate } from "@/lib/orders";
 import { useCart } from "./cart/CartProvider";
 import AvailabilityBadge from "./AvailabilityBadge";
 import SeedImage from "./SeedImage";
@@ -225,11 +225,7 @@ export default function SeedModal({ product, onClose, onOpenCart }: Props) {
               <div className="flex items-center justify-between">
                 <dt className="text-stone-400 dark:text-stone-500">Actualizado</dt>
                 <dd className="font-medium text-stone-700 dark:text-stone-200">
-                  {new Date(product.updatedAt).toLocaleDateString("es-ES", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
+                  {formatDate(product.updatedAt)}
                 </dd>
               </div>
             </dl>

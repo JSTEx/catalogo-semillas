@@ -131,6 +131,22 @@ export function formatDateTime(
   }
 }
 
+/** Fecha (sin hora) en zona El Salvador; determinista servidor/cliente. */
+export function formatDate(value: string | number | Date): string {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  try {
+    return new Intl.DateTimeFormat("es-SV", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      timeZone: "America/El_Salvador",
+    }).format(date);
+  } catch {
+    return date.toISOString().slice(0, 10);
+  }
+}
+
 export function orderItemsSummary(items: OrderItem[]): string {
   return items
     .map((it) => `- ${it.name} x${it.quantity} (${formatMoney(it.priceCents * it.quantity)})`)

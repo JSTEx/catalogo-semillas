@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { useCart } from "./CartProvider";
 import { formatMoney } from "@/lib/money";
 import {
@@ -22,6 +23,7 @@ type Step = "form" | "review";
 
 export default function CheckoutModal({ open, onClose }: Props) {
   const { items, totalCents, clear } = useCart();
+  const { data: session, status: sessionStatus } = useSession();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
@@ -34,6 +36,21 @@ export default function CheckoutModal({ open, onClose }: Props) {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<OrderDTO | null>(null);
+  const [prefilled, setPrefilled] = useState(false);
+
+  // Prellena nombre y correo del usuario logueado (sin pisar lo que escriba).
+  useEffect(() => {
+    if (!open) {
+      setPrefilled(false);
+      return;
+    }
+    if (prefilled || sessionStatus === "loading") return;
+    if (session?.user) {
+      setName((value) => value || session.user?.name || "");
+      setEmail((value) => value || session.user?.email || "");
+    }
+    setPrefilled(true);
+  }, [open, prefilled, session, sessionStatus]);
 
   if (!open) return null;
 
