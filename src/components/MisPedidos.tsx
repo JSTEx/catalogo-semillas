@@ -1,8 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
+import SignInButton from "./auth/SignInButton";
+import type { OrderDTO } from "@/lib/types";
 import {
   MY_ORDER_EVENT,
   clearMyOrders,
@@ -24,6 +27,20 @@ import { formatMoney } from "@/lib/money";
 
 const INITIAL_VISIBLE = 10;
 
+/** Convierte un pedido de la cuenta al formato usado por el historial. */
+function fromOrderDTO(order: OrderDTO): StoredOrder {
+  return {
+    id: order.id,
+    number: order.number,
+    createdAt: order.createdAt,
+    totalCents: order.totalCents,
+    payment: order.payment,
+    delivery: order.delivery,
+    itemCount: order.items.reduce((acc, item) => acc + item.quantity, 0),
+    status: order.status,
+  };
+}
+
 function StatusBadge({ status }: { status: OrderStatus }) {
   const meta = ORDER_STATUS_META[status];
   return (
@@ -42,10 +59,12 @@ function StatusBadge({ status }: { status: OrderStatus }) {
 function OrderCard({
   order,
   status,
+  canRemove = true,
   onRemove,
 }: {
   order: StoredOrder;
   status: OrderStatus;
+  canRemove?: boolean;
   onRemove: (id: string) => void;
 }) {
   const date = order.createdAt ? formatDateTime(order.createdAt, "short") : "";
@@ -102,29 +121,31 @@ function OrderCard({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => onRemove(order.id)}
-            title="Quitar de este dispositivo"
-            aria-label={`Quitar el pedido N° ${order.number} de este dispositivo`}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-stone-200 text-stone-400 transition-colors hover:border-red-200 hover:text-red-500 dark:border-stone-700 dark:text-stone-500 dark:hover:border-red-500/40 dark:hover:text-red-400"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-4 w-4"
-              aria-hidden="true"
+          {canRemove && (
+            <button
+              type="button"
+              onClick={() => onRemove(order.id)}
+              title="Quitar de este dispositivo"
+              aria-label={`Quitar el pedido N° ${order.number} de este dispositivo`}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-stone-200 text-stone-400 transition-colors hover:border-red-200 hover:text-red-500 dark:border-stone-700 dark:text-stone-500 dark:hover:border-red-500/40 dark:hover:text-red-400"
             >
-              <path d="M3 6h18" />
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-              <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-            </svg>
-          </button>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-4 w-4"
+                aria-hidden="true"
+              >
+                <path d="M3 6h18" />
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              </svg>
+            </button>
+          )}
           <a
             href={orderTrackingPath(order.id)}
             className="inline-flex items-center gap-1.5 rounded-2xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-600"
@@ -151,7 +172,10 @@ function OrderCard({
 }
 
 export default function MisPedidos() {
+  const { status: authStatus } = useSession();
   const [orders, setOrders] = useState<StoredOrder[]>([]);
+  const [accountOrders, setAccountOrders] = useState<StoredOrder[]>([]);
+  const [accountLoading, setAccountLoading] = useState(true);
   const [loaded, setLoaded] = useState(false);
   const [visible, setVisible] = useState(INITIAL_VISIBLE);
   const [live, setLive] = useState<Record<string, OrderStatus>>({});
@@ -169,6 +193,40 @@ export default function MisPedidos() {
       window.removeEventListener("storage", sync);
     };
   }, []);
+
+  // Pedidos vinculados a la cuenta de Google (visibles en cualquier equipo).
+  useEffect(() => {
+    if (authStatus === "unauthenticated") {
+      setAccountOrders([]);
+      setAccountLoading(false);
+      return;
+    }
+    if (authStatus !== "authenticated") return;
+
+    let active = true;
+    setAccountLoading(true);
+
+    const pull = async () => {
+      try {
+        const res = await fetch("/api/orders/mine", { cache: "no-store" });
+        if (!res.ok || !active) return;
+        const data = (await res.json()) as { orders?: OrderDTO[] };
+        if (!active || !Array.isArray(data.orders)) return;
+        setAccountOrders(data.orders.map(fromOrderDTO));
+      } catch {
+        // sin conexion: se conserva lo que ya estaba en pantalla
+      }
+    };
+
+    pull().finally(() => {
+      if (active) setAccountLoading(false);
+    });
+    window.addEventListener("focus", pull);
+    return () => {
+      active = false;
+      window.removeEventListener("focus", pull);
+    };
+  }, [authStatus]);
 
   const idsKey = orders.map((o) => o.id).join(",");
 
@@ -204,6 +262,24 @@ export default function MisPedidos() {
     };
   }, [idsKey]);
 
+  // Combina los pedidos de la cuenta con los guardados en este dispositivo.
+  const accountIdSet = useMemo(
+    () => new Set(accountOrders.map((o) => o.id)),
+    [accountOrders],
+  );
+
+  const allOrders = useMemo(() => {
+    const merged = [
+      ...accountOrders,
+      ...orders.filter((o) => !accountIdSet.has(o.id)),
+    ];
+    return merged.sort(
+      (a, b) =>
+        (b.createdAt || "").localeCompare(a.createdAt || "") ||
+        b.number - a.number,
+    );
+  }, [accountOrders, accountIdSet, orders]);
+
   const statusOf = useCallback(
     (order: StoredOrder) => live[order.id] ?? order.status,
     [live],
@@ -224,11 +300,17 @@ export default function MisPedidos() {
     [orders],
   );
 
-  const activeOrders = orders.filter((o) => isActiveOrder(statusOf(o)));
-  const pastOrders = orders.filter((o) => !isActiveOrder(statusOf(o)));
+  const ready =
+    loaded &&
+    authStatus !== "loading" &&
+    !(authStatus === "authenticated" && accountLoading);
+
+  const activeOrders = allOrders.filter((o) => isActiveOrder(statusOf(o)));
+  const pastOrders = allOrders.filter((o) => !isActiveOrder(statusOf(o)));
   const activeShown = activeOrders.slice(0, visible);
   const pastShown = pastOrders.slice(0, Math.max(visible - activeOrders.length, 0));
-  const hiddenCount = orders.length - activeShown.length - pastShown.length;
+  const hiddenCount =
+    allOrders.length - activeShown.length - pastShown.length;
 
   return (
     <div className="min-h-dvh">
@@ -255,8 +337,8 @@ export default function MisPedidos() {
             <span className="hidden sm:inline">Volver al catalogo</span>
             <span className="sm:hidden">Catalogo</span>
           </Link>
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+          <div className="flex min-w-0 items-center gap-2.5">
+            <span className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-stone-200 sm:flex dark:bg-stone-900 dark:ring-stone-700">
               <Image
                 src="/logo.png"
                 alt=""
@@ -274,15 +356,16 @@ export default function MisPedidos() {
                 className="hidden h-6 w-6 dark:block"
               />
             </span>
-            <h1 className="text-lg font-bold tracking-tight text-stone-900 dark:text-stone-100">
+            <h1 className="truncate text-lg font-bold tracking-tight text-stone-900 dark:text-stone-100">
               Mis pedidos
             </h1>
+            <SignInButton />
           </div>
         </div>
       </header>
 
       <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
-        {!loaded ? null : orders.length === 0 ? (
+        {!ready ? null : allOrders.length === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded-3xl border border-dashed border-stone-300 bg-white/50 py-20 text-center backdrop-blur-md dark:border-stone-700 dark:bg-stone-900/50">
             <span className="flex h-14 w-14 items-center justify-center rounded-full bg-brand-50 text-brand-500 dark:bg-brand-500/10">
               <svg
@@ -302,11 +385,14 @@ export default function MisPedidos() {
               </svg>
             </span>
             <p className="text-base font-semibold text-stone-700 dark:text-stone-200">
-              Aun no tienes pedidos guardados
+              {authStatus === "authenticated"
+                ? "Aun no tienes pedidos"
+                : "Aun no tienes pedidos guardados"}
             </p>
             <p className="max-w-sm text-sm text-stone-500 dark:text-stone-400">
-              Los pedidos que hagas desde este dispositivo apareceran aqui para
-              que puedas seguir su estado.
+              {authStatus === "authenticated"
+                ? "Cuando hagas un pedido con esta cuenta aparecera aqui, en cualquier dispositivo."
+                : "Los pedidos que hagas desde este dispositivo apareceran aqui. Si pediste con tu cuenta de Google, inicia sesion para verlo."}
             </p>
             <Link
               href="/"
@@ -334,9 +420,9 @@ export default function MisPedidos() {
                 <path d="M12 8h.01" />
               </svg>
               <p>
-                Estos pedidos se guardan en este dispositivo. Para verlos en otro,
-                abre el enlace de seguimiento que te compartimos al confirmar tu
-                pedido.
+                {authStatus === "authenticated"
+                  ? "Estos pedidos incluyen los vinculados a tu cuenta de Google y los guardados en este dispositivo."
+                  : "Estos pedidos se guardan en este dispositivo. Para verlos en otro, inicia sesion con la cuenta con la que pediste o abre el enlace de seguimiento."}
               </p>
             </div>
 
@@ -351,6 +437,7 @@ export default function MisPedidos() {
                       key={order.id}
                       order={order}
                       status={statusOf(order)}
+                      canRemove={!accountIdSet.has(order.id)}
                       onRemove={handleRemove}
                     />
                   ))}
@@ -369,6 +456,7 @@ export default function MisPedidos() {
                       key={order.id}
                       order={order}
                       status={statusOf(order)}
+                      canRemove={!accountIdSet.has(order.id)}
                       onRemove={handleRemove}
                     />
                   ))}
@@ -386,21 +474,23 @@ export default function MisPedidos() {
                   Ver mas pedidos ({hiddenCount})
                 </button>
               )}
-              <button
-                type="button"
-                onClick={() => {
-                  if (
-                    window.confirm(
-                      "Se quitaran todos los pedidos guardados en este dispositivo. ¿Continuar?",
-                    )
-                  ) {
-                    clearMyOrders();
-                  }
-                }}
-                className="text-xs font-medium text-stone-400 underline-offset-2 transition-colors hover:text-red-500 hover:underline dark:text-stone-500 dark:hover:text-red-400"
-              >
-                Vaciar historial de este dispositivo
-              </button>
+              {orders.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        "Se quitaran todos los pedidos guardados en este dispositivo. ¿Continuar?",
+                      )
+                    ) {
+                      clearMyOrders();
+                    }
+                  }}
+                  className="text-xs font-medium text-stone-400 underline-offset-2 transition-colors hover:text-red-500 hover:underline dark:text-stone-500 dark:hover:text-red-400"
+                >
+                  Vaciar historial de este dispositivo
+                </button>
+              )}
             </div>
           </>
         )}
