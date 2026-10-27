@@ -204,19 +204,19 @@ export default function SeedCard({
         />
         <div
           className={[
-            "absolute",
-            compact ? "right-2 top-2" : "right-3 top-3",
+            "absolute z-10",
+            compact ? "right-1.5 top-1.5" : "right-2 top-2",
           ].join(" ")}
         >
           <AvailabilityBadge status={product.status} withPulse size="sm" />
         </div>
         {!compact && (
-          <span className="pointer-events-none absolute bottom-2 left-2 rounded-full bg-stone-900/45 px-2 py-0.5 text-[9px] font-medium leading-tight text-white/90 backdrop-blur-sm">
+          <span className="pointer-events-none absolute bottom-2 left-2 z-10 rounded-full bg-black/60 px-2 py-0.5 text-[9px] font-semibold leading-tight text-white shadow-sm">
             Imagen ilustrativa
           </span>
         )}
         {compact && (
-          <div className="absolute bottom-2 right-2">
+          <div className="absolute bottom-1.5 right-1.5 z-10">
             <AddButton product={product} onOpenCart={onOpenCart} />
           </div>
         )}
