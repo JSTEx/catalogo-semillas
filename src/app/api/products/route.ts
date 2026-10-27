@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
 import { createProductSchema } from "@/lib/validation";
 import { requireAdmin, jsonError } from "@/lib/http";
+import { toProductDTO } from "@/lib/types";
 
 export const runtime = "nodejs";
 
@@ -14,7 +15,7 @@ export async function GET() {
     .from(products)
     .orderBy(desc(products.createdAt));
 
-  return NextResponse.json({ products: rows });
+  return NextResponse.json({ products: rows.map(toProductDTO) });
 }
 
 // Crear producto (solo administradores autenticados).
@@ -41,13 +42,20 @@ export async function POST(req: Request) {
         ? [parsed.data.imageUrl]
         : [];
 
+  // Sin existencias no puede figurar como disponible/pocas unidades.
+  const status =
+    parsed.data.stock <= 0 &&
+    (parsed.data.status === "available" || parsed.data.status === "low_stock")
+      ? "out_of_stock"
+      : parsed.data.status;
+
   const [created] = await db
     .insert(products)
     .values({
       name: parsed.data.name,
       category: parsed.data.category,
       description: parsed.data.description ?? null,
-      status: parsed.data.status,
+      status,
       imageUrl: imageUrls[0],
       imageUrls,
       priceCents: parsed.data.priceCents,
@@ -55,5 +63,5 @@ export async function POST(req: Request) {
     })
     .returning();
 
-  return NextResponse.json({ product: created }, { status: 201 });
+  return NextResponse.json({ product: toProductDTO(created) }, { status: 201 });
 }

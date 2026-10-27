@@ -11,6 +11,7 @@ import {
   type ReactNode,
 } from "react";
 import type { ProductDTO } from "@/lib/types";
+import { isOrderable } from "@/lib/orders";
 
 export interface CartItem {
   product: ProductDTO;
@@ -26,6 +27,8 @@ interface CartContextValue {
   setQuantity: (productId: string, quantity: number) => void;
   remove: (productId: string) => void;
   clear: () => void;
+  /** Actualiza los datos de los productos del carrito con el catalogo actual. */
+  sync: (catalog: ProductDTO[]) => void;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -104,18 +107,81 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clear = useCallback(() => setItems([]), []);
 
+  /**
+   * Reconcilia el carrito con el catalogo vigente: actualiza precios, stock e
+   * imagenes, y quita productos que ya no existen o no se pueden pedir.
+   */
+  const sync = useCallback((catalog: ProductDTO[]) => {
+    const byId = new Map(catalog.map((p) => [p.id, p]));
+    setItems((prev) => {
+      let changed = false;
+      const next: CartItem[] = [];
+      for (const it of prev) {
+        const latest = byId.get(it.product.id);
+        if (!latest || !isOrderable(latest)) {
+          changed = true;
+          continue;
+        }
+        const quantity = Math.min(it.quantity, latest.stock);
+        if (quantity < 1) {
+          changed = true;
+          continue;
+        }
+        if (quantity !== it.quantity || latest.updatedAt !== it.product.updatedAt) {
+          changed = true;
+        }
+        next.push({
+          product:
+            latest.updatedAt !== it.product.updatedAt ? latest : it.product,
+          quantity,
+        });
+      }
+      return changed ? next : prev;
+    });
+  }, []);
+
   const count = useMemo(
     () => items.reduce((acc, it) => acc + it.quantity, 0),
     [items],
   );
+
+  // Al volver a la pestana, refresca precios/existencias desde el catalogo.
+  useEffect(() => {
+    let active = true;
+    async function refresh() {
+      try {
+        const res = await fetch("/api/products", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as { products?: ProductDTO[] };
+        if (active && Array.isArray(data.products)) sync(data.products);
+      } catch {
+        // sin conexion: se conserva el carrito actual
+      }
+    }
+    window.addEventListener("focus", refresh);
+    return () => {
+      active = false;
+      window.removeEventListener("focus", refresh);
+    };
+  }, [sync]);
   const totalCents = useMemo(
     () => items.reduce((acc, it) => acc + it.product.priceCents * it.quantity, 0),
     [items],
   );
 
   const value = useMemo(
-    () => ({ items, count, totalCents, loaded, add, setQuantity, remove, clear }),
-    [items, count, totalCents, loaded, add, setQuantity, remove, clear],
+    () => ({
+      items,
+      count,
+      totalCents,
+      loaded,
+      add,
+      setQuantity,
+      remove,
+      clear,
+      sync,
+    }),
+    [items, count, totalCents, loaded, add, setQuantity, remove, clear, sync],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

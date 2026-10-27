@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
 import { productIdSchema, updateProductSchema } from "@/lib/validation";
 import { requireAdmin, jsonError } from "@/lib/http";
+import { toProductDTO } from "@/lib/types";
 
 export const runtime = "nodejs";
 
@@ -30,10 +31,27 @@ export async function PATCH(req: Request, { params }: Params) {
     return jsonError(parsed.error.issues[0]?.message ?? "Datos invalidos", 400);
   }
 
+  const [current] = await db
+    .select()
+    .from(products)
+    .where(eq(products.id, id));
+  if (!current) return jsonError("Producto no encontrado", 404);
+
   const update: Partial<typeof products.$inferInsert> = {
     ...parsed.data,
     updatedAt: new Date(),
   };
+
+  // Mantiene coherentes estado y existencias: un producto sin stock no puede
+  // quedar como disponible o con pocas unidades.
+  const nextStock = parsed.data.stock ?? current.stock;
+  const nextStatus = parsed.data.status ?? current.status;
+  if (
+    nextStock <= 0 &&
+    (nextStatus === "available" || nextStatus === "low_stock")
+  ) {
+    update.status = "out_of_stock";
+  }
 
   if (parsed.data.imageUrls && parsed.data.imageUrls.length > 0) {
     // La portada es siempre la primera imagen de la galeria.
@@ -41,11 +59,7 @@ export async function PATCH(req: Request, { params }: Params) {
   } else if (parsed.data.imageUrl) {
     // Solo se actualizo la portada (p. ej. desde el editor de imagen):
     // conserva el resto de la galeria y evita duplicar la portada.
-    const [current] = await db
-      .select({ imageUrls: products.imageUrls })
-      .from(products)
-      .where(eq(products.id, id));
-    const rest = (current?.imageUrls ?? []).filter(
+    const rest = (current.imageUrls ?? []).filter(
       (u) => u !== parsed.data.imageUrl,
     );
     update.imageUrls = [parsed.data.imageUrl, ...rest];
@@ -59,7 +73,7 @@ export async function PATCH(req: Request, { params }: Params) {
 
   if (!updated) return jsonError("Producto no encontrado", 404);
 
-  return NextResponse.json({ product: updated });
+  return NextResponse.json({ product: toProductDTO(updated) });
 }
 
 export async function DELETE(req: Request, { params }: Params) {

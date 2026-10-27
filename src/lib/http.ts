@@ -42,6 +42,9 @@ export function jsonError(
 /**
  * Comprueba sesion + origen en endpoints de administracion.
  * Devuelve la sesion valida o una respuesta de error lista para retornar.
+ *
+ * Solo se exige `Origin` en metodos que mutan estado: los navegadores no lo
+ * envian en GET/HEAD del mismo origen, y bloquearlos romperia esos endpoints.
  */
 export async function requireAdmin(
   req: Request,
@@ -49,7 +52,9 @@ export async function requireAdmin(
   | { authorized: true; session: SessionPayload }
   | { authorized: false; response: NextResponse }
 > {
-  if (!isSameOrigin(req)) {
+  const method = req.method.toUpperCase();
+  const mutating = method !== "GET" && method !== "HEAD" && method !== "OPTIONS";
+  if (mutating && !isSameOrigin(req)) {
     return { authorized: false, response: jsonError("Origen no permitido", 403) };
   }
   const session = await getSession();

@@ -50,7 +50,9 @@ export async function reserveStock(
 
 /**
  * Devuelve existencias reservadas por un pedido cancelado. Reactiva el producto
- * si estaba marcado como agotado.
+ * solo si se habia agotado por ventas (stock en 0); si el administrador lo
+ * marco como agotado manualmente pausando un producto con existencias, se
+ * respeta ese estado.
  */
 export async function releaseStock(
   runner: SqlRunner,
@@ -61,7 +63,7 @@ export async function releaseStock(
       UPDATE products
       SET stock = stock + ${item.quantity},
           status = CASE
-            WHEN status = 'out_of_stock' THEN 'available'::product_status
+            WHEN status = 'out_of_stock' AND stock = 0 THEN 'available'::product_status
             ELSE status
           END,
           updated_at = now()

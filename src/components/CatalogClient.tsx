@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import type { ProductDTO } from "@/lib/types";
 import {
@@ -17,7 +17,7 @@ import SeedModal from "./SeedModal";
 import ThemeToggle from "./ThemeToggle";
 import ViewToggle from "./ViewToggle";
 import MyOrderLink from "./MyOrderLink";
-import { CartProvider } from "./cart/CartProvider";
+import { CartProvider, useCart } from "./cart/CartProvider";
 import CartButton from "./cart/CartButton";
 import SignInButton from "./auth/SignInButton";
 import CartDrawer from "./cart/CartDrawer";
@@ -27,6 +27,15 @@ type Filter = "all" | ProductStatus;
 
 interface Props {
   initialProducts: ProductDTO[];
+}
+
+/** Sincroniza el carrito guardado con el catalogo recien cargado. */
+function CartSync({ products }: { products: ProductDTO[] }) {
+  const { sync, loaded } = useCart();
+  useEffect(() => {
+    if (loaded) sync(products);
+  }, [loaded, products, sync]);
+  return null;
 }
 
 const GRID_CLASSES: Record<string, string> = {
@@ -96,6 +105,7 @@ export default function CatalogClient({ initialProducts }: Props) {
 
   return (
     <CartProvider>
+      <CartSync products={initialProducts} />
       <div className="min-h-dvh">
       <header className="sticky top-0 z-40 border-b border-stone-200/60 bg-white/70 backdrop-blur-md dark:border-stone-800/60 dark:bg-stone-900/70">
         <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
