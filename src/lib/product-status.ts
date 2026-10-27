@@ -26,7 +26,7 @@ export const STATUS_META: Record<ProductStatus, StatusMeta> = {
       "Esta variedad esta disponible actualmente. Contactanos para reservar tu pedido.",
     availability: "En existencia",
     badge:
-      "border-emerald-200/70 bg-emerald-50/80 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300",
+      "border-emerald-200/70 bg-emerald-50/90 text-emerald-700 dark:border-emerald-400/60 dark:bg-emerald-950/90 dark:text-emerald-200",
     dot: "bg-emerald-500",
     solid: "bg-emerald-500",
     rank: 0,
@@ -38,7 +38,7 @@ export const STATUS_META: Record<ProductStatus, StatusMeta> = {
       "Quedan pocas unidades de esta variedad. Te recomendamos apartar tu pedido cuanto antes.",
     availability: "Pocas unidades",
     badge:
-      "border-amber-200/70 bg-amber-50/80 text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300",
+      "border-amber-200/70 bg-amber-50/90 text-amber-700 dark:border-amber-400/60 dark:bg-amber-950/90 dark:text-amber-200",
     dot: "bg-amber-500",
     solid: "bg-amber-500",
     rank: 1,
@@ -50,7 +50,7 @@ export const STATUS_META: Record<ProductStatus, StatusMeta> = {
       "Esta variedad llegara pronto al catalogo. Consultanos para mas informacion.",
     availability: "Proximamente",
     badge:
-      "border-sky-200/70 bg-sky-50/80 text-sky-700 dark:border-sky-500/30 dark:bg-sky-500/10 dark:text-sky-300",
+      "border-sky-200/70 bg-sky-50/90 text-sky-700 dark:border-sky-400/60 dark:bg-sky-950/90 dark:text-sky-200",
     dot: "bg-sky-500",
     solid: "bg-sky-500",
     rank: 2,
@@ -62,7 +62,7 @@ export const STATUS_META: Record<ProductStatus, StatusMeta> = {
       "Por el momento esta variedad no tiene existencias. Vuelve pronto o consulta otras opciones.",
     availability: "Sin existencias",
     badge:
-      "border-rose-200/70 bg-rose-50/80 text-rose-700 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-300",
+      "border-rose-200/70 bg-rose-50/90 text-rose-700 dark:border-rose-400/60 dark:bg-rose-950/90 dark:text-rose-200",
     dot: "bg-rose-500",
     solid: "bg-rose-500",
     rank: 3,
