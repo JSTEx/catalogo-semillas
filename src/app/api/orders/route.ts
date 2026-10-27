@@ -9,6 +9,7 @@ import { isOrderable } from "@/lib/orders";
 import { reserveStock } from "@/lib/inventory";
 import { sendNewOrderEmail, sendCustomerOrderEmail } from "@/lib/email";
 import { toOrderDTO, type OrderItem } from "@/lib/types";
+import { auth } from "@/auth";
 
 export const runtime = "nodejs";
 
@@ -77,6 +78,9 @@ export async function POST(req: Request) {
     productsTotal += product.priceCents * quantity;
   }
 
+  const session = await auth();
+  const customerId = session?.user?.id ?? null;
+
   const dto = await db.transaction(async (tx) => {
     const reserved = await reserveStock(tx, items);
     if (!reserved) return null;
@@ -84,6 +88,7 @@ export async function POST(req: Request) {
     const [created] = await tx
       .insert(orders)
       .values({
+        customerId,
         customerName: parsed.data.customerName,
         customerPhone: parsed.data.customerPhone,
         customerEmail: parsed.data.customerEmail ?? null,

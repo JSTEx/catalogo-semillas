@@ -19,6 +19,7 @@ import ViewToggle from "./ViewToggle";
 import MyOrderLink from "./MyOrderLink";
 import { CartProvider } from "./cart/CartProvider";
 import CartButton from "./cart/CartButton";
+import SignInButton from "./auth/SignInButton";
 import CartDrawer from "./cart/CartDrawer";
 import CheckoutModal from "./cart/CheckoutModal";
 
@@ -153,6 +154,7 @@ export default function CatalogClient({ initialProducts }: Props) {
 
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <MyOrderLink />
+            <SignInButton />
             <div className="hidden sm:block">
               <ViewToggle value={view} onChange={setView} />
             </div>

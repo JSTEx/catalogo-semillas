@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { cookies, headers } from "next/headers";
 import "./globals.css";
 import ThemeSync from "@/components/ThemeSync";
+import AuthSessionProvider from "@/components/SessionProvider";
 
 export const metadata: Metadata = {
   title: {
@@ -76,8 +77,10 @@ export default async function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning className={themeClass}>
       <body className="min-h-dvh antialiased">
-        <ThemeSync />
-        {children}
+        <AuthSessionProvider>
+          <ThemeSync />
+          {children}
+        </AuthSessionProvider>
       </body>
     </html>
   );
