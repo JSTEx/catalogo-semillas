@@ -17,8 +17,8 @@ export default function AvailabilityBadge({
   return (
     <span
       className={[
-        "inline-flex items-center rounded-full border font-semibold shadow-lg ring-1 ring-black/5 backdrop-blur-sm",
-        sm ? "gap-1.5 px-2 py-0.5 text-[10px]" : "gap-2 px-3 py-1 text-xs",
+        "inline-flex items-center rounded-full border-2 font-bold shadow-[0_1px_3px_rgba(0,0,0,0.25)]",
+        sm ? "gap-1.5 px-2.5 py-0.5 text-[10px]" : "gap-2 px-3.5 py-1 text-xs",
         meta.badge,
       ].join(" ")}
     >
