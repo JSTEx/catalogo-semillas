@@ -510,28 +510,12 @@ export default function OrderTracker({
             </svg>
             Pago por transferencia
           </h2>
-          {order.receiptUrl ? (
-            <>
-              <p className="mt-1 text-sm text-amber-800 dark:text-amber-300/90">
-                {order.status === "delivered"
-                  ? "Gracias por tu pago. Comprobante registrado."
-                  : "Ya subiste el comprobante. Te avisaremos cuando lo confirmemos."}
-              </p>
-              <a
-                href={order.receiptUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-3 rounded-2xl border border-amber-300 bg-white/80 p-2 pr-4 text-sm font-semibold text-amber-800 shadow-sm transition-colors hover:bg-white dark:border-amber-400/40 dark:bg-stone-900/60 dark:text-amber-200 dark:hover:bg-stone-900"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={order.receiptUrl}
-                  alt="Comprobante de pago"
-                  className="h-14 w-14 rounded-xl object-cover"
-                />
-                Ver comprobante subido
-              </a>
-            </>
+          {(order as { hasReceipt?: boolean }).hasReceipt ? (
+            <p className="mt-1 text-sm text-amber-800 dark:text-amber-300/90">
+              {order.status === "delivered"
+                ? "Gracias por tu pago. Comprobante registrado."
+                : "Ya subiste el comprobante. Te avisaremos cuando lo confirmemos."}
+            </p>
           ) : (
             <p className="mt-1 text-sm text-amber-800 dark:text-amber-300/90">
               {order.status === "delivered"
@@ -540,7 +524,7 @@ export default function OrderTracker({
             </p>
           )}
 
-          {canUploadReceipt && (
+          {canUploadReceipt && !(order as { hasReceipt?: boolean }).hasReceipt && (
             <div className="mt-3">
               <input
                 ref={receiptInputRef}
@@ -575,11 +559,7 @@ export default function OrderTracker({
                   <path d="m7 8 5-5 5 5" />
                   <path d="M5 21h14" />
                 </svg>
-                {uploadingReceipt
-                  ? "Subiendo..."
-                  : order.receiptUrl
-                    ? "Cambiar comprobante"
-                    : "Subir comprobante"}
+                {uploadingReceipt ? "Subiendo..." : "Subir comprobante"}
               </button>
               {receiptError && (
                 <p className="mt-2 text-xs font-medium text-rose-600 dark:text-rose-400">

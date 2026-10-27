@@ -42,11 +42,19 @@ export async function POST(req: Request, { params }: Params) {
   if (order.status === "cancelled") {
     return jsonError("Este pedido esta cancelado.", 409);
   }
+  if (order.payment !== "transferencia") {
+    return jsonError("Este pedido no es por transferencia.", 409);
+  }
+  if (order.receiptUrl) {
+    return jsonError("Ya se subio un comprobante para este pedido.", 409);
+  }
+
+  const maxMb = MAX_IMAGE_BYTES / 1024 / 1024;
 
   // Rechazo temprano por tamano declarado.
   const contentLength = Number(req.headers.get("content-length") ?? "0");
   if (contentLength && contentLength > MAX_IMAGE_BYTES + 64 * 1024) {
-    return jsonError("La imagen supera el limite de 2MB", 413);
+    return jsonError(`La imagen supera el limite de ${maxMb}MB`, 413);
   }
 
   let form: FormData;
@@ -62,7 +70,7 @@ export async function POST(req: Request, { params }: Params) {
   }
 
   if (file.size > MAX_IMAGE_BYTES) {
-    return jsonError("La imagen supera el limite de 2MB", 413);
+    return jsonError(`La imagen supera el limite de ${maxMb}MB`, 413);
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());

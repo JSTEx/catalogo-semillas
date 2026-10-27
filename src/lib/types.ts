@@ -119,7 +119,7 @@ export interface PublicOrderDTO {
   productsTotal: number;
   shippingCents: number;
   totalCents: number;
-  receiptUrl: string | null;
+  hasReceipt: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -135,7 +135,7 @@ export function toPublicOrderDTO(o: Order): PublicOrderDTO {
     productsTotal: o.productsTotal,
     shippingCents: o.shippingCents,
     totalCents: o.totalCents,
-    receiptUrl: o.receiptUrl ?? null,
+    hasReceipt: Boolean(o.receiptUrl),
     createdAt: o.createdAt.toISOString(),
     updatedAt: o.updatedAt.toISOString(),
   };
