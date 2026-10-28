@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
+import { useConfirm } from "@/components/ConfirmDialog";
 import type { OrderDTO } from "@/lib/types";
 import {
   ORDER_STATUSES,
@@ -65,6 +66,7 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [view, setView] = useViewMode("admin-orders-view", "grid");
   const [openId, setOpenId] = useState<string | null>(null);
+  const confirm = useConfirm();
   const backdrop = useBackdropClose(() => setOpenId(null));
 
   const counts = useMemo(() => {
@@ -119,7 +121,14 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
   }
 
   async function remove(id: string, number: number) {
-    if (!window.confirm(`¿Eliminar el pedido N° ${number}?`)) return;
+    const ok = await confirm({
+      title: "Eliminar pedido",
+      message: `¿Eliminar el pedido N° ${number}?`,
+      confirmText: "Eliminar",
+      cancelText: "Cancelar",
+      destructive: true,
+    });
+    if (!ok) return;
     setError(null);
     setBusyId(id);
     try {

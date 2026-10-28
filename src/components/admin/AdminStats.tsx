@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
+import { useConfirm } from "@/components/ConfirmDialog";
 import {
   Area,
   AreaChart,
@@ -85,6 +86,7 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
   const fileRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const conceptRef = useRef<HTMLInputElement>(null);
+  const confirm = useConfirm();
 
   const kpis = useMemo(() => {
     const ingresos = orders
@@ -304,7 +306,14 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
   }
 
   async function removeExpense(e: ExpenseDTO) {
-    if (!window.confirm("¿Eliminar este gasto?")) return;
+    const ok = await confirm({
+      title: "Eliminar gasto",
+      message: "¿Eliminar este gasto? Podrás deshacerlo por unos segundos.",
+      confirmText: "Eliminar",
+      cancelText: "Cancelar",
+      destructive: true,
+    });
+    if (!ok) return;
     setError(null);
     setUndo(e);
     onExpensesChange((prev) => prev.filter((x) => x.id !== e.id));

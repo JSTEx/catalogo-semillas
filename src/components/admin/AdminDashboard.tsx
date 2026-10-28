@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -94,6 +95,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
   const [studioOpen, setStudioOpen] = useState(false);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
+  const confirm = useConfirm();
   const fileRef = useRef<HTMLInputElement>(null);
   const onFileChangeRef = useRef(onFileChange);
 
@@ -323,11 +325,14 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
   }
 
   async function remove(product: ProductDTO) {
-    if (
-      !window.confirm(`¿Eliminar "${product.name}"? Esta accion es permanente.`)
-    ) {
-      return;
-    }
+    const ok = await confirm({
+      title: "Eliminar producto",
+      message: `¿Eliminar "${product.name}"? Esta acción es permanente.`,
+      confirmText: "Eliminar",
+      cancelText: "Cancelar",
+      destructive: true,
+    });
+    if (!ok) return;
     setError(null);
     setBusyId(product.id);
     try {

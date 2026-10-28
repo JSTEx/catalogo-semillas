@@ -3,6 +3,7 @@ import { cookies, headers } from "next/headers";
 import "./globals.css";
 import ThemeSync from "@/components/ThemeSync";
 import AuthSessionProvider from "@/components/SessionProvider";
+import { ConfirmProvider } from "@/components/ConfirmDialog";
 
 export const metadata: Metadata = {
   title: {
@@ -78,8 +79,10 @@ export default async function RootLayout({
     <html lang="es" suppressHydrationWarning className={themeClass}>
       <body className="min-h-dvh antialiased">
         <AuthSessionProvider>
-          <ThemeSync />
-          {children}
+          <ConfirmProvider>
+            <ThemeSync />
+            {children}
+          </ConfirmProvider>
         </AuthSessionProvider>
       </body>
     </html>

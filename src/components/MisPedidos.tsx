@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useConfirm } from "@/components/ConfirmDialog";
 import Image from "next/image";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
@@ -179,6 +180,7 @@ export default function MisPedidos() {
   const [loaded, setLoaded] = useState(false);
   const [visible, setVisible] = useState(INITIAL_VISIBLE);
   const [live, setLive] = useState<Record<string, OrderStatus>>({});
+  const confirm = useConfirm();
 
   useEffect(() => {
     const sync = () => {
@@ -286,18 +288,21 @@ export default function MisPedidos() {
   );
 
   const handleRemove = useCallback(
-    (id: string) => {
+    async (id: string) => {
       const order = orders.find((o) => o.id === id);
-      const label = order ? `el pedido N° ${order.number}` : "este pedido";
-      if (
-        window.confirm(
-          `Se quitara ${label} de este dispositivo. ¿Quieres continuar?`,
-        )
-      ) {
+      const label = order?.number ? `el pedido N° ${order.number}` : "este pedido";
+      const ok = await confirm({
+        title: "Quitar pedido",
+        message: `Se quitará ${label} de este dispositivo. ¿Quieres continuar?`,
+        confirmText: "Quitar",
+        cancelText: "Cancelar",
+        destructive: true,
+      });
+      if (ok) {
         removeMyOrder(id);
       }
     },
-    [orders],
+    [orders, confirm],
   );
 
   const ready =
@@ -477,12 +482,15 @@ export default function MisPedidos() {
               {orders.length > 0 && (
                 <button
                   type="button"
-                  onClick={() => {
-                    if (
-                      window.confirm(
-                        "Se quitaran todos los pedidos guardados en este dispositivo. ¿Continuar?",
-                      )
-                    ) {
+                  onClick={async () => {
+                    const ok = await confirm({
+                      title: "Borrar pedidos guardados",
+                      message: "Se quitarán todos los pedidos guardados en este dispositivo. ¿Continuar?",
+                      confirmText: "Borrar",
+                      cancelText: "Cancelar",
+                      destructive: true,
+                    });
+                    if (ok) {
                       clearMyOrders();
                     }
                   }}
