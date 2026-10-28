@@ -81,7 +81,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
   const [items, setItems] = useState<ProductDTO[]>(initialProducts);
   const [orders, setOrders] = useState<OrderDTO[]>(initialOrders);
   const [expenses, setExpenses] = useState<ExpenseDTO[]>(initialExpenses);
-  const [tab, setTab] = useState<"products" | "orders" | "stats">("products");
+  const [tab, setTab] = useState<"products" | "orders" | "stats">("stats");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [sort, setSort] = useState<SortKey>("status");
@@ -582,15 +582,15 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
         {(
           [
             {
-              key: "products",
-              label: "Productos",
+              key: "stats",
+              label: "Resumen",
               badge: 0,
               icon: (
                 <>
-                  <path d="m7.5 4.27 9 5.15" />
-                  <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
-                  <path d="m3.3 7 8.7 5 8.7-5" />
-                  <path d="M12 22V12" />
+                  <path d="M3 3v16a2 2 0 0 0 2 2h16" />
+                  <path d="M18 17V9" />
+                  <path d="M13 17V5" />
+                  <path d="M8 17v-3" />
                 </>
               ),
             },
@@ -608,15 +608,15 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
               ),
             },
             {
-              key: "stats",
-              label: "Resumen",
+              key: "products",
+              label: "Productos",
               badge: 0,
               icon: (
                 <>
-                  <path d="M3 3v16a2 2 0 0 0 2 2h16" />
-                  <path d="M18 17V9" />
-                  <path d="M13 17V5" />
-                  <path d="M8 17v-3" />
+                  <path d="m7.5 4.27 9 5.15" />
+                  <path d="M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z" />
+                  <path d="m3.3 7 8.7 5 8.7-5" />
+                  <path d="M12 22V12" />
                 </>
               ),
             },
