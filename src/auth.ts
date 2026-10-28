@@ -32,6 +32,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async session({ session, user }) {
       if (session.user && user) {
         session.user.id = user.id;
+        if (user.email) {
+          try {
+            const email = user.email.toLowerCase();
+            await db
+              .update(orders)
+              .set({ customerId: user.id as string })
+              .where(sql`lower(${orders.customerEmail}) = ${email}`);
+          } catch {
+            // ignore
+          }
+        }
       }
       return session;
     },
