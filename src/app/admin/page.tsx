@@ -29,11 +29,16 @@ export default async function AdminPage() {
     .from(orders)
     .orderBy(desc(orders.createdAt))
     .limit(300);
-  const expenseRows = await db
-    .select()
-    .from(expenses)
-    .orderBy(desc(expenses.createdAt))
-    .limit(500);
+  let expenseRows: any[] = [];
+  try {
+    expenseRows = await db
+      .select()
+      .from(expenses)
+      .orderBy(desc(expenses.createdAt))
+      .limit(500);
+  } catch {
+    expenseRows = [];
+  }
 
   return (
     <AdminDashboard
