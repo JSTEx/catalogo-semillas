@@ -511,10 +511,15 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
       </div>
 
       {undo && (
-        <div className="fixed bottom-4 left-1/2 z-[60] -translate-x-1/2">
-          <div className="flex items-center gap-3 rounded-full bg-stone-900 px-4 py-2 text-sm text-white shadow-lg dark:bg-stone-100 dark:text-stone-900">
-            <span>Gasto eliminado</span>
-            <button type="button" onClick={restoreExpense} className="font-semibold">Deshacer</button>
+        <div className="fixed bottom-4 left-1/2 z-[70] w-[calc(100%-1.5rem)] max-w-sm -translate-x-1/2 animate-in fade-in slide-in-from-bottom-2">
+          <div className="flex items-center justify-between gap-3 rounded-2xl bg-stone-900 px-4 py-3 text-sm text-white shadow-[0_20px_60px_-20px_rgba(15,23,42,0.9)] ring-1 ring-white/10 dark:bg-stone-100 dark:text-stone-900 dark:shadow-[0_20px_60px_-20px_rgba(255,255,255,0.4)] dark:ring-stone-900/10">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 dark:bg-stone-900/10">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /></svg>
+              </span>
+              <span className="font-medium">Gasto eliminado</span>
+            </div>
+            <button type="button" onClick={restoreExpense} className="rounded-xl bg-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors hover:bg-white/20 dark:bg-stone-900/10 dark:hover:bg-stone-900/20">Deshacer</button>
           </div>
         </div>
       )}
