@@ -187,25 +187,27 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
       <article
         key={order.id}
         className={[
-          "flex flex-col gap-3 rounded-3xl border border-stone-200/70 bg-white/70 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-md dark:border-stone-800/70 dark:bg-stone-900/70",
-          superCompact ? "p-3" : "p-4",
+          "flex flex-col gap-3 rounded-3xl border border-stone-200/70 bg-gradient-to-b from-white/90 to-white/70 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg dark:border-stone-800/70 dark:from-stone-900/90 dark:to-stone-900/70",
+          superCompact ? "p-3" : "p-4 sm:p-5",
         ].join(" ")}
       >
-        <header className="flex items-start justify-between gap-2">
+        <header className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="truncate text-sm font-bold text-stone-900 dark:text-stone-100">
-              Pedido N° {order.number}
-            </p>
-            <p className="text-xs text-stone-500 dark:text-stone-400">{date}</p>
+            <div className="flex items-center gap-2">
+              <p className="truncate text-base font-bold text-stone-900 dark:text-stone-100">
+                Pedido N° {order.number}
+              </p>
+            </div>
+            <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">{date}</p>
           </div>
           <StatusBadge status={order.status} />
         </header>
 
-        <div className="flex items-center gap-2 text-sm">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-stone-100 text-xs font-bold text-stone-500 dark:bg-stone-800 dark:text-stone-400">
+        <div className="flex items-center gap-3 rounded-2xl bg-stone-50/80 px-3 py-2.5 dark:bg-stone-800/40">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-sm font-bold text-stone-600 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-300 dark:ring-stone-700">
             {order.customerName.slice(0, 1).toUpperCase()}
           </span>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="truncate font-semibold text-stone-800 dark:text-stone-100">
               {order.customerName}
             </p>
@@ -216,26 +218,32 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
         </div>
 
         {!superCompact && (
-          <p className="text-xs text-stone-500 dark:text-stone-400">
-            {DELIVERY_META[order.delivery].label} ·{" "}
-            {PAYMENT_META[order.payment].label}
-            {order.delivery === "domicilio" && order.address
-              ? ` · ${order.address}`
-              : ""}
-          </p>
+          <div className="flex flex-wrap items-center gap-2 text-xs text-stone-500 dark:text-stone-400">
+            <span className="rounded-full bg-stone-100 px-2.5 py-1 dark:bg-stone-800">
+              {DELIVERY_META[order.delivery].label}
+            </span>
+            <span className="rounded-full bg-stone-100 px-2.5 py-1 dark:bg-stone-800">
+              {PAYMENT_META[order.payment].label}
+            </span>
+            {order.delivery === "domicilio" && order.address && (
+              <span className="line-clamp-1 rounded-full bg-stone-100 px-2.5 py-1 dark:bg-stone-800">
+                {order.address}
+              </span>
+            )}
+          </div>
         )}
 
         {order.notes && !superCompact && (
-          <p className="line-clamp-2 rounded-2xl bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+          <p className="line-clamp-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
             Nota: {order.notes}
           </p>
         )}
 
-        <div className="mt-auto flex items-center justify-between border-t border-stone-200/60 pt-3 text-sm dark:border-stone-800/60">
+        <div className="mt-auto flex items-center justify-between rounded-2xl border border-stone-200/70 px-4 py-2.5 text-sm dark:border-stone-800/70">
           <span className="text-xs text-stone-500 dark:text-stone-400">
             {units} {units === 1 ? "unidad" : "unidades"}
           </span>
-          <span className="font-bold text-stone-900 dark:text-stone-100">
+          <span className="text-base font-bold text-stone-900 dark:text-stone-100">
             {formatMoney(order.totalCents)}
           </span>
         </div>
@@ -244,7 +252,7 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
           <button
             type="button"
             onClick={() => setOpenId(order.id)}
-            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-brand-500 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-brand-600"
+            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-md"
           >
             Ver detalle
           </button>
@@ -257,7 +265,7 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
                 ? "Confirmar el pedido con el cliente"
                 : "Avisar del estado actual al cliente"
             }
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
+            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
           >
             <WhatsAppIcon />
           </a>
@@ -272,8 +280,9 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
     return (
       <article
         key={order.id}
-        className="flex items-center gap-3 rounded-2xl border border-stone-200/70 bg-white/70 px-3 py-2.5 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-md dark:border-stone-800/70 dark:bg-stone-900/70"
-      >
+      className="flex flex-col gap-2 rounded-3xl border border-stone-200/70 bg-white/70 p-3 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-md sm:flex-row sm:items-center sm:gap-3 dark:border-stone-800/70 dark:bg-stone-900/70"
+    >
+      <div className="flex items-center gap-3">
         <span
           className={[
             "h-2.5 w-2.5 shrink-0 rounded-full",
@@ -281,15 +290,27 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
           ].join(" ")}
           aria-hidden="true"
         />
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 sm:flex-none">
           <p className="truncate text-sm font-semibold text-stone-800 dark:text-stone-100">
-            N° {order.number} · {order.customerName}
+            Pedido N° {order.number}
           </p>
           <p className="truncate text-xs text-stone-500 dark:text-stone-400">
-            {date} · {units} {units === 1 ? "unidad" : "unidades"} ·{" "}
-            {PAYMENT_META[order.payment].label}
+            {order.customerName}
           </p>
         </div>
+      </div>
+      <div className="flex flex-1 flex-wrap items-center gap-2 text-xs text-stone-500 sm:flex-nowrap dark:text-stone-400">
+        <span>{date}</span>
+        <span className="hidden sm:inline">·</span>
+        <span>{units} {units === 1 ? "unidad" : "unidades"}</span>
+        <span className="hidden sm:inline">·</span>
+        <span className="rounded-full bg-stone-100 px-2 py-0.5 dark:bg-stone-800">{DELIVERY_META[order.delivery].label}</span>
+        <span className="rounded-full bg-stone-100 px-2 py-0.5 dark:bg-stone-800">{PAYMENT_META[order.payment].label}</span>
+      </div>
+      <div className="flex items-center justify-between gap-2 sm:justify-end">
+        <span className="rounded-full px-2.5 py-1 text-xs font-semibold text-white sm:hidden" style={{ background: ORDER_STATUS_META[order.status].dot.replace("bg-", "").includes("emerald") ? "#10b981" : ORDER_STATUS_META[order.status].dot.replace("bg-", "").includes("sky") ? "#0ea5e9" : ORDER_STATUS_META[order.status].dot.replace("bg-", "").includes("amber") ? "#f59e0b" : "#78716c" }}>
+          {ORDER_STATUS_META[order.status].short}
+        </span>
         <span className="hidden text-xs font-medium text-stone-500 sm:block dark:text-stone-400">
           {ORDER_STATUS_META[order.status].short}
         </span>
@@ -299,10 +320,11 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
         <button
           type="button"
           onClick={() => setOpenId(order.id)}
-          className="shrink-0 rounded-2xl border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 transition-colors hover:bg-brand-100 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300"
+          className="shrink-0 rounded-2xl bg-brand-500 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-brand-600"
         >
-          Ver
+          Ver detalle
         </button>
+      </div>
       </article>
     );
   }
