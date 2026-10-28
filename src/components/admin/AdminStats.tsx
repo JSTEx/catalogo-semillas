@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import {
@@ -55,10 +55,7 @@ function monthKey(d: Date): string {
   return `${p.year}-${String(p.month).padStart(2, "0")}`;
 }
 
-const MONTH_LABELS = [
-  "ene", "feb", "mar", "abr", "may", "jun",
-  "jul", "ago", "sep", "oct", "nov", "dic",
-];
+const MONTH_LABELS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 
 interface ExpenseForm {
   concept: string;
@@ -83,7 +80,11 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [showForm, setShowForm] = useState(false);
+  const [undo, setUndo] = useState<ExpenseDTO | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const conceptRef = useRef<HTMLInputElement>(null);
 
   const kpis = useMemo(() => {
     const ingresos = orders
@@ -233,17 +234,28 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
       imageUrls: e.imageUrls ?? (e.imageUrl ? [e.imageUrl] : []),
     });
     setError(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    setShowForm(true);
+    requestAnimationFrame(() => {
+      const el = formRef.current;
+      if (el) {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < 0 || rect.bottom > window.innerHeight) {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      }
+      conceptRef.current?.focus({ preventScroll: true });
+    });
   }
 
   function cancelEdit() {
     setEditingId(null);
     setForm(EMPTY_FORM);
     setError(null);
+    setShowForm(false);
   }
 
-  async function submitExpense(e: React.FormEvent) {
-    e.preventDefault();
+  async function submitExpense(ev: React.FormEvent) {
+    ev.preventDefault();
     setError(null);
     const cents = Math.round((parseFloat(form.amount.replace(",", ".")) || 0) * 100);
     if (form.concept.trim().length < 2) return setError("Escribe un concepto");
@@ -282,6 +294,7 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
         if (!res.ok || !data?.expense) throw new Error(data?.error ?? "No se pudo guardar el gasto");
         onExpensesChange((prev) => [data.expense!, ...prev]);
         setForm(EMPTY_FORM);
+        setShowForm(false);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al guardar");
@@ -290,29 +303,51 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
     }
   }
 
-  async function removeExpense(id: string) {
+  async function removeExpense(e: ExpenseDTO) {
+    if (!window.confirm("¿Eliminar este gasto?")) return;
     setError(null);
+    setUndo(e);
+    onExpensesChange((prev) => prev.filter((x) => x.id !== e.id));
+    if (editingId === e.id) cancelEdit();
     try {
-      const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/expenses/${e.id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("No se pudo eliminar");
-      onExpensesChange((prev) => prev.filter((e) => e.id !== id));
-      if (editingId === id) cancelEdit();
+      window.setTimeout(() => setUndo((cur) => (cur?.id === e.id ? null : cur)), 5000);
     } catch (err) {
+      onExpensesChange((prev) => [e, ...prev].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")));
       setError(err instanceof Error ? err.message : "Error al eliminar");
+      setUndo(null);
     }
   }
 
-  const tooltipStyle = {
-    borderRadius: 12,
-    border: "1px solid rgba(120,113,108,0.4)",
-    background: "rgba(28,25,23,0.95)",
-    color: "#f5f5f4",
-    fontSize: 12,
-  };
+  async function restoreExpense() {
+    if (!undo) return;
+    const u = undo;
+    setUndo(null);
+    try {
+      const res = await fetch("/api/expenses", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          concept: u.concept,
+          category: u.category,
+          amountCents: u.amountCents,
+          notes: u.notes ?? undefined,
+          imageUrls: u.imageUrls ?? [],
+        }),
+      });
+      const data = (await res.json().catch(() => null)) as { expense?: ExpenseDTO; error?: string } | null;
+      if (!res.ok || !data?.expense) throw new Error(data?.error ?? "No se pudo restaurar");
+      onExpensesChange((prev) => [data.expense!, ...prev.filter((x) => x.id !== u.id)].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al restaurar");
+    }
+  }
+
+  const tooltipStyle = { borderRadius: 12, border: "1px solid rgba(120,113,108,0.4)", background: "rgba(28,25,23,0.95)", color: "#f5f5f4", fontSize: 12 };
   const axisTick = { fill: "#a8a29e", fontSize: 11 };
   const gridStroke = "rgba(120,113,108,0.18)";
-  const inputClass =
-    "w-full rounded-2xl border border-stone-200 bg-white/80 px-4 py-2.5 text-sm text-stone-800 outline-none transition-all duration-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/30";
+  const inputClass = "w-full rounded-2xl border border-stone-200 bg-white/80 px-4 py-2.5 text-sm text-stone-800 outline-none transition-all duration-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/30";
 
   const kpiCards = [
     { label: "Ingresos entregados", value: formatMoney(kpis.ingresos), accent: "text-emerald-600 dark:text-emerald-400" },
@@ -333,6 +368,147 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
           </div>
         ))}
       </div>
+
+      <div className="rounded-3xl border border-stone-200/70 bg-white/70 shadow-sm backdrop-blur-md dark:border-stone-800/70 dark:bg-stone-900/70">
+        <div className="flex flex-col gap-3 border-b border-stone-200/70 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-stone-800/70">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" /><path d="M8 7h8" /><path d="M8 11h8" /><path d="M8 15h5" /></svg>
+            </div>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-base font-semibold text-stone-800 dark:text-stone-100">Gastos</h3>
+                <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[11px] font-medium text-stone-500 dark:bg-stone-800 dark:text-stone-400">{expenses.length}</span>
+              </div>
+              <p className="text-sm text-stone-500 dark:text-stone-400">
+                Total <span className="font-semibold text-rose-600 dark:text-rose-400">-{formatMoney(kpis.gastos)}</span> · edita o elimina cualquier gasto
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {editingId ? (
+              <>
+                <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">Editando gasto</span>
+                <button type="button" onClick={cancelEdit} className="rounded-2xl border border-stone-200 px-3.5 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800">Cancelar</button>
+              </>
+            ) : (
+              <button type="button" onClick={() => { setEditingId(null); setForm(EMPTY_FORM); setShowForm((v) => !v); }} className="rounded-2xl bg-brand-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-600">
+                {showForm ? "Cerrar" : "Agregar gasto"}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {showForm && (
+          <form ref={formRef} onSubmit={submitExpense} className="grid grid-cols-1 gap-3 border-b border-stone-200/70 bg-stone-50/60 p-5 lg:grid-cols-12 dark:border-stone-800/70 dark:bg-stone-950/30">
+            <div className="space-y-2 lg:col-span-4">
+              <label className="text-sm font-medium text-stone-700 dark:text-stone-300">Concepto</label>
+              <input ref={conceptRef} value={form.concept} onChange={(e) => setForm({ ...form, concept: e.target.value })} placeholder="Ej. Bolsas, flete, publicidad..." className={inputClass} />
+            </div>
+            <div className="space-y-2 lg:col-span-3">
+              <label className="text-sm font-medium text-stone-700 dark:text-stone-300">Categoría</label>
+              <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as ExpenseCategory })} className={inputClass}>
+                {EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{EXPENSE_CATEGORY_META[c].label}</option>)}
+              </select>
+            </div>
+            <div className="space-y-2 lg:col-span-2">
+              <label className="text-sm font-medium text-stone-700 dark:text-stone-300">Monto (USD)</label>
+              <input value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0.00" inputMode="decimal" className={inputClass} />
+            </div>
+            <div className="space-y-2 lg:col-span-3">
+              <label className="text-sm font-medium text-stone-700 dark:text-stone-300">Notas (opcional)</label>
+              <input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Detalle adicional" className={inputClass} />
+            </div>
+            <div className="space-y-3 lg:col-span-12">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <p className="text-sm font-medium text-stone-700 dark:text-stone-300">Comprobantes / imágenes</p>
+                  <p className="text-xs text-stone-400 dark:text-stone-500">Puedes subir varias imágenes (JPG, PNG, WEBP)</p>
+                </div>
+                <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading || form.imageUrls.length >= MAX_PRODUCT_IMAGES} className="rounded-2xl border border-stone-200 px-4 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50 disabled:opacity-50 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800">
+                  {uploading ? "Subiendo..." : "Subir imágenes"}
+                </button>
+                <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={(e) => uploadFiles(e.target.files)} />
+              </div>
+              {form.imageUrls.length > 0 && (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
+                  {form.imageUrls.map((url, idx) => (
+                    <button key={url} type="button" onClick={() => setPreview(url)} className="group relative aspect-square overflow-hidden rounded-2xl border border-stone-200 dark:border-stone-700">
+                      <img src={url} alt="" className="h-full w-full object-cover" />
+                      <span onClick={(ev) => { ev.stopPropagation(); setForm((prev) => ({ ...prev, imageUrls: prev.imageUrls.filter((_, i) => i !== idx) })); }} className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5"><path d="M18 6 6 18M6 6l12 12" /></svg>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {error && <div className="lg:col-span-12"><p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">{error}</p></div>}
+            <div className="flex flex-col gap-2 border-t border-stone-200/70 pt-3 sm:flex-row sm:items-center sm:justify-end lg:col-span-12 dark:border-stone-800/70">
+              <button type="button" onClick={cancelEdit} className="rounded-2xl border border-stone-200 px-4 py-2.5 text-sm font-medium text-stone-600 transition-colors hover:bg-white dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800">
+                Cancelar
+              </button>
+              <button type="submit" disabled={saving || uploading} className="rounded-2xl bg-brand-500 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-600 disabled:opacity-50">
+                {saving ? "Guardando..." : editingId ? "Guardar cambios" : "Agregar gasto"}
+              </button>
+            </div>
+          </form>
+        )}
+        <div className="border-t border-stone-200/70 dark:border-stone-800/70">
+          {expenses.length === 0 ? (
+            <p className="py-10 text-center text-sm text-stone-400">Aún no registras gastos.</p>
+          ) : (
+            <div className="divide-y divide-stone-200/60 dark:divide-stone-800/60">
+              {expenses.map((e) => (
+                <div key={e.id} className={["flex flex-col gap-3 px-5 py-4 transition-colors sm:flex-row sm:items-center", editingId === e.id ? "bg-amber-50/60 dark:bg-amber-500/10" : "hover:bg-stone-50/70 dark:hover:bg-stone-800/30"].join(" ")}>
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                    {e.imageUrl ? (
+                      <button type="button" onClick={() => setPreview(e.imageUrl)} className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-stone-200 dark:border-stone-700">
+                        <img src={e.imageUrl} alt="" className="h-full w-full object-cover" />
+                      </button>
+                    ) : (
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-dashed border-stone-300 text-stone-400 dark:border-stone-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-6 w-6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" x2="12" y1="3" y2="15" /></svg>
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-stone-800 dark:text-stone-100">{e.concept}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-stone-400 dark:text-stone-500">
+                        <span className="rounded-full bg-stone-100 px-2 py-0.5 dark:bg-stone-800">{EXPENSE_CATEGORY_META[e.category].label}</span>
+                        <span>{formatDate(e.createdAt)}</span>
+                        {e.imageUrls && e.imageUrls.length > 1 && <span>{e.imageUrls.length} imágenes</span>}
+                      </div>
+                      {e.notes && <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">{e.notes}</p>}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between gap-3 sm:justify-end">
+                    <p className="text-base font-bold text-rose-600 dark:text-rose-400">-{formatMoney(e.amountCents)}</p>
+                    <div className="flex items-center gap-1.5">
+                      <button type="button" onClick={() => startEdit(e)} className="flex h-9 items-center justify-center gap-1.5 rounded-xl border border-stone-200 px-2.5 text-xs font-medium text-stone-600 transition-colors hover:border-stone-300 hover:bg-white hover:text-stone-900 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-stone-100" aria-label="Editar gasto">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+                        <span className="hidden sm:inline">Editar</span>
+                      </button>
+                      <button type="button" onClick={() => removeExpense(e)} className="flex h-9 items-center justify-center gap-1.5 rounded-xl border border-stone-200 px-2.5 text-xs font-medium text-stone-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-stone-700 dark:text-stone-300 dark:hover:border-red-500/40 dark:hover:bg-red-500/15 dark:hover:text-red-300" aria-label="Eliminar gasto">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /></svg>
+                        <span className="hidden sm:inline">Eliminar</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {undo && (
+        <div className="fixed bottom-4 left-1/2 z-[60] -translate-x-1/2">
+          <div className="flex items-center gap-3 rounded-full bg-stone-900 px-4 py-2 text-sm text-white shadow-lg dark:bg-stone-100 dark:text-stone-900">
+            <span>Gasto eliminado</span>
+            <button type="button" onClick={restoreExpense} className="font-semibold">Deshacer</button>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
         <div className="rounded-3xl border border-stone-200/70 bg-white/70 p-5 shadow-sm backdrop-blur-md xl:col-span-8 dark:border-stone-800/70 dark:bg-stone-900/70">
@@ -445,105 +621,6 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
-      </div>
-
-      <div id="gastos" className="rounded-3xl border border-stone-200/70 bg-white/70 shadow-sm backdrop-blur-md dark:border-stone-800/70 dark:bg-stone-900/70">
-        <div className="flex flex-col gap-2 border-b border-stone-200/70 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-stone-800/70">
-          <div>
-            <h3 className="text-base font-semibold text-stone-800 dark:text-stone-100">Gastos</h3>
-            <p className="text-sm text-stone-500 dark:text-stone-400">Agrega, sube comprobantes, edita o elimina cualquier gasto</p>
-          </div>
-          {editingId && <button type="button" onClick={cancelEdit} className="rounded-2xl border border-stone-200 px-3 py-1.5 text-sm text-stone-600 hover:bg-stone-50 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800">Cancelar edición</button>}
-        </div>
-        <form onSubmit={submitExpense} className="grid grid-cols-1 gap-3 p-5 lg:grid-cols-12">
-          <div className="space-y-2 lg:col-span-4">
-            <label className="text-sm font-medium text-stone-700 dark:text-stone-300">Concepto</label>
-            <input value={form.concept} onChange={(e) => setForm({ ...form, concept: e.target.value })} placeholder="Ej. Bolsas, flete, publicidad..." className={inputClass} />
-          </div>
-          <div className="space-y-2 lg:col-span-3">
-            <label className="text-sm font-medium text-stone-700 dark:text-stone-300">Categoría</label>
-            <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as ExpenseCategory })} className={inputClass}>
-              {EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{EXPENSE_CATEGORY_META[c].label}</option>)}
-            </select>
-          </div>
-          <div className="space-y-2 lg:col-span-2">
-            <label className="text-sm font-medium text-stone-700 dark:text-stone-300">Monto (USD)</label>
-            <input value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} placeholder="0.00" inputMode="decimal" className={inputClass} />
-          </div>
-          <div className="space-y-2 lg:col-span-3">
-            <label className="text-sm font-medium text-stone-700 dark:text-stone-300">Notas (opcional)</label>
-            <input value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Detalle adicional" className={inputClass} />
-          </div>
-          <div className="space-y-3 lg:col-span-12">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <p className="text-sm font-medium text-stone-700 dark:text-stone-300">Comprobantes / imágenes</p>
-                <p className="text-xs text-stone-400 dark:text-stone-500">Puedes subir varias imágenes (JPG, PNG, WEBP)</p>
-              </div>
-              <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading || form.imageUrls.length >= MAX_PRODUCT_IMAGES} className="rounded-2xl border border-stone-200 px-4 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50 disabled:opacity-50 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800">
-                {uploading ? "Subiendo..." : "Subir imágenes"}
-              </button>
-              <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={(e) => uploadFiles(e.target.files)} />
-            </div>
-            {form.imageUrls.length > 0 && (
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
-                {form.imageUrls.map((url, idx) => (
-                  <button key={url} type="button" onClick={() => setPreview(url)} className="group relative aspect-square overflow-hidden rounded-2xl border border-stone-200 dark:border-stone-700">
-                    <img src={url} alt="" className="h-full w-full object-cover" />
-                    <span onClick={(ev) => { ev.stopPropagation(); setForm((prev) => ({ ...prev, imageUrls: prev.imageUrls.filter((_, i) => i !== idx) })); }} className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100">
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5"><path d="M18 6 6 18M6 6l12 12" /></svg>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          {error && <div className="lg:col-span-12"><p className="rounded-2xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-700 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-300">{error}</p></div>}
-          <div className="flex items-center justify-end gap-2 lg:col-span-12">
-            <button type="submit" disabled={saving || uploading} className="rounded-2xl bg-brand-500 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-brand-600 disabled:opacity-50">
-              {saving ? "Guardando..." : editingId ? "Actualizar gasto" : "Agregar gasto"}
-            </button>
-          </div>
-        </form>
-        <div className="border-t border-stone-200/70 dark:border-stone-800/70">
-          {expenses.length === 0 ? (
-            <p className="py-10 text-center text-sm text-stone-400">Aún no registras gastos.</p>
-          ) : (
-            <div className="divide-y divide-stone-200/60 dark:divide-stone-800/60">
-              {expenses.map((e) => (
-                <div key={e.id} className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center">
-                  <div className="flex min-w-0 flex-1 items-start gap-3">
-                    {e.imageUrl ? (
-                      <button type="button" onClick={() => setPreview(e.imageUrl)} className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-stone-200 dark:border-stone-700">
-                        <img src={e.imageUrl} alt="" className="h-full w-full object-cover" />
-                      </button>
-                    ) : (
-                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-dashed border-stone-300 text-stone-400 dark:border-stone-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-6 w-6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" x2="12" y1="3" y2="15" /></svg>
-                      </div>
-                    )}
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-stone-800 dark:text-stone-100">{e.concept}</p>
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-stone-400 dark:text-stone-500">
-                        <span className="rounded-full bg-stone-100 px-2 py-0.5 dark:bg-stone-800">{EXPENSE_CATEGORY_META[e.category].label}</span>
-                        <span>{formatDate(e.createdAt)}</span>
-                        {e.imageUrls && e.imageUrls.length > 1 && <span>{e.imageUrls.length} imágenes</span>}
-                      </div>
-                      {e.notes && <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">{e.notes}</p>}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between gap-3 sm:justify-end">
-                    <p className="text-base font-bold text-rose-600 dark:text-rose-400">-{formatMoney(e.amountCents)}</p>
-                    <div className="flex items-center gap-1">
-                      <button type="button" onClick={() => startEdit(e)} className="flex h-9 w-9 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-800 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100" aria-label="Editar gasto"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg></button>
-                      <button type="button" onClick={() => removeExpense(e.id)} className="flex h-9 w-9 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-red-50 hover:text-red-600 dark:text-stone-400 dark:hover:bg-red-500/15 dark:hover:text-red-300" aria-label="Eliminar gasto"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /></svg></button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       </div>
 
