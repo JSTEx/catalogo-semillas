@@ -448,7 +448,7 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
         </div>
       </div>
 
-      <div className="rounded-3xl border border-stone-200/70 bg-white/70 shadow-sm backdrop-blur-md dark:border-stone-800/70 dark:bg-stone-900/70">
+      <div id="gastos" className="rounded-3xl border border-stone-200/70 bg-white/70 shadow-sm backdrop-blur-md dark:border-stone-800/70 dark:bg-stone-900/70">
         <div className="flex flex-col gap-2 border-b border-stone-200/70 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-stone-800/70">
           <div>
             <h3 className="text-base font-semibold text-stone-800 dark:text-stone-100">Gastos</h3>
