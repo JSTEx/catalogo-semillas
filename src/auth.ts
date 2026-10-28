@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import authConfig from "./auth.config";
 import { db } from "@/lib/db";
 import { accounts, customers, orders, sessions, verificationTokens } from "@/lib/db/schema";
@@ -16,13 +16,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
   events: {
     async signIn({ user }) {
-      if (!user?.email) return;
+      if (!user?.email || !user?.id) return;
       try {
         const email = user.email.toLowerCase();
         await db
           .update(orders)
           .set({ customerId: user.id as string })
-          .where(eq(orders.customerEmail, email));
+          .where(sql`lower(${orders.customerEmail}) = ${email}`);
       } catch {
         // ignore
       }
