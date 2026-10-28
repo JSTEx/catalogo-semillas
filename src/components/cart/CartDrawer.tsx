@@ -68,75 +68,68 @@ export default function CartDrawer({ open, onClose, onCheckout }: Props) {
               {items.map((it) => (
                 <li
                   key={it.product.id}
-                  className="rounded-2xl border border-stone-200/80 bg-white/80 p-3 shadow-sm transition-shadow hover:shadow-md dark:border-stone-700/70 dark:bg-stone-900/80"
+                  className="flex flex-wrap items-center gap-3 rounded-2xl border border-stone-200 bg-white p-2.5 shadow-sm dark:border-stone-700 dark:bg-stone-900"
                 >
-                  <div className="flex items-start gap-3">
-                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-stone-100 ring-1 ring-stone-200/70 dark:bg-stone-800 dark:ring-stone-700/70">
-                      <SeedImage
-                        src={it.product.imageUrl}
-                        alt={it.product.name}
-                        fill
-                        sizes="64px"
-                        className="object-contain"
-                      />
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="line-clamp-2 text-sm font-semibold leading-snug text-stone-800 dark:text-stone-100">
-                        {it.product.name}
-                      </p>
-                      <p className="mt-1 text-sm font-semibold text-brand-600 dark:text-brand-400">
-                        {formatMoney(it.product.priceCents)} <span className="text-xs font-normal text-stone-500 dark:text-stone-400">c/u</span>
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => remove(it.product.id)}
-                      aria-label={`Quitar ${it.product.name}`}
-                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-stone-200 text-stone-500 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-stone-700 dark:text-stone-400 dark:hover:border-red-500/40 dark:hover:bg-red-500/10 dark:hover:text-red-300"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /></svg>
-                    </button>
+                  <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-stone-100 ring-1 ring-stone-200 dark:bg-stone-800 dark:ring-stone-700">
+                    <SeedImage
+                      src={it.product.imageUrl}
+                      alt={it.product.name}
+                      fill
+                      sizes="64px"
+                      className="object-contain"
+                    />
                   </div>
-                  <div className="mt-3 flex items-center justify-between">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-stone-200 bg-stone-50/80 p-1 dark:border-stone-700 dark:bg-stone-800/70">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setQuantity(it.product.id, it.quantity - 1)
-                        }
-                        aria-label="Quitar uno"
-                        disabled={it.quantity <= 1}
-                        className="flex h-8 w-8 items-center justify-center rounded-full text-stone-700 transition-colors hover:bg-white disabled:opacity-40 dark:text-stone-200 dark:hover:bg-stone-700"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-4 w-4"><path d="M5 12h14" /></svg>
-                      </button>
-                      <span className="w-8 text-center text-sm font-bold text-stone-900 dark:text-stone-100">
-                        {it.quantity}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setQuantity(
-                            it.product.id,
-                            Math.min(
-                              it.product.stock > 0 ? it.product.stock : 99,
-                              it.quantity + 1,
-                            ),
-                          )
-                        }
-                        aria-label="Agregar uno"
-                        disabled={
-                          it.product.stock > 0 && it.quantity >= it.product.stock
-                        }
-                        className="flex h-8 w-8 items-center justify-center rounded-full text-stone-700 transition-colors hover:bg-white disabled:opacity-40 dark:text-stone-200 dark:hover:bg-stone-700"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-4 w-4"><path d="M12 5v14M5 12h14" /></svg>
-                      </button>
-                    </div>
-                    <p className="text-sm font-bold text-stone-900 dark:text-stone-100">
-                      {formatMoney(it.product.priceCents * it.quantity)}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-stone-900 dark:text-stone-100">
+                      {it.product.name}
+                    </p>
+                    <p className="text-xs text-stone-500 dark:text-stone-400">
+                      {formatMoney(it.product.priceCents)} c/u
                     </p>
                   </div>
+                  <div className="flex items-center gap-1.5 rounded-full border border-stone-300 bg-white p-0.5 shadow-sm dark:border-stone-600 dark:bg-stone-800">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setQuantity(it.product.id, it.quantity - 1)
+                      }
+                      aria-label="Quitar uno"
+                      disabled={it.quantity <= 1}
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-stone-700 transition-colors hover:bg-stone-100 disabled:opacity-40 dark:text-stone-200 dark:hover:bg-stone-700"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-4 w-4"><path d="M5 12h14" /></svg>
+                    </button>
+                    <span className="w-7 text-center text-sm font-bold text-stone-900 dark:text-stone-100">
+                      {it.quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setQuantity(
+                          it.product.id,
+                          Math.min(
+                            it.product.stock > 0 ? it.product.stock : 99,
+                            it.quantity + 1,
+                          ),
+                        )
+                      }
+                      aria-label="Agregar uno"
+                      disabled={
+                        it.product.stock > 0 && it.quantity >= it.product.stock
+                      }
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-stone-700 transition-colors hover:bg-stone-100 disabled:opacity-40 dark:text-stone-200 dark:hover:bg-stone-700"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" className="h-4 w-4"><path d="M12 5v14M5 12h14" /></svg>
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => remove(it.product.id)}
+                    aria-label={`Quitar ${it.product.name}`}
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-red-200 bg-red-50 text-red-600 transition-colors hover:bg-red-100 dark:border-red-500/40 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /></svg>
+                  </button>
                   {it.product.stock > 0 && it.quantity >= it.product.stock && (
                     <p className="basis-full text-[11px] font-medium text-amber-600 dark:text-amber-400">
                       Alcanzaste el maximo disponible de este producto. Si
