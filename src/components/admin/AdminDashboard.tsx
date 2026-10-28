@@ -1294,17 +1294,16 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                   </label>
                   <input
                     id="stock"
-                    type="number"
-                    min={0}
-                    step={1}
+                    type="text"
                     inputMode="numeric"
+                    pattern="[0-9]*"
+                    autoComplete="off"
                     value={form.stock}
-                    onChange={(e) =>
-                      setForm({
-                        ...form,
-                        stock: Math.max(0, Math.floor(Number(e.target.value) || 0)),
-                      })
-                    }
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/[^0-9]/g, "");
+                      setForm({ ...form, stock: v === "" ? 0 : parseInt(v, 10) });
+                    }}
+                    onWheel={(e) => e.currentTarget.blur()}
                     placeholder="0"
                     className="w-full rounded-2xl border border-stone-200 bg-white/80 px-4 py-3 text-sm text-stone-800 outline-none transition-all duration-300 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
                   />
