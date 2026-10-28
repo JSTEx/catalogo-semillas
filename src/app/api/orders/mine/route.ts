@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { auth } from "@/auth";
@@ -14,9 +14,24 @@ export const runtime = "nodejs";
 export async function GET() {
   const session = await auth();
   const userId = session?.user?.id;
+  const email = session?.user?.email;
 
   if (!userId) {
     return NextResponse.json({ error: "No autenticado" }, { status: 401 });
+  }
+
+  if (email) {
+    try {
+      const lowerEmail = email.toLowerCase();
+      await db
+        .update(orders)
+        .set({ customerId: userId })
+        .where(
+          sql`lower(${orders.customerEmail}) = ${lowerEmail} AND ${orders.customerId} IS DISTINCT FROM ${userId}`,
+        );
+    } catch {
+      // ignore
+    }
   }
 
   const rows = await db
