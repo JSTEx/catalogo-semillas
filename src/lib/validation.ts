@@ -173,14 +173,35 @@ export const updateOrderSchema = z
   });
 
 export const createExpenseSchema = z.object({
-  concept: sanitizedString(2, 120, "El concepto"),
+  concept: sanitizedString(2, 200, "El concepto"),
   category: z.enum(["insumos", "envio", "empaque", "publicidad", "otros"]).default("otros"),
   amountCents: z
     .number()
     .int("El monto debe ser un numero entero")
     .min(1, "El monto debe ser mayor a 0")
     .max(1_000_000_000),
+  imageUrl: imageUrlSchema.nullable().optional(),
+  imageUrls: z.array(imageUrlSchema).max(10).optional(),
+  notes: sanitizedString(0, 300, "Las notas").optional(),
 });
+
+export const updateExpenseSchema = z
+  .object({
+    concept: sanitizedString(2, 200, "El concepto").optional(),
+    category: z.enum(["insumos", "envio", "empaque", "publicidad", "otros"]).optional(),
+    amountCents: z
+      .number()
+      .int("El monto debe ser un numero entero")
+      .min(1, "El monto debe ser mayor a 0")
+      .max(1_000_000_000)
+      .optional(),
+    imageUrl: imageUrlSchema.nullable().optional(),
+    imageUrls: z.array(imageUrlSchema).max(10).optional(),
+    notes: sanitizedString(0, 300, "Las notas").optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "No se envio ningun campo para actualizar",
+  });
 
 export const ALLOWED_IMAGE_MIME = [
   "image/jpeg",

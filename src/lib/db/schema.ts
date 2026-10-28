@@ -146,7 +146,16 @@ export const expenses = pgTable(
     concept: text("concept").notNull(),
     category: expenseCategoryEnum("category").default("otros").notNull(),
     amountCents: integer("amount_cents").notNull(),
+    imageUrl: text("image_url"),
+    imageUrls: jsonb("image_urls")
+      .$type<string[]>()
+      .default(sql`'[]'::jsonb`)
+      .notNull(),
+    notes: text("notes"),
     createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
       .defaultNow()
       .notNull(),
   },

@@ -23,12 +23,21 @@ export async function POST(req: Request) {
     return jsonError(parsed.error.issues[0]?.message ?? "Datos invalidos", 400);
   }
 
+  const imageUrls = Array.isArray(parsed.data.imageUrls)
+    ? parsed.data.imageUrls.filter((u) => typeof u === "string" && u.length > 0)
+    : parsed.data.imageUrl
+      ? [parsed.data.imageUrl]
+      : [];
+
   const [created] = await db
     .insert(expenses)
     .values({
       concept: parsed.data.concept,
       category: parsed.data.category,
       amountCents: parsed.data.amountCents,
+      imageUrl: imageUrls[0] ?? null,
+      imageUrls: imageUrls.length > 0 ? imageUrls : [],
+      notes: parsed.data.notes ?? null,
     })
     .returning();
 

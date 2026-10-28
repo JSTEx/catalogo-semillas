@@ -148,16 +148,35 @@ export interface ExpenseDTO {
   concept: string;
   category: "insumos" | "envio" | "empaque" | "publicidad" | "otros";
   amountCents: number;
+  imageUrl: string | null;
+  imageUrls: string[];
+  notes: string | null;
   createdAt: string;
+  updatedAt: string;
 }
 
 export function toExpenseDTO(e: Expense): ExpenseDTO {
+  const ex = e as Expense & { imageUrls?: unknown; imageUrl?: unknown; notes?: unknown; updatedAt?: unknown };
+  const images = Array.isArray(ex.imageUrls)
+    ? (ex.imageUrls as unknown[]).filter((u): u is string => typeof u === "string" && u.length > 0)
+    : [];
+  const primary =
+    typeof ex.imageUrl === "string" && ex.imageUrl.length > 0
+      ? (ex.imageUrl as string)
+      : images[0] ?? null;
   return {
     id: e.id,
     concept: e.concept,
     category: e.category,
     amountCents: e.amountCents,
+    imageUrl: primary,
+    imageUrls: images.length > 0 ? images : primary ? [primary] : [],
+    notes: typeof ex.notes === "string" ? ex.notes : null,
     createdAt: e.createdAt.toISOString(),
+    updatedAt:
+      ex.updatedAt instanceof Date
+        ? ex.updatedAt.toISOString()
+        : e.createdAt.toISOString(),
   };
 }
 
