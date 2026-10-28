@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { MY_ORDER_EVENT, isActiveOrder, readMyOrders } from "@/lib/my-order";
 
 /**
- * Acceso persistente a los pedidos del cliente (guardados en el dispositivo).
- * No requiere iniciar sesion.
+ * Acceso a los pedidos del cliente (guardados en el dispositivo o vinculados a la cuenta).
  */
 export default function MyOrderLink({ className }: { className?: string }) {
+  const { status } = useSession();
   const [total, setTotal] = useState(0);
   const [active, setActive] = useState(0);
 
@@ -26,7 +27,7 @@ export default function MyOrderLink({ className }: { className?: string }) {
     };
   }, []);
 
-  if (total === 0) return null;
+  if (status !== "authenticated" && total === 0) return null;
 
   return (
     <a
