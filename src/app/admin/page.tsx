@@ -29,7 +29,7 @@ export default async function AdminPage() {
     .from(orders)
     .orderBy(desc(orders.createdAt))
     .limit(300);
-  let expenseRows: any[] = [];
+  let expenseRows: (typeof expenses.$inferSelect)[] = [];
   try {
     expenseRows = await db
       .select()
