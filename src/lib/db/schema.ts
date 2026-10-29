@@ -15,6 +15,13 @@ import {
 import { sql } from "drizzle-orm";
 import type { AdapterAccountType } from "next-auth/adapters";
 
+function enableRowLevelSecurity<T extends { enableRLS: () => unknown }>(
+  table: T,
+): T {
+  table.enableRLS();
+  return table;
+}
+
 export const productStatusEnum = pgEnum("product_status", [
   "available",
   "low_stock",
@@ -50,7 +57,7 @@ export const expenseCategoryEnum = pgEnum("expense_category", [
 
 export const adminRoleEnum = pgEnum("admin_role", ["superadmin", "admin"]);
 
-export const allowedAdmins = pgTable(
+export const allowedAdmins = enableRowLevelSecurity(pgTable(
   "allowed_admins",
   {
     id: uuid("id").primaryKey().default(sql`uuid_generate_v4()`),
@@ -65,9 +72,9 @@ export const allowedAdmins = pgTable(
       .notNull(),
   },
   (table) => [index("idx_allowed_admins_email").on(table.email)],
-);
+));
 
-export const products = pgTable(
+export const products = enableRowLevelSecurity(pgTable(
   "products",
   {
     id: uuid("id").primaryKey().default(sql`uuid_generate_v4()`),
@@ -94,9 +101,9 @@ export const products = pgTable(
     index("idx_products_name").on(table.name),
     index("idx_products_category").on(table.category),
   ],
-);
+));
 
-export const customers = pgTable("customers", {
+export const customers = enableRowLevelSecurity(pgTable("customers", {
   id: uuid("id").primaryKey().default(sql`uuid_generate_v4()`),
   email: varchar("email", { length: 254 }).unique().notNull(),
   name: text("name"),
@@ -109,9 +116,9 @@ export const customers = pgTable("customers", {
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
-});
+}));
 
-export const orders = pgTable(
+export const orders = enableRowLevelSecurity(pgTable(
   "orders",
   {
     id: uuid("id").primaryKey().default(sql`uuid_generate_v4()`),
@@ -147,9 +154,9 @@ export const orders = pgTable(
     index("idx_orders_delivered_at").on(table.deliveredAt),
     index("idx_orders_customer_id").on(table.customerId),
   ],
-);
+));
 
-export const expenses = pgTable(
+export const expenses = enableRowLevelSecurity(pgTable(
   "expenses",
   {
     id: uuid("id").primaryKey().default(sql`uuid_generate_v4()`),
@@ -170,9 +177,9 @@ export const expenses = pgTable(
       .notNull(),
   },
   (table) => [index("idx_expenses_created_at").on(table.createdAt)],
-);
+));
 
-export const accounts = pgTable(
+export const accounts = enableRowLevelSecurity(pgTable(
   "accounts",
   {
     userId: uuid("user_id")
@@ -194,17 +201,17 @@ export const accounts = pgTable(
       columns: [account.provider, account.providerAccountId],
     }),
   ],
-);
+));
 
-export const sessions = pgTable("sessions", {
+export const sessions = enableRowLevelSecurity(pgTable("sessions", {
   sessionToken: text("session_token").primaryKey(),
   userId: uuid("user_id")
     .notNull()
     .references(() => customers.id, { onDelete: "cascade" }),
   expires: timestamp("expires", { withTimezone: true }).notNull(),
-});
+}));
 
-export const verificationTokens = pgTable(
+export const verificationTokens = enableRowLevelSecurity(pgTable(
   "verification_tokens",
   {
     identifier: text("identifier").notNull(),
@@ -212,7 +219,7 @@ export const verificationTokens = pgTable(
     expires: timestamp("expires", { withTimezone: true }).notNull(),
   },
   (vt) => [primaryKey({ columns: [vt.identifier, vt.token] })],
-);
+));
 
 export type AllowedAdmin = typeof allowedAdmins.$inferSelect;
 export type NewAllowedAdmin = typeof allowedAdmins.$inferInsert;
