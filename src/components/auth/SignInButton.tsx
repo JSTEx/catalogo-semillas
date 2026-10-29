@@ -39,21 +39,17 @@ export default function SignInButton() {
     };
   }, [open]);
 
-  if (status === "loading") {
-    return (
-      <div className="h-10 w-10 animate-pulse rounded-2xl bg-stone-200 dark:bg-stone-700" />
-    );
-  }
-
-  if (!session?.user) {
+  if (status !== "authenticated" || !session?.user) {
     return (
       <button
         type="button"
         onClick={() => signIn("google")}
+        aria-label="Entrar con Google"
+        title="Entrar con Google"
         className="inline-flex h-10 items-center justify-center gap-2 rounded-2xl border border-stone-200 bg-white/70 px-3 text-sm font-medium text-stone-600 shadow-sm backdrop-blur-md transition-colors hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:border-brand-500/40 dark:hover:text-brand-300"
       >
         <GoogleIcon />
-        <span className="hidden sm:inline">Entrar</span>
+        <span>Entrar</span>
       </button>
     );
   }

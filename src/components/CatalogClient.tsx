@@ -118,6 +118,7 @@ export default function CatalogClient({ initialProducts }: Props) {
                 width={720}
                 height={720}
                 aria-hidden="true"
+                priority
                 className="h-7 w-7 dark:hidden"
               />
               <Image
@@ -126,6 +127,7 @@ export default function CatalogClient({ initialProducts }: Props) {
                 width={720}
                 height={720}
                 aria-hidden="true"
+                priority
                 className="hidden h-7 w-7 dark:block"
               />
             </span>

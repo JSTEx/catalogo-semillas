@@ -65,6 +65,7 @@ check("GET /api/orders/status (batch)", statusRes?.status === 200, `-> ${statusR
 const html = await fetch(BASE + "/").then((r) => r.text()).catch(() => "");
 check("catalogo incluye og:image", /og:image/.test(html));
 check("catalogo incluye favicon", /icons\/favicon/.test(html));
+check("login de Google visible mientras carga la sesion", /aria-label="Entrar con Google"/.test(html));
 
 if (process.env.SMOKE_WRITE === "1") {
   const cookie = process.env.ADMIN_COOKIE;
