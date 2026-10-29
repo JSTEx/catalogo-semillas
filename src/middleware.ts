@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { SESSION_COOKIE, verifySession } from "@/lib/auth/jwt";
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -60,22 +59,10 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Proteccion de rutas del panel de administracion.
-  const isAdminPage =
-    pathname.startsWith("/admin") && pathname !== "/admin/login";
+  const isAdminPage = pathname.startsWith("/admin");
 
   if (isAdminPage) {
-    const token = request.cookies.get(SESSION_COOKIE)?.value;
-    const session = token ? await verifySession(token) : null;
-    if (session) {
-      // allow
-    } else {
-      // allow if Google session present? middleware can't easily read NextAuth session cookie in all cases
-      // but we also protect in page/api; redirect to login for now but login page will allow authorized google users
-      const loginUrl = request.nextUrl.clone();
-      loginUrl.pathname = "/admin/login";
-      loginUrl.searchParams.set("from", pathname);
-      return applySecurityHeaders(NextResponse.redirect(loginUrl), csp);
-    }
+    // Auth handled in page/server components
   }
 
   const requestHeaders = new Headers(request.headers);

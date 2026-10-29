@@ -497,6 +497,9 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
+    try {
+      await fetch("/api/auth/[...nextauth]?action=signout", { method: "POST" }).catch(() => null);
+    } catch {}
     router.replace("/");
     router.refresh();
   }
@@ -560,8 +563,8 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
             <button
               type="button"
               onClick={logout}
-              aria-label="Cerrar sesion"
-              title="Cerrar sesion"
+              aria-label="Salir"
+              title="Salir"
               className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-white/70 px-3 py-2 text-sm font-medium text-stone-600 transition-all duration-300 hover:border-red-200 hover:text-red-600 sm:px-4 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:border-red-500/40 dark:hover:text-red-300"
             >
               <svg
@@ -579,7 +582,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                 <path d="m16 17 5-5-5-5" />
                 <path d="M21 12H9" />
               </svg>
-              <span className="hidden sm:inline">Cerrar sesion</span>
+              <span className="hidden sm:inline">Salir</span>
             </button>
           </div>
         </div>

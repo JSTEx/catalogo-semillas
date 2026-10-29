@@ -15,7 +15,7 @@ export const runtime = "nodejs";
 
 export default async function AdminPage() {
   const admin = await getAdminUser();
-  if (!admin) redirect("/admin/login");
+  if (!admin) redirect("/");
 
   // Consultas secuenciales: el pool tiene max:1 y las consultas concurrentes
   // (Promise.all) pueden bloquear la unica conexion en el runtime de Next.
