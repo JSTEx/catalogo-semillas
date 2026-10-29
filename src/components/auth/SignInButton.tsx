@@ -43,7 +43,7 @@ export default function SignInButton() {
     return (
       <button
         type="button"
-        onClick={() => signIn("google")}
+        onClick={() => void signIn("google", undefined, { prompt: "select_account" })}
         aria-label="Entrar con Google"
         title="Entrar con Google"
         className="inline-flex h-10 items-center justify-center gap-2 rounded-2xl border border-stone-200 bg-white/70 px-3 text-sm font-medium text-stone-600 shadow-sm backdrop-blur-md transition-colors hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:border-brand-500/40 dark:hover:text-brand-300"
