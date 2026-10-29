@@ -496,9 +496,11 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
   }
 
   async function logout() {
-    await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
     try {
-      await fetch("/api/auth/[...nextauth]?action=signout", { method: "POST" }).catch(() => null);
+      await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
+      const { signOut } = await import("next-auth/react");
+      await signOut({ callbackUrl: "/", redirect: true });
+      return;
     } catch {}
     router.replace("/");
     router.refresh();
@@ -539,8 +541,8 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
             <ThemeToggle />
             <Link
               href="/"
-              aria-label="Ver catalogo"
-              title="Ver catalogo"
+              aria-label="Ir al catalogo"
+              title="Ir al catalogo"
               className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-white/70 px-3 py-2 text-sm font-medium text-stone-600 transition-all duration-300 hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:border-brand-500/40 dark:hover:text-brand-300"
             >
               <svg
@@ -558,7 +560,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                 <path d="M3 6h18" />
                 <path d="M16 10a4 4 0 0 1-8 0" />
               </svg>
-              <span className="hidden sm:inline">Ver catalogo</span>
+              <span className="hidden sm:inline">Ir al catalogo</span>
             </Link>
             <button
               type="button"

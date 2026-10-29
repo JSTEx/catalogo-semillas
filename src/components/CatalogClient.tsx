@@ -22,6 +22,7 @@ import CartButton from "./cart/CartButton";
 import SignInButton from "./auth/SignInButton";
 import CartDrawer from "./cart/CartDrawer";
 import CheckoutModal from "./cart/CheckoutModal";
+import AdminQuickLink from "./AdminQuickLink";
 
 type Filter = "all" | ProductStatus;
 
@@ -168,29 +169,7 @@ export default function CatalogClient({ initialProducts }: Props) {
             <div className="hidden sm:block">
               <ViewToggle value={view} onChange={setView} />
             </div>
-            <a
-              href="/admin"
-              title="Ir al panel de administracion"
-              aria-label="Ir al panel de administracion"
-              className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-brand-200 bg-brand-50 text-brand-700 shadow-sm backdrop-blur-md transition-all duration-300 hover:border-brand-300 hover:bg-brand-100 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300 dark:hover:border-brand-500/50 dark:hover:bg-brand-500/20"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-5 w-5"
-                aria-hidden="true"
-              >
-                <rect width="7" height="9" x="3" y="3" rx="1" />
-                <rect width="7" height="5" x="14" y="3" rx="1" />
-                <rect width="7" height="9" x="14" y="12" rx="1" />
-                <rect width="7" height="5" x="3" y="16" rx="1" />
-              </svg>
-            </a>
+            <AdminQuickLink />
             <ThemeToggle />
           </div>
         </div>
