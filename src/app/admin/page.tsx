@@ -2,21 +2,20 @@ import { redirect } from "next/navigation";
 import { desc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { expenses, orders, products } from "@/lib/db/schema";
-import { getSession } from "@/lib/auth/session";
 import {
   toProductDTO,
   toOrderDTOList,
   toExpenseDTOList,
 } from "@/lib/types";
 import AdminDashboard from "@/components/admin/AdminDashboard";
+import { getAdminUser } from "@/lib/admin/server";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export default async function AdminPage() {
-  // Defensa en profundidad: el middleware ya protege esta ruta.
-  const session = await getSession();
-  if (!session) redirect("/admin/login");
+  const admin = await getAdminUser();
+  if (!admin) redirect("/admin/login");
 
   // Consultas secuenciales: el pool tiene max:1 y las consultas concurrentes
   // (Promise.all) pueden bloquear la unica conexion en el runtime de Next.
@@ -45,7 +44,8 @@ export default async function AdminPage() {
       initialProducts={productRows.map(toProductDTO)}
       initialOrders={toOrderDTOList(orderRows)}
       initialExpenses={toExpenseDTOList(expenseRows)}
-      username={session.username}
+      username={admin.email || admin.username || "admin"}
+      adminRole={admin.role}
     />
   );
 }

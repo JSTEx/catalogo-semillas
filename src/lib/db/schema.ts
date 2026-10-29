@@ -57,6 +57,25 @@ export const adminUsers = pgTable("admin_users", {
     .notNull(),
 });
 
+export const adminRoleEnum = pgEnum("admin_role", ["superadmin", "admin"]);
+
+export const allowedAdmins = pgTable(
+  "allowed_admins",
+  {
+    id: uuid("id").primaryKey().default(sql`uuid_generate_v4()`),
+    email: varchar("email", { length: 254 }).unique().notNull(),
+    role: adminRoleEnum("role").default("admin").notNull(),
+    addedBy: uuid("added_by"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (table) => [index("idx_allowed_admins_email").on(table.email)],
+);
+
 export const products = pgTable(
   "products",
   {
@@ -205,6 +224,9 @@ export const verificationTokens = pgTable(
 );
 
 export type AdminUser = typeof adminUsers.$inferSelect;
+export type NewAdminUser = typeof adminUsers.$inferInsert;
+export type AllowedAdmin = typeof allowedAdmins.$inferSelect;
+export type NewAllowedAdmin = typeof allowedAdmins.$inferInsert;
 export type Product = typeof products.$inferSelect;
 export type NewProduct = typeof products.$inferInsert;
 export type Order = typeof orders.$inferSelect;

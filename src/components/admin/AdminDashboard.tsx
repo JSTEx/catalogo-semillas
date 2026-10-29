@@ -20,12 +20,14 @@ import SeedImage from "@/components/SeedImage";
 import AdminOrders from "./AdminOrders";
 import AdminStats from "./AdminStats";
 import ImageStudio from "./ImageStudio";
+import AdminUsers from "./AdminUsers";
 
 interface Props {
   initialProducts: ProductDTO[];
   initialOrders: OrderDTO[];
   initialExpenses: ExpenseDTO[];
   username: string;
+  adminRole?: "superadmin" | "admin";
 }
 
 interface FormState {
@@ -77,12 +79,12 @@ const GRID_CLASSES: Record<string, string> = {
   list: "flex flex-col gap-2",
 };
 
-export default function AdminDashboard({ initialProducts, initialOrders, initialExpenses, username }: Props) {
+export default function AdminDashboard({ initialProducts, initialOrders, initialExpenses, username, adminRole }: Props) {
   const router = useRouter();
   const [items, setItems] = useState<ProductDTO[]>(initialProducts);
   const [orders, setOrders] = useState<OrderDTO[]>(initialOrders);
   const [expenses, setExpenses] = useState<ExpenseDTO[]>(initialExpenses);
-  const [tab, setTab] = useState<"products" | "orders" | "stats">("products");
+  const [tab, setTab] = useState<"products" | "orders" | "stats" | "admins">("products");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<StatusFilter>("all");
   const [sort, setSort] = useState<SortKey>("status");
@@ -495,7 +497,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
 
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
-    router.replace("/admin/login");
+    router.replace("/");
     router.refresh();
   }
 
@@ -526,7 +528,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
               <h1 className="text-lg font-bold tracking-tight text-stone-900 dark:text-stone-100">
                 Administracion
               </h1>
-              <p className="text-xs text-stone-500 dark:text-stone-400">Sesion: {username}</p>
+              <p className="text-xs text-stone-500 dark:text-stone-400">Sesion: {username}{adminRole === "superadmin" ? " · Superadmin" : adminRole === "admin" ? " · Admin" : ""}</p>
             </div>
           </div>
 
@@ -625,6 +627,23 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                 </>
               ),
             },
+            ...(adminRole === "superadmin"
+              ? [
+                  {
+                    key: "admins" as const,
+                    label: "Administradores",
+                    badge: 0,
+                    icon: (
+                      <>
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                        <circle cx="9" cy="7" r="4" />
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                      </>
+                    ),
+                  },
+                ]
+              : []),
           ] as const
         ).map((t) => (
           <button
@@ -954,13 +973,15 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
           </>
         ) : tab === "orders" ? (
           <AdminOrders orders={orders} onOrdersChange={setOrders} />
-        ) : (
+        ) : tab === "stats" ? (
           <AdminStats
             orders={orders}
             expenses={expenses}
             onExpensesChange={setExpenses}
           />
-        )}
+        ) : tab === "admins" ? (
+          <AdminUsers canManage={adminRole === "superadmin"} />
+        ) : null}
       </main>
 
       {form && (

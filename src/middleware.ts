@@ -66,7 +66,11 @@ export async function middleware(request: NextRequest) {
   if (isAdminPage) {
     const token = request.cookies.get(SESSION_COOKIE)?.value;
     const session = token ? await verifySession(token) : null;
-    if (!session) {
+    if (session) {
+      // allow
+    } else {
+      // allow if Google session present? middleware can't easily read NextAuth session cookie in all cases
+      // but we also protect in page/api; redirect to login for now but login page will allow authorized google users
       const loginUrl = request.nextUrl.clone();
       loginUrl.pathname = "/admin/login";
       loginUrl.searchParams.set("from", pathname);
