@@ -496,14 +496,8 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
   }
 
   async function logout() {
-    try {
-      await fetch("/api/auth/logout", { method: "POST" }).catch(() => null);
-      const { signOut } = await import("next-auth/react");
-      await signOut({ callbackUrl: "/", redirect: true });
-      return;
-    } catch {}
-    router.replace("/");
-    router.refresh();
+    const { signOut } = await import("next-auth/react");
+    await signOut({ callbackUrl: "/", redirect: true });
   }
 
   return (

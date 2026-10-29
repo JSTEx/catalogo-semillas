@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { allowedAdmins } from "@/lib/db/schema";
 import { getAdminUser } from "@/lib/admin/server";
-import { jsonError } from "@/lib/http";
+import { SUPER_ADMIN_EMAIL } from "@/lib/admin/auth";
+import { isSameOrigin, jsonError } from "@/lib/http";
 import { z } from "zod";
 
 export const runtime = "nodejs";
 
 const schema = z.object({
-  email: z.string().email("Correo invalido"),
+  email: z.string().trim().email("Correo invalido").max(254),
   role: z.enum(["admin"]).default("admin"),
 });
 
@@ -22,6 +23,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  if (!isSameOrigin(req)) return jsonError("Origen no permitido", 403);
   const admin = await getAdminUser();
   if (!admin) return jsonError("No autorizado", 401);
   if (admin.role !== "superadmin") return jsonError("No autorizado", 403);
@@ -36,11 +38,19 @@ export async function POST(req: Request) {
   if (!parsed.success) return jsonError(parsed.error.issues[0]?.message ?? "Datos invalidos", 400);
 
   const email = parsed.data.email.toLowerCase().trim();
-  if (email === "jecsitoshop@gmail.com") return jsonError("El superadmin no se puede modificar", 400);
+  if (email === SUPER_ADMIN_EMAIL) return jsonError("El superadmin no se puede modificar", 400);
 
-  const [existing] = await db.select().from(allowedAdmins).where(eq(allowedAdmins.email, email)).limit(1);
+  const [existing] = await db
+    .select()
+    .from(allowedAdmins)
+    .where(sql`lower(${allowedAdmins.email}) = ${email}`)
+    .limit(1);
   if (existing) {
-    const [updated] = await db.update(allowedAdmins).set({ role: "admin", updatedAt: new Date() }).where(eq(allowedAdmins.email, email)).returning();
+    const [updated] = await db
+      .update(allowedAdmins)
+      .set({ email, role: "admin", updatedAt: new Date() })
+      .where(sql`lower(${allowedAdmins.email}) = ${email}`)
+      .returning();
     return NextResponse.json({ admin: updated });
   }
   const [created] = await db.insert(allowedAdmins).values({ email, role: "admin" }).returning();
@@ -48,6 +58,7 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  if (!isSameOrigin(req)) return jsonError("Origen no permitido", 403);
   const admin = await getAdminUser();
   if (!admin) return jsonError("No autorizado", 401);
   if (admin.role !== "superadmin") return jsonError("No autorizado", 403);
@@ -55,9 +66,12 @@ export async function DELETE(req: Request) {
   const { searchParams } = new URL(req.url);
   const email = searchParams.get("email")?.toLowerCase().trim();
   if (!email) return jsonError("Correo requerido", 400);
-  if (email === "jecsitoshop@gmail.com") return jsonError("No se puede quitar al superadmin", 400);
+  if (email === SUPER_ADMIN_EMAIL) return jsonError("No se puede quitar al superadmin", 400);
 
-  const [deleted] = await db.delete(allowedAdmins).where(eq(allowedAdmins.email, email)).returning();
+  const [deleted] = await db
+    .delete(allowedAdmins)
+    .where(sql`lower(${allowedAdmins.email}) = ${email}`)
+    .returning();
   if (!deleted) return jsonError("No encontrado", 404);
   return NextResponse.json({ ok: true });
 }

@@ -14,8 +14,7 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:clear-orders": "node scripts/clear-orders.mjs",
-    "create-admin": "node scripts/create-admin.mjs"
+    "db:clear-orders": "node scripts/clear-orders.mjs"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",
@@ -23,9 +22,7 @@
     "@supabase/supabase-js": "^2.45.4",
     "@upstash/ratelimit": "^2.0.5",
     "@upstash/redis": "^1.34.0",
-    "bcryptjs": "^2.4.3",
     "drizzle-orm": "^0.45.4",
-    "jose": "^5.9.6",
     "next": "^15.1.3",
     "next-auth": "^5.0.0-beta.32",
     "nodemailer": "^10.1.1",
@@ -40,7 +37,6 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.7",
     "@tailwindcss/postcss": "^4.0.0",
-    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.10.2",
     "@types/nodemailer": "^8.0.2",
     "@types/react": "^19.0.2",

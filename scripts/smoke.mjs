@@ -6,7 +6,7 @@
  *   SMOKE_BASE=https://... node scripts/smoke.mjs # contra otro entorno
  *
  * Flujo con escritura (crea y elimina un pedido de prueba) si se define:
- *   SMOKE_WRITE=1 ADMIN_USER=... ADMIN_PASSWORD=...
+ *   SMOKE_WRITE=1 ADMIN_COOKIE="authjs.session-token=..."
  */
 const BASE = (process.env.SMOKE_BASE || "http://localhost:3000").replace(/\/+$/, "");
 const ORIGIN = { Origin: BASE, "Content-Type": "application/json" };
@@ -31,6 +31,34 @@ for (const path of ["/", "/logo.png", "/og.png", "/icons/favicon.png", "/icons/a
   check(`GET ${path}`, status === 200, `-> ${status}`);
 }
 
+const adminResponse = await fetch(BASE + "/admin", { redirect: "manual" }).catch(() => null);
+const adminHtml = await adminResponse?.text().catch(() => "") ?? "";
+check(
+  "GET /admin redirige al acceso por correo",
+  adminResponse?.status === 200 &&
+    adminHtml.includes('url=/auth/signin?callbackUrl=%2Fadmin'),
+  `-> ${adminResponse?.status ?? 0}`,
+);
+
+const oldLogin = await fetch(BASE + "/api/auth/login", {
+  method: "POST",
+  headers: ORIGIN,
+  body: JSON.stringify({ username: "retired", password: "retired-password" }),
+}).catch(() => null);
+check("login antiguo deshabilitado", (oldLogin?.status ?? 0) >= 400, `-> ${oldLogin?.status ?? 0}`);
+
+const adminList = await fetch(BASE + "/api/admin/allowed", {
+  headers: { Origin: BASE },
+}).catch(() => null);
+check("lista de administradores protegida", adminList?.status === 401, `-> ${adminList?.status ?? 0}`);
+
+const productMutation = await fetch(BASE + "/api/products", {
+  method: "POST",
+  headers: ORIGIN,
+  body: JSON.stringify({ name: "Sin sesión" }),
+}).catch(() => null);
+check("ediciones protegidas sin sesión", productMutation?.status === 401, `-> ${productMutation?.status ?? 0}`);
+
 const statusRes = await fetch(BASE + "/api/orders/status?ids=", { headers: { Origin: BASE } }).catch(() => null);
 check("GET /api/orders/status (batch)", statusRes?.status === 200, `-> ${statusRes?.status ?? 0}`);
 
@@ -39,19 +67,11 @@ check("catalogo incluye og:image", /og:image/.test(html));
 check("catalogo incluye favicon", /icons\/favicon/.test(html));
 
 if (process.env.SMOKE_WRITE === "1") {
-  const user = process.env.ADMIN_USER;
-  const pass = process.env.ADMIN_PASSWORD;
-  if (!user || !pass) {
-    check("escritura: faltan ADMIN_USER/ADMIN_PASSWORD", false);
+  const cookie = process.env.ADMIN_COOKIE;
+  if (!cookie) {
+    check("escritura: falta ADMIN_COOKIE", false);
   } else {
-    const login = await fetch(BASE + "/api/auth/login", {
-      method: "POST",
-      headers: ORIGIN,
-      body: JSON.stringify({ username: user, password: pass }),
-    });
-    const cookie = login.headers.get("set-cookie")?.split(";")[0] ?? "";
     const authH = { ...ORIGIN, Cookie: cookie };
-    check("login admin", login.status === 200, `-> ${login.status}`);
 
     const products = await fetch(BASE + "/api/products").then((r) => r.json());
     const image = products.products?.[0]?.imageUrl;

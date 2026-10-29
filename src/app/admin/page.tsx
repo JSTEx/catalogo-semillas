@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { desc } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { expenses, orders, products } from "@/lib/db/schema";
+import { auth } from "@/auth";
 import {
   toProductDTO,
   toOrderDTOList,
@@ -15,7 +16,11 @@ export const runtime = "nodejs";
 
 export default async function AdminPage() {
   const admin = await getAdminUser();
-  if (!admin) redirect("/");
+  if (!admin) {
+    const session = await auth();
+    if (session?.user?.email) redirect("/");
+    redirect("/auth/signin?callbackUrl=%2Fadmin");
+  }
 
   // Consultas secuenciales: el pool tiene max:1 y las consultas concurrentes
   // (Promise.all) pueden bloquear la unica conexion en el runtime de Next.
@@ -44,7 +49,7 @@ export default async function AdminPage() {
       initialProducts={productRows.map(toProductDTO)}
       initialOrders={toOrderDTOList(orderRows)}
       initialExpenses={toExpenseDTOList(expenseRows)}
-      username={admin.email || admin.username || "admin"}
+      username={admin.email || "admin"}
       adminRole={admin.role}
     />
   );

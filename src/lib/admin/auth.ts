@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { allowedAdmins } from "@/lib/db/schema";
 
@@ -10,7 +10,7 @@ export async function getAllowedAdminByEmail(email: string | null | undefined) {
   const [row] = await db
     .select()
     .from(allowedAdmins)
-    .where(eq(allowedAdmins.email, normalized))
+    .where(sql`lower(${allowedAdmins.email}) = ${normalized}`)
     .limit(1);
   return row ?? null;
 }

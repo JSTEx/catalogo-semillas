@@ -7,16 +7,6 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================================
---  Tabla de Usuarios Administradores
--- ============================================================
-CREATE TABLE IF NOT EXISTS admin_users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    username VARCHAR(50) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-);
-
--- ============================================================
 --  Tabla de Productos (Semillas)
 -- ============================================================
 CREATE TABLE IF NOT EXISTS products (
@@ -58,7 +48,6 @@ CREATE TRIGGER trg_products_updated_at
 --  Row Level Security (defensa en profundidad, opcional)
 --  El backend accede con el rol de servicio, que omite RLS.
 -- ============================================================
-ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
 
 -- Lectura publica de productos (por si se usa el cliente anon de Supabase).

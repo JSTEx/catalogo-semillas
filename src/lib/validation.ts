@@ -23,19 +23,6 @@ const sanitizedString = (min: number, max: number, label: string) =>
       message: `${label} no puede superar ${max} caracteres`,
     });
 
-export const loginSchema = z.object({
-  username: z
-    .string()
-    .trim()
-    .min(3, "Usuario demasiado corto")
-    .max(50, "Usuario demasiado largo")
-    .regex(/^[a-zA-Z0-9._-]+$/, "Usuario contiene caracteres no validos"),
-  password: z
-    .string()
-    .min(8, "La contrasena debe tener al menos 8 caracteres")
-    .max(100, "La contrasena es demasiado larga"),
-});
-
 export const imageUrlSchema = z
   .string()
   .trim()
@@ -210,7 +197,6 @@ export const ALLOWED_IMAGE_MIME = [
 ] as const;
 export const MAX_IMAGE_BYTES = 6 * 1024 * 1024; // 6MB
 
-export type LoginInput = z.infer<typeof loginSchema>;
 export type CreateProductInput = z.infer<typeof createProductSchema>;
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;

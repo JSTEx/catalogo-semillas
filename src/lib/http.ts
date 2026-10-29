@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getSession, type SessionPayload } from "./auth/session";
+import { getAdminUser } from "./admin/server";
 
 export function getClientIp(req: Request): string {
   const headers = req.headers;
@@ -41,7 +41,7 @@ export function jsonError(
 
 /**
  * Comprueba sesion + origen en endpoints de administracion.
- * Devuelve la sesion valida o una respuesta de error lista para retornar.
+ * Devuelve el administrador autorizado o una respuesta de error lista para retornar.
  *
  * Solo se exige `Origin` en metodos que mutan estado: los navegadores no lo
  * envian en GET/HEAD del mismo origen, y bloquearlos romperia esos endpoints.
@@ -49,7 +49,10 @@ export function jsonError(
 export async function requireAdmin(
   req: Request,
 ): Promise<
-  | { authorized: true; session: SessionPayload }
+  | {
+      authorized: true;
+      admin: NonNullable<Awaited<ReturnType<typeof getAdminUser>>>;
+    }
   | { authorized: false; response: NextResponse }
 > {
   const method = req.method.toUpperCase();
@@ -57,9 +60,9 @@ export async function requireAdmin(
   if (mutating && !isSameOrigin(req)) {
     return { authorized: false, response: jsonError("Origen no permitido", 403) };
   }
-  const session = await getSession();
-  if (!session) {
+  const admin = await getAdminUser();
+  if (!admin) {
     return { authorized: false, response: jsonError("No autorizado", 401) };
   }
-  return { authorized: true, session };
+  return { authorized: true, admin };
 }

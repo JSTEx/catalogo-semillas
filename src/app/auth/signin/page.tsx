@@ -1,19 +1,39 @@
 import { signIn } from "@/auth";
 
-export default function SignInPage() {
+type Props = {
+  searchParams: Promise<{ callbackUrl?: string | string[] }>;
+};
+
+export default async function SignInPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const requestedCallback = params.callbackUrl;
+  const callbackUrl =
+    typeof requestedCallback === "string" &&
+    requestedCallback.startsWith("/") &&
+    !requestedCallback.startsWith("//")
+      ? requestedCallback
+      : "/";
+  const isAdminLogin = callbackUrl.startsWith("/admin");
+
   return (
     <div className="flex min-h-dvh items-center justify-center px-4">
       <div className="w-full max-w-sm rounded-3xl border border-stone-200 bg-white p-8 shadow-sm dark:border-stone-800 dark:bg-stone-900">
         <h1 className="text-center text-xl font-bold text-stone-900 dark:text-stone-100">
-          Iniciar sesión
+          {isAdminLogin ? "Acceso al panel" : "Iniciar sesión"}
         </h1>
         <p className="mt-2 text-center text-sm text-stone-500 dark:text-stone-400">
-          Accede para ver tus pedidos en todos tus dispositivos
+          {isAdminLogin
+            ? "Continúa con el correo autorizado para administrar la tienda."
+            : "Accede para ver tus pedidos en todos tus dispositivos."}
         </p>
         <form
           action={async () => {
             "use server";
-            await signIn("google", { redirectTo: "/" });
+            await signIn(
+              "google",
+              { redirectTo: callbackUrl },
+              { prompt: "select_account" },
+            );
           }}
           className="mt-6"
         >

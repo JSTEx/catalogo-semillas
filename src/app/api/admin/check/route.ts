@@ -9,5 +9,8 @@ export async function GET() {
   const email = session?.user?.email;
   if (!email) return NextResponse.json({ allowed: false });
   const allowed = await getAllowedAdminByEmail(email);
-  return NextResponse.json({ allowed: !!allowed, role: allowed?.role ?? null });
+  return NextResponse.json({
+    allowed: !!allowed,
+    role: allowed?.role ?? null,
+  });
 }

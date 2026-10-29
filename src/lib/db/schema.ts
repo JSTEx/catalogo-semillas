@@ -48,15 +48,6 @@ export const expenseCategoryEnum = pgEnum("expense_category", [
   "otros",
 ]);
 
-export const adminUsers = pgTable("admin_users", {
-  id: uuid("id").primaryKey().default(sql`uuid_generate_v4()`),
-  username: varchar("username", { length: 50 }).unique().notNull(),
-  passwordHash: varchar("password_hash", { length: 255 }).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
-
 export const adminRoleEnum = pgEnum("admin_role", ["superadmin", "admin"]);
 
 export const allowedAdmins = pgTable(
@@ -223,8 +214,6 @@ export const verificationTokens = pgTable(
   (vt) => [primaryKey({ columns: [vt.identifier, vt.token] })],
 );
 
-export type AdminUser = typeof adminUsers.$inferSelect;
-export type NewAdminUser = typeof adminUsers.$inferInsert;
 export type AllowedAdmin = typeof allowedAdmins.$inferSelect;
 export type NewAllowedAdmin = typeof allowedAdmins.$inferInsert;
 export type Product = typeof products.$inferSelect;
