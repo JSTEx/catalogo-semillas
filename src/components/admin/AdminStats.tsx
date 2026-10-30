@@ -86,7 +86,6 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const conceptRef = useRef<HTMLInputElement>(null);
   const confirm = useConfirm();
 
   const kpis = useMemo(() => {
@@ -246,7 +245,6 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
           el.scrollIntoView({ behavior: "smooth", block: "center" });
         }
       }
-      conceptRef.current?.focus({ preventScroll: true });
     });
   }
 
@@ -417,14 +415,31 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
         </div>
 
         {showForm && (
-          <form ref={formRef} onSubmit={submitExpense} className="grid grid-cols-1 gap-3 border-b border-stone-200 bg-stone-50 p-3.5 sm:p-5 lg:grid-cols-12 dark:border-stone-700 dark:bg-stone-950">
-            <div className="lg:col-span-12">
-              <h4 className="text-sm font-semibold text-stone-800 dark:text-stone-100">{editingId ? "Editar gasto" : "Nuevo gasto"}</h4>
-              <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">Completa los datos y conserva o agrega comprobantes antes de guardar.</p>
+          <form
+            ref={formRef}
+            onSubmit={submitExpense}
+            aria-label={editingId ? "Editar gasto" : "Nuevo gasto"}
+            className={[
+              "m-3 grid grid-cols-1 gap-3 rounded-xl border p-3.5 sm:m-5 sm:rounded-2xl sm:p-5 lg:grid-cols-12",
+              editingId
+                ? "border-l-4 border-emerald-500 border-y-emerald-200 border-r-emerald-200 bg-emerald-50/70 shadow-sm dark:border-y-emerald-800 dark:border-r-emerald-800 dark:bg-stone-800"
+                : "border-stone-200 bg-stone-50 dark:border-stone-700 dark:bg-stone-950",
+            ].join(" ")}
+          >
+            <div className="flex items-start justify-between gap-3 lg:col-span-12">
+              <div>
+                <h4 className="text-sm font-semibold text-stone-900 dark:text-stone-100">{editingId ? "Editar gasto" : "Nuevo gasto"}</h4>
+                <p className="mt-1 text-xs text-stone-600 dark:text-stone-300">Completa los datos y conserva o agrega comprobantes antes de guardar.</p>
+              </div>
+              {editingId && (
+                <span className="shrink-0 rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-[10px] font-semibold text-emerald-800 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-200">
+                  Editando
+                </span>
+              )}
             </div>
             <div className="space-y-2 lg:col-span-4">
               <label className="text-sm font-medium text-stone-700 dark:text-stone-300">Concepto</label>
-              <input ref={conceptRef} value={form.concept} onChange={(e) => setForm({ ...form, concept: e.target.value })} placeholder="Ej. Bolsas, flete, publicidad..." className={inputClass} />
+              <input value={form.concept} onChange={(e) => setForm({ ...form, concept: e.target.value })} placeholder="Ej. Bolsas, flete, publicidad..." className={inputClass} />
             </div>
             <div className="space-y-2 lg:col-span-3">
               <label className="text-sm font-medium text-stone-700 dark:text-stone-300">Categoría</label>
