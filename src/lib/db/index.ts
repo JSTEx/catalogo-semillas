@@ -20,6 +20,7 @@ const client =
     prepare: false, // Compatible con transaction pooler (Supabase/pgBouncer)
     idle_timeout: 20,
     connect_timeout: 15,
+    connection: { statement_timeout: 12_000 },
     max_lifetime: 60 * 30,
   });
 
