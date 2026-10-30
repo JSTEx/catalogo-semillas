@@ -229,7 +229,7 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
             </span>
           </div>
 
-          <div className="col-span-2 flex items-center justify-between gap-2 rounded-lg border border-brand-200 bg-brand-50 px-2 py-1.5 dark:border-emerald-800 dark:bg-emerald-950 sm:gap-3 sm:rounded-xl sm:px-3 sm:py-2">
+          <div className="col-span-2 flex items-center justify-between gap-2 rounded-lg border border-brand-200 bg-brand-50 px-2 py-1.5 dark:border-stone-700 dark:bg-stone-800 sm:gap-3 sm:rounded-xl sm:px-3 sm:py-2">
             <span className="text-sm font-extrabold text-brand-700 dark:text-emerald-200 sm:text-base">
               {formatMoney(order.totalCents)}
             </span>
@@ -311,7 +311,7 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
           </p>
         )}
 
-        <div className="mt-auto flex items-center justify-between rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-sm dark:border-emerald-800 dark:bg-emerald-950 sm:rounded-2xl sm:px-4 sm:py-2.5">
+        <div className="mt-auto flex items-center justify-between rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-800 sm:rounded-2xl sm:px-4 sm:py-2.5">
           <span className="text-xs font-medium text-stone-600 dark:text-stone-200">
             {units} {units === 1 ? "unidad" : "unidades"}
           </span>
@@ -364,7 +364,7 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
         </div>
         <div className="flex items-center gap-2 sm:order-last">
           <StatusBadge status={order.status} />
-          <span className="shrink-0 rounded-lg bg-brand-50 px-2 py-1 text-base font-extrabold text-brand-700 dark:bg-emerald-950 dark:text-emerald-200 sm:text-lg">
+          <span className="shrink-0 rounded-lg bg-brand-50 px-2 py-1 text-base font-extrabold text-brand-700 dark:bg-stone-800 dark:text-emerald-300 sm:text-lg">
             {formatMoney(order.totalCents)}
           </span>
         </div>
