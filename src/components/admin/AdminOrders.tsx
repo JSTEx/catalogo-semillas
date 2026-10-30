@@ -320,11 +320,11 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end gap-2">
           <button
             type="button"
             onClick={() => setOpenId(order.id)}
-            className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-2xl bg-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-brand-600 hover:shadow-md"
+            className="inline-flex min-h-10 flex-none items-center justify-center gap-1.5 rounded-xl bg-brand-500 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-brand-600 sm:min-h-11 sm:rounded-2xl sm:px-5 sm:text-sm"
           >
             Ver detalle
           </button>
@@ -377,11 +377,11 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
             {PAYMENT_META[order.payment].label}
           </span>
         </div>
-        <div className="col-span-2 flex items-center gap-2 sm:col-span-1">
+        <div className="col-span-2 flex items-center justify-end gap-2 sm:col-span-1">
           <button
             type="button"
             onClick={() => setOpenId(order.id)}
-            className="inline-flex min-h-9 flex-1 items-center justify-center rounded-xl bg-brand-500 px-4 text-xs font-semibold text-white transition-colors hover:bg-brand-600 sm:flex-none"
+            className="inline-flex min-h-9 flex-none items-center justify-center rounded-xl bg-brand-500 px-4 text-xs font-semibold text-white transition-colors hover:bg-brand-600"
           >
             Ver detalle
           </button>
