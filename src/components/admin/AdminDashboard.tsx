@@ -495,11 +495,6 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
     }
   }
 
-  async function logout() {
-    const { signOut } = await import("next-auth/react");
-    await signOut({ callbackUrl: "/", redirect: true });
-  }
-
   return (
     <div className="min-h-dvh">
       <header className="sticky top-0 z-40 border-b border-stone-200/60 bg-white/70 backdrop-blur-md dark:border-stone-800/60 dark:bg-stone-900/70">
@@ -556,35 +551,11 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
               </svg>
               <span className="hidden sm:inline">Ir al catalogo</span>
             </Link>
-            <button
-              type="button"
-              onClick={logout}
-              aria-label="Salir"
-              title="Salir"
-              className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-white/70 px-3 py-2 text-sm font-medium text-stone-600 transition-all duration-300 hover:border-red-200 hover:text-red-600 sm:px-4 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:border-red-500/40 dark:hover:text-red-300"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-4 w-4"
-                aria-hidden="true"
-              >
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <path d="m16 17 5-5-5-5" />
-                <path d="M21 12H9" />
-              </svg>
-              <span className="hidden sm:inline">Salir</span>
-            </button>
           </div>
         </div>
       </header>
 
-      <nav className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 pt-5 sm:px-6">
+      <nav className="mx-auto grid max-w-7xl grid-cols-2 gap-1 px-4 pt-4 sm:flex sm:flex-wrap sm:px-6 sm:pt-5">
         {(
           [
             {
@@ -650,7 +621,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
             type="button"
             onClick={() => setTab(t.key)}
             className={[
-              "inline-flex items-center gap-2 whitespace-nowrap rounded-2xl px-4 py-2 text-sm font-semibold transition-all duration-300",
+              "inline-flex w-full items-center justify-center gap-1.5 rounded-2xl px-2 py-2.5 text-xs font-semibold transition-all duration-300 sm:w-auto sm:justify-start sm:gap-2 sm:px-4 sm:py-2 sm:text-sm",
               tab === t.key
                 ? "bg-brand-500 text-white shadow-sm"
                 : "text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800",

@@ -26,7 +26,7 @@ interface Props {
 
 const LAYOUT: Record<string, string> = {
   grid: "grid grid-cols-1 gap-4 lg:grid-cols-2",
-  compact: "grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3",
+  compact: "grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3",
   list: "flex flex-col gap-2",
 };
 
@@ -192,12 +192,68 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
     const units = order.items.reduce((sum, it) => sum + it.quantity, 0);
     const superCompact = view === "compact";
 
+    if (superCompact) {
+      return (
+        <article
+          key={order.id}
+          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 rounded-2xl border border-stone-200/70 bg-white/70 p-3 shadow-sm backdrop-blur-md dark:border-stone-800/70 dark:bg-stone-900/70"
+        >
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold text-stone-900 dark:text-stone-100">
+              Pedido N° {order.number}
+            </p>
+            <p className="truncate text-[11px] text-stone-500 dark:text-stone-400">
+              {date}
+            </p>
+          </div>
+          <StatusBadge status={order.status} />
+
+          <div className="col-span-2 flex min-w-0 items-center gap-2 rounded-xl bg-stone-50/80 px-2.5 py-2 dark:bg-stone-800/40">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold text-stone-600 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-300 dark:ring-stone-700">
+              {order.customerName.slice(0, 1).toUpperCase()}
+            </span>
+            <p className="min-w-0 truncate text-sm font-medium text-stone-800 dark:text-stone-100">
+              {order.customerName}
+            </p>
+            <span className="ml-auto shrink-0 text-[11px] text-stone-500 dark:text-stone-400">
+              {units} {units === 1 ? "unidad" : "unidades"}
+            </span>
+          </div>
+
+          <div className="col-span-2 flex items-center justify-between gap-3">
+            <span className="text-base font-bold text-stone-900 dark:text-stone-100">
+              {formatMoney(order.totalCents)}
+            </span>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setOpenId(order.id)}
+                className="inline-flex min-h-9 items-center justify-center rounded-xl bg-brand-500 px-4 text-xs font-semibold text-white transition-colors hover:bg-brand-600"
+              >
+                Ver detalle
+              </button>
+              <a
+                href={notifyCustomerWhatsAppLink(order)}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Contactar por WhatsApp al cliente del pedido ${order.number}`}
+                title="Contactar por WhatsApp"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
+              >
+                <WhatsAppIcon />
+              </a>
+            </div>
+          </div>
+        </article>
+      );
+    }
+
     return (
       <article
         key={order.id}
         className={[
           "flex flex-col gap-3 rounded-3xl border border-stone-200/70 bg-gradient-to-b from-white/90 to-white/70 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg dark:border-stone-800/70 dark:from-stone-900/90 dark:to-stone-900/70",
-          superCompact ? "p-3" : "p-4 sm:p-5",
+          "p-4 sm:p-5",
         ].join(" ")}
       >
         <header className="flex items-start justify-between gap-3">
@@ -226,23 +282,21 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
           </div>
         </div>
 
-        {!superCompact && (
-          <div className="flex flex-wrap items-center gap-2 text-xs text-stone-500 dark:text-stone-400">
-            <span className="rounded-full bg-stone-100 px-2.5 py-1 dark:bg-stone-800">
-              {DELIVERY_META[order.delivery].label}
+        <div className="flex flex-wrap items-center gap-2 text-xs text-stone-500 dark:text-stone-400">
+          <span className="rounded-full bg-stone-100 px-2.5 py-1 dark:bg-stone-800">
+            {DELIVERY_META[order.delivery].label}
+          </span>
+          <span className="rounded-full bg-stone-100 px-2.5 py-1 dark:bg-stone-800">
+            {PAYMENT_META[order.payment].label}
+          </span>
+          {order.delivery === "domicilio" && order.address && (
+            <span className="line-clamp-1 rounded-full bg-stone-100 px-2.5 py-1 dark:bg-stone-800">
+              {order.address}
             </span>
-            <span className="rounded-full bg-stone-100 px-2.5 py-1 dark:bg-stone-800">
-              {PAYMENT_META[order.payment].label}
-            </span>
-            {order.delivery === "domicilio" && order.address && (
-              <span className="line-clamp-1 rounded-full bg-stone-100 px-2.5 py-1 dark:bg-stone-800">
-                {order.address}
-              </span>
-            )}
+          )}
           </div>
-        )}
 
-        {order.notes && !superCompact && (
+        {order.notes && (
           <p className="line-clamp-2 rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
             Nota: {order.notes}
           </p>
@@ -289,51 +343,50 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
     return (
       <article
         key={order.id}
-      className="flex flex-col gap-2 rounded-3xl border border-stone-200/70 bg-white/70 p-3 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-md sm:flex-row sm:items-center sm:gap-3 dark:border-stone-800/70 dark:bg-stone-900/70"
-    >
-      <div className="flex items-center gap-3">
-        <span
-          className={[
-            "h-2.5 w-2.5 shrink-0 rounded-full",
-            ORDER_STATUS_META[order.status].dot,
-          ].join(" ")}
-          aria-hidden="true"
-        />
-        <div className="min-w-0 flex-1 sm:flex-none">
+        className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 rounded-2xl border border-stone-200/70 bg-white/70 p-3 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-md sm:flex sm:gap-3 dark:border-stone-800/70 dark:bg-stone-900/70"
+      >
+        <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-stone-800 dark:text-stone-100">
             Pedido N° {order.number}
           </p>
           <p className="truncate text-xs text-stone-500 dark:text-stone-400">
-            {order.customerName}
+            {date} · {order.customerName}
           </p>
         </div>
-      </div>
-      <div className="flex flex-1 flex-wrap items-center gap-2 text-xs text-stone-500 sm:flex-nowrap dark:text-stone-400">
-        <span>{date}</span>
-        <span className="hidden sm:inline">·</span>
-        <span>{units} {units === 1 ? "unidad" : "unidades"}</span>
-        <span className="hidden sm:inline">·</span>
-        <span className="rounded-full bg-stone-100 px-2 py-0.5 dark:bg-stone-800">{DELIVERY_META[order.delivery].label}</span>
-        <span className="rounded-full bg-stone-100 px-2 py-0.5 dark:bg-stone-800">{PAYMENT_META[order.payment].label}</span>
-      </div>
-      <div className="flex items-center justify-between gap-2 sm:justify-end">
-        <span className="rounded-full px-2.5 py-1 text-xs font-semibold text-white sm:hidden" style={{ background: ORDER_STATUS_META[order.status].dot.replace("bg-", "").includes("emerald") ? "#10b981" : ORDER_STATUS_META[order.status].dot.replace("bg-", "").includes("sky") ? "#0ea5e9" : ORDER_STATUS_META[order.status].dot.replace("bg-", "").includes("amber") ? "#f59e0b" : "#78716c" }}>
-          {ORDER_STATUS_META[order.status].short}
-        </span>
-        <span className="hidden text-xs font-medium text-stone-500 sm:block dark:text-stone-400">
-          {ORDER_STATUS_META[order.status].short}
-        </span>
-        <span className="shrink-0 text-sm font-bold text-stone-900 dark:text-stone-100">
-          {formatMoney(order.totalCents)}
-        </span>
-        <button
-          type="button"
-          onClick={() => setOpenId(order.id)}
-          className="shrink-0 rounded-2xl bg-brand-500 px-4 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-brand-600"
-        >
-          Ver detalle
-        </button>
-      </div>
+        <div className="flex items-center gap-2 sm:order-last">
+          <StatusBadge status={order.status} />
+          <span className="shrink-0 text-sm font-bold text-stone-900 dark:text-stone-100">
+            {formatMoney(order.totalCents)}
+          </span>
+        </div>
+        <div className="col-span-2 flex min-w-0 flex-wrap items-center gap-1.5 text-[11px] text-stone-500 dark:text-stone-400 sm:col-span-1 sm:flex-1 sm:flex-nowrap sm:gap-2 sm:text-xs">
+          <span>{units} {units === 1 ? "unidad" : "unidades"}</span>
+          <span className="rounded-full bg-stone-100 px-2 py-1 dark:bg-stone-800">
+            {DELIVERY_META[order.delivery].label}
+          </span>
+          <span className="rounded-full bg-stone-100 px-2 py-1 dark:bg-stone-800">
+            {PAYMENT_META[order.payment].label}
+          </span>
+        </div>
+        <div className="col-span-2 flex items-center gap-2 sm:col-span-1">
+          <button
+            type="button"
+            onClick={() => setOpenId(order.id)}
+            className="inline-flex min-h-9 flex-1 items-center justify-center rounded-xl bg-brand-500 px-4 text-xs font-semibold text-white transition-colors hover:bg-brand-600 sm:flex-none"
+          >
+            Ver detalle
+          </button>
+          <a
+            href={notifyCustomerWhatsAppLink(order)}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`Contactar por WhatsApp al cliente del pedido ${order.number}`}
+            title="Contactar por WhatsApp"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
+          >
+            <WhatsAppIcon />
+          </a>
+        </div>
       </article>
     );
   }
