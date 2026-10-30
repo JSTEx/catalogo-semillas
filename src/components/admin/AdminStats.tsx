@@ -461,7 +461,21 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
                   <p className="text-sm font-medium text-stone-700 dark:text-stone-300">Comprobantes / imágenes</p>
                   <p className="text-xs text-stone-400 dark:text-stone-500">Puedes subir varias imágenes (JPG, PNG, WEBP)</p>
                 </div>
-                <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading || form.imageUrls.length >= MAX_PRODUCT_IMAGES} className="rounded-2xl border border-stone-200 px-4 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50 disabled:opacity-50 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800">
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading || form.imageUrls.length >= MAX_PRODUCT_IMAGES}
+                  className="inline-flex min-h-10 items-center justify-center gap-2 rounded-xl border border-brand-300 bg-brand-50 px-4 py-2 text-sm font-semibold text-brand-800 shadow-sm transition-colors hover:bg-brand-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-200 dark:hover:bg-emerald-900"
+                >
+                  {uploading ? (
+                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-current/30 border-t-current" aria-hidden="true" />
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+                      <path d="M12 16V4" />
+                      <path d="m7 9 5-5 5 5" />
+                      <path d="M20 16.5v2A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5v-2" />
+                    </svg>
+                  )}
                   {uploading ? "Subiendo..." : editingId ? "Agregar imágenes" : "Subir imágenes"}
                 </button>
                 <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={(e) => uploadFiles(e.target.files)} />
