@@ -782,12 +782,22 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
               type="button"
               onClick={() => setFilter(f.key)}
               className={[
-                "inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all duration-300",
+                "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200 sm:px-3.5 sm:text-sm",
                 filter === f.key
-                  ? "border-brand-500 bg-brand-500 text-white shadow-sm"
-                  : "border-stone-200 bg-white/70 text-stone-600 hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:border-brand-500/40 dark:hover:text-brand-300",
+                  ? f.key === "all"
+                    ? "border-brand-500 bg-brand-500 text-white shadow-sm"
+                    : `${STATUS_META[f.key].solid} border-transparent text-white shadow-sm`
+                  : f.key === "all"
+                    ? "border-stone-200 bg-white/70 text-stone-600 hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300"
+                    : STATUS_META[f.key].badge,
               ].join(" ")}
             >
+              {f.key !== "all" && (
+                <span
+                  className={["h-2 w-2 rounded-full", STATUS_META[f.key].dot].join(" ")}
+                  aria-hidden="true"
+                />
+              )}
               {f.label}
               <span
                 className={[
@@ -838,7 +848,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
               view === "list" ? (
                 <article
                   key={product.id}
-                  className="flex items-center gap-3 rounded-2xl border border-stone-200/70 bg-white/70 p-2.5 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-md dark:border-stone-800/70 dark:bg-stone-900/70"
+                  className="grid grid-cols-[3.5rem_minmax(0,1fr)] items-center gap-3 rounded-2xl border border-stone-200/70 bg-white/70 p-3 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-md sm:flex dark:border-stone-800/70 dark:bg-stone-900/70"
                 >
                   <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-stone-100 dark:bg-stone-800">
                     <SeedImage
@@ -849,21 +859,21 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                       className="object-contain"
                     />
                   </div>
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0">
                     <p className="truncate text-sm font-semibold text-stone-800 dark:text-stone-100">
                       {product.name}
                     </p>
-                    <div className="mt-1">
+                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                       <AvailabilityBadge status={product.status} size="sm" />
-                    </div>
-                    <p className="mt-1 text-sm font-semibold text-brand-600 dark:text-brand-400">
-                      {priceLabel(product)}
-                      <span className="ml-2 text-xs font-normal text-stone-400 dark:text-stone-500">
-                        stock: {product.stock}
+                      <span className="text-sm font-semibold text-brand-600 dark:text-brand-400">
+                        {priceLabel(product)}
                       </span>
-                    </p>
+                      <span className="text-xs text-stone-500 dark:text-stone-400">
+                        Stock: {product.stock}
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-2">
+                  <div className="col-span-2 flex items-center justify-between gap-2 border-t border-stone-200/70 pt-2 dark:border-stone-800/70 sm:col-span-1 sm:ml-auto sm:border-0 sm:pt-0">
                     {renderStatusSelect(product)}
                     {renderActions(product)}
                   </div>
@@ -889,9 +899,14 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                     <h3 className="truncate text-sm font-semibold text-stone-800 dark:text-stone-100">
                       {product.name}
                     </h3>
-                    <p className="text-sm font-semibold text-brand-600 dark:text-brand-400">
-                      {priceLabel(product)}
-                    </p>
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
+                      <p className="text-sm font-semibold text-brand-600 dark:text-brand-400">
+                        {priceLabel(product)}
+                      </p>
+                      <p className="text-xs text-stone-500 dark:text-stone-400">
+                        Stock: {product.stock}
+                      </p>
+                    </div>
                     <div className="mt-auto flex items-center justify-between gap-1">
                       {renderStatusSelect(product)}
                       {renderActions(product)}
@@ -925,8 +940,8 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                     </h3>
                     <p className="text-lg font-bold text-brand-600 dark:text-brand-400">
                       {priceLabel(product)}
-                      <span className="ml-2 text-xs font-normal text-stone-400 dark:text-stone-500">
-                        stock: {product.stock}
+                      <span className="ml-2 text-xs font-normal text-stone-500 dark:text-stone-400">
+                        Stock: {product.stock}
                       </span>
                     </p>
 

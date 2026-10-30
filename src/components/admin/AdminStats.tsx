@@ -83,6 +83,7 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
   const [preview, setPreview] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [undo, setUndo] = useState<ExpenseDTO | null>(null);
+  const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const conceptRef = useRef<HTMLInputElement>(null);
@@ -305,7 +306,26 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
     }
   }
 
+  async function commitExpenseDeletion(e: ExpenseDTO) {
+    try {
+      const res = await fetch(`/api/expenses/${e.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("No se pudo eliminar");
+      setUndo((current) => (current?.id === e.id ? null : current));
+    } catch (err) {
+      onExpensesChange((prev) =>
+        [e, ...prev.filter((x) => x.id !== e.id)].sort((a, b) =>
+          (b.createdAt || "").localeCompare(a.createdAt || ""),
+        ),
+      );
+      setError(err instanceof Error ? err.message : "Error al eliminar");
+      setUndo(null);
+    } finally {
+      undoTimer.current = null;
+    }
+  }
+
   async function removeExpense(e: ExpenseDTO) {
+    if (undo) return;
     const ok = await confirm({
       title: "Eliminar gasto",
       message: "¿Eliminar este gasto? Podrás deshacerlo por unos segundos.",
@@ -318,39 +338,21 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
     setUndo(e);
     onExpensesChange((prev) => prev.filter((x) => x.id !== e.id));
     if (editingId === e.id) cancelEdit();
-    try {
-      const res = await fetch(`/api/expenses/${e.id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("No se pudo eliminar");
-      window.setTimeout(() => setUndo((cur) => (cur?.id === e.id ? null : cur)), 5000);
-    } catch (err) {
-      onExpensesChange((prev) => [e, ...prev].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")));
-      setError(err instanceof Error ? err.message : "Error al eliminar");
-      setUndo(null);
-    }
+    undoTimer.current = setTimeout(() => {
+      void commitExpenseDeletion(e);
+    }, 5000);
   }
 
-  async function restoreExpense() {
+  function restoreExpense() {
     if (!undo) return;
-    const u = undo;
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+    undoTimer.current = null;
     setUndo(null);
-    try {
-      const res = await fetch("/api/expenses", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          concept: u.concept,
-          category: u.category,
-          amountCents: u.amountCents,
-          notes: u.notes ?? undefined,
-          imageUrls: u.imageUrls ?? [],
-        }),
-      });
-      const data = (await res.json().catch(() => null)) as { expense?: ExpenseDTO; error?: string } | null;
-      if (!res.ok || !data?.expense) throw new Error(data?.error ?? "No se pudo restaurar");
-      onExpensesChange((prev) => [data.expense!, ...prev.filter((x) => x.id !== u.id)].sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || "")));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al restaurar");
-    }
+    onExpensesChange((prev) =>
+      [undo, ...prev.filter((x) => x.id !== undo.id)].sort((a, b) =>
+        (b.createdAt || "").localeCompare(a.createdAt || ""),
+      ),
+    );
   }
 
   const tooltipStyle = { borderRadius: 12, border: "1px solid rgba(120,113,108,0.4)", background: "rgba(28,25,23,0.95)", color: "#f5f5f4", fontSize: 12 };
@@ -369,14 +371,20 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+      <section aria-labelledby="stats-overview-title" className="space-y-3">
+        <div>
+          <h2 id="stats-overview-title" className="text-lg font-semibold text-stone-800 dark:text-stone-100">Resumen financiero</h2>
+          <p className="text-sm text-stone-500 dark:text-stone-400">Ingresos, gastos y actividad de tus pedidos en un solo lugar.</p>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
         {kpiCards.map((k) => (
-          <div key={k.label} className="rounded-2xl border border-stone-200/70 bg-white/70 px-4 py-3 shadow-sm backdrop-blur-md dark:border-stone-800/70 dark:bg-stone-900/70">
+          <div key={k.label} className="rounded-2xl border border-stone-200/70 bg-white/70 px-3 py-3 shadow-sm backdrop-blur-md sm:px-4 dark:border-stone-800/70 dark:bg-stone-900/70">
             <p className="text-[11px] uppercase tracking-wide text-stone-400 dark:text-stone-500">{k.label}</p>
-            <p className={["mt-1 text-lg font-bold sm:text-xl", k.accent].join(" ")}>{k.value}</p>
+            <p className={["mt-1 break-words text-base font-bold sm:text-xl", k.accent].join(" ")}>{k.value}</p>
           </div>
         ))}
-      </div>
+        </div>
+      </section>
 
       <div className="rounded-3xl border border-stone-200/70 bg-white/70 shadow-sm backdrop-blur-md dark:border-stone-800/70 dark:bg-stone-900/70">
         <div className="flex flex-col gap-3 border-b border-stone-200/70 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-stone-800/70">
@@ -390,7 +398,7 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
                 <span className="rounded-full bg-stone-100 px-2 py-0.5 text-[11px] font-medium text-stone-500 dark:bg-stone-800 dark:text-stone-400">{expenses.length}</span>
               </div>
               <p className="text-sm text-stone-500 dark:text-stone-400">
-                Total <span className="font-semibold text-rose-600 dark:text-rose-400">-{formatMoney(kpis.gastos)}</span> · edita o elimina cualquier gasto
+                Total <span className="font-semibold text-rose-600 dark:text-rose-400">-{formatMoney(kpis.gastos)}</span> · registra y administra comprobantes
               </p>
             </div>
           </div>
@@ -410,6 +418,10 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
 
         {showForm && (
           <form ref={formRef} onSubmit={submitExpense} className="grid grid-cols-1 gap-3 border-b border-stone-200/70 bg-stone-50/60 p-5 lg:grid-cols-12 dark:border-stone-800/70 dark:bg-stone-950/30">
+            <div className="lg:col-span-12">
+              <h4 className="text-sm font-semibold text-stone-800 dark:text-stone-100">{editingId ? "Editar gasto" : "Nuevo gasto"}</h4>
+              <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">Completa los datos y conserva o agrega comprobantes antes de guardar.</p>
+            </div>
             <div className="space-y-2 lg:col-span-4">
               <label className="text-sm font-medium text-stone-700 dark:text-stone-300">Concepto</label>
               <input ref={conceptRef} value={form.concept} onChange={(e) => setForm({ ...form, concept: e.target.value })} placeholder="Ej. Bolsas, flete, publicidad..." className={inputClass} />
@@ -435,19 +447,26 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
                   <p className="text-xs text-stone-400 dark:text-stone-500">Puedes subir varias imágenes (JPG, PNG, WEBP)</p>
                 </div>
                 <button type="button" onClick={() => fileRef.current?.click()} disabled={uploading || form.imageUrls.length >= MAX_PRODUCT_IMAGES} className="rounded-2xl border border-stone-200 px-4 py-2 text-sm font-medium text-stone-600 transition-colors hover:bg-stone-50 disabled:opacity-50 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800">
-                  {uploading ? "Subiendo..." : "Subir imágenes"}
+                  {uploading ? "Subiendo..." : editingId ? "Agregar imágenes" : "Subir imágenes"}
                 </button>
                 <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={(e) => uploadFiles(e.target.files)} />
               </div>
               {form.imageUrls.length > 0 && (
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">
                   {form.imageUrls.map((url, idx) => (
-                    <button key={url} type="button" onClick={() => setPreview(url)} className="group relative aspect-square overflow-hidden rounded-2xl border border-stone-200 dark:border-stone-700">
-                      <img src={url} alt="" className="h-full w-full object-cover" />
-                      <span onClick={(ev) => { ev.stopPropagation(); setForm((prev) => ({ ...prev, imageUrls: prev.imageUrls.filter((_, i) => i !== idx) })); }} className="absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-white opacity-0 transition-opacity group-hover:opacity-100">
+                    <div key={url} className="group relative aspect-square overflow-hidden rounded-2xl border border-stone-200 dark:border-stone-700">
+                      <button type="button" onClick={() => setPreview(url)} className="h-full w-full" aria-label={`Ver comprobante ${idx + 1}`}>
+                        <img src={url} alt="" className="h-full w-full object-cover" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Quitar imagen ${idx + 1}`}
+                        onClick={() => setForm((prev) => ({ ...prev, imageUrls: prev.imageUrls.filter((_, i) => i !== idx) }))}
+                        className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white transition-colors hover:bg-red-600"
+                      >
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5"><path d="M18 6 6 18M6 6l12 12" /></svg>
-                      </span>
-                    </button>
+                      </button>
+                    </div>
                   ))}
                 </div>
               )}
@@ -467,9 +486,9 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
           {expenses.length === 0 ? (
             <p className="py-10 text-center text-sm text-stone-400">Aún no registras gastos.</p>
           ) : (
-            <div className="divide-y divide-stone-200/60 dark:divide-stone-800/60">
+            <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-3">
               {expenses.map((e) => (
-                <div key={e.id} className={["flex flex-col gap-3 px-5 py-4 transition-colors sm:flex-row sm:items-center", editingId === e.id ? "bg-amber-50/60 dark:bg-amber-500/10" : "hover:bg-stone-50/70 dark:hover:bg-stone-800/30"].join(" ")}>
+                <article key={e.id} className={["flex min-w-0 flex-col justify-between gap-4 rounded-2xl border p-4 transition-colors", editingId === e.id ? "border-amber-300 bg-amber-50/60 dark:border-amber-500/40 dark:bg-amber-500/10" : "border-stone-200/70 bg-white/70 hover:border-stone-300 dark:border-stone-800 dark:bg-stone-900/50 dark:hover:border-stone-700"].join(" ")}>
                   <div className="flex min-w-0 flex-1 items-start gap-3">
                     {e.imageUrl ? (
                       <button type="button" onClick={() => setPreview(e.imageUrl)} className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-stone-200 dark:border-stone-700">
@@ -485,25 +504,25 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
                       <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-stone-400 dark:text-stone-500">
                         <span className="rounded-full bg-stone-100 px-2 py-0.5 dark:bg-stone-800">{EXPENSE_CATEGORY_META[e.category].label}</span>
                         <span>{formatDate(e.createdAt)}</span>
-                        {e.imageUrls && e.imageUrls.length > 1 && <span>{e.imageUrls.length} imágenes</span>}
+                        {e.imageUrls && e.imageUrls.length > 0 && <span>{e.imageUrls.length} {e.imageUrls.length === 1 ? "comprobante" : "comprobantes"}</span>}
                       </div>
                       {e.notes && <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">{e.notes}</p>}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between gap-3 sm:justify-end">
+                  <div className="flex items-center justify-between gap-3 border-t border-stone-200/70 pt-3 dark:border-stone-800/70">
                     <p className="text-base font-bold text-rose-600 dark:text-rose-400">-{formatMoney(e.amountCents)}</p>
                     <div className="flex items-center gap-1.5">
-                      <button type="button" onClick={() => startEdit(e)} className="flex h-9 items-center justify-center gap-1.5 rounded-xl border border-stone-200 px-2.5 text-xs font-medium text-stone-600 transition-colors hover:border-stone-300 hover:bg-white hover:text-stone-900 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-stone-100" aria-label="Editar gasto">
+                      <button type="button" onClick={() => startEdit(e)} disabled={undo !== null} className="flex h-9 items-center justify-center gap-1.5 rounded-xl border border-stone-200 px-2.5 text-xs font-medium text-stone-600 transition-colors hover:border-stone-300 hover:bg-white hover:text-stone-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-stone-100" aria-label="Editar gasto">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
                         <span className="hidden sm:inline">Editar</span>
                       </button>
-                      <button type="button" onClick={() => removeExpense(e)} className="flex h-9 items-center justify-center gap-1.5 rounded-xl border border-stone-200 px-2.5 text-xs font-medium text-stone-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 dark:border-stone-700 dark:text-stone-300 dark:hover:border-red-500/40 dark:hover:bg-red-500/15 dark:hover:text-red-300" aria-label="Eliminar gasto">
+                      <button type="button" onClick={() => removeExpense(e)} disabled={undo !== null} className="flex h-9 items-center justify-center gap-1.5 rounded-xl border border-stone-200 px-2.5 text-xs font-medium text-stone-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-stone-700 dark:text-stone-300 dark:hover:border-red-500/40 dark:hover:bg-red-500/15 dark:hover:text-red-300" aria-label="Eliminar gasto">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /></svg>
                         <span className="hidden sm:inline">Eliminar</span>
                       </button>
                     </div>
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           )}
@@ -517,13 +536,20 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/10 dark:bg-stone-900/10">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /></svg>
               </span>
-              <span className="font-medium">Gasto eliminado</span>
+              <span className="font-medium">Gasto quitado de la lista</span>
             </div>
             <button type="button" onClick={restoreExpense} className="rounded-xl bg-white/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors hover:bg-white/20 dark:bg-stone-900/10 dark:hover:bg-stone-900/20">Deshacer</button>
           </div>
         </div>
       )}
 
+      <section aria-labelledby="stats-trends-title" className="space-y-3">
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <h2 id="stats-trends-title" className="text-lg font-semibold text-stone-800 dark:text-stone-100">Actividad y tendencias</h2>
+          <p className="text-sm text-stone-500 dark:text-stone-400">Consulta el comportamiento de ingresos, pedidos y productos.</p>
+        </div>
+      </div>
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
         <div className="rounded-3xl border border-stone-200/70 bg-white/70 p-5 shadow-sm backdrop-blur-md xl:col-span-8 dark:border-stone-800/70 dark:bg-stone-900/70">
           <div className="mb-4 flex items-center justify-between">
@@ -637,6 +663,7 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
           </div>
         </div>
       </div>
+      </section>
 
       {preview && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
