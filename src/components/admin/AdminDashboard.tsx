@@ -689,7 +689,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
             <button
               type="button"
               onClick={() => setStudioOpen(true)}
-              className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-xl border border-brand-200 bg-brand-50 px-2 py-2.5 text-[11px] font-semibold text-brand-700 transition-colors hover:bg-brand-100 sm:gap-2 sm:rounded-2xl sm:px-5 sm:py-3 sm:text-sm dark:border-brand-500/40 dark:bg-brand-950/60 dark:text-brand-200 dark:hover:bg-brand-900/70"
+              className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-xl border border-brand-200 bg-brand-50 px-2 py-2.5 text-[11px] font-semibold text-brand-700 transition-colors hover:bg-brand-100 sm:gap-2 sm:rounded-2xl sm:px-5 sm:py-3 sm:text-sm dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-200 dark:hover:bg-emerald-900"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
