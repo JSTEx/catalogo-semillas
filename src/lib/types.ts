@@ -11,6 +11,7 @@ export interface ProductDTO {
   category: string;
   description: string | null;
   status: ProductStatus;
+  isHidden: boolean;
   imageUrl: string;
   /** Galeria completa (la primera es la portada que se usa en las tarjetas). */
   imageUrls: string[];
@@ -40,6 +41,7 @@ export function toProductDTO(p: Product): ProductDTO {
     category: p.category,
     description: p.description,
     status: p.status,
+    isHidden: p.isHidden,
     imageUrl: imageUrls[0] ?? p.imageUrl,
     imageUrls,
     priceCents: p.priceCents,

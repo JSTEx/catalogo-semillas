@@ -40,7 +40,9 @@ export async function reserveStock(
             ELSE status
           END,
           updated_at = now()
-      WHERE id = ${item.productId} AND stock >= ${item.quantity}
+      WHERE id = ${item.productId}
+        AND stock >= ${item.quantity}
+        AND is_hidden = false
       RETURNING id
     `);
     if (rowCount(result) === 0) return false;

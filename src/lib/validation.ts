@@ -73,6 +73,7 @@ export const updateProductSchema = z
     category: categorySchema.optional(),
     description: descriptionSchema.optional(),
     status: z.enum(PRODUCT_STATUSES).optional(),
+    isHidden: z.boolean().optional(),
     imageUrl: imageUrlSchema.optional(),
     imageUrls: imageUrlsSchema.optional(),
     priceCents: z

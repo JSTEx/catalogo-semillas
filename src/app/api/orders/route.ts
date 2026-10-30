@@ -56,6 +56,9 @@ export async function POST(req: Request) {
     if (!product) {
       return jsonError("Uno de los productos ya no existe", 409);
     }
+    if (product.isHidden) {
+      return jsonError(`"${product.name}" ya no esta disponible`, 409);
+    }
     if (!isOrderable(product)) {
       return jsonError(`"${product.name}" no esta disponible`, 409);
     }

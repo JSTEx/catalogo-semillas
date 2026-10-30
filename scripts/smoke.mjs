@@ -84,6 +84,46 @@ if (process.env.SMOKE_WRITE === "1") {
     const productId = createdProduct.product?.id;
     check("crear producto de prueba", Boolean(productId));
 
+    if (productId) {
+      const hideResponse = await fetch(`${BASE}/api/products/${productId}`, {
+        method: "PATCH",
+        headers: authH,
+        body: JSON.stringify({ isHidden: true }),
+      }).catch(() => null);
+      const hiddenProduct = await hideResponse?.json().catch(() => null);
+      check("ocultar producto desde admin", hideResponse?.ok && hiddenProduct?.product?.isHidden === true);
+
+      const publicProducts = await fetch(BASE + "/api/products")
+        .then((r) => r.json())
+        .catch(() => null);
+      check(
+        "producto oculto no aparece en catalogo publico",
+        Array.isArray(publicProducts?.products) &&
+          !publicProducts.products.some((p) => p.id === productId),
+      );
+
+      const hiddenOrder = await fetch(BASE + "/api/orders", {
+        method: "POST",
+        headers: ORIGIN,
+        body: JSON.stringify({
+          customerName: "Smoke",
+          customerPhone: "50370009999",
+          delivery: "retiro",
+          payment: "efectivo",
+          items: [{ productId, quantity: 1 }],
+        }),
+      }).catch(() => null);
+      check("producto oculto no admite pedidos", hiddenOrder?.status === 409);
+
+      const showResponse = await fetch(`${BASE}/api/products/${productId}`, {
+        method: "PATCH",
+        headers: authH,
+        body: JSON.stringify({ isHidden: false }),
+      }).catch(() => null);
+      const shownProduct = await showResponse?.json().catch(() => null);
+      check("volver a mostrar producto", showResponse?.ok && shownProduct?.product?.isHidden === false);
+    }
+
     const createdOrder = await fetch(BASE + "/api/orders", {
       method: "POST",
       headers: ORIGIN,

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
 import { createProductSchema } from "@/lib/validation";
@@ -13,6 +13,7 @@ export async function GET() {
   const rows = await db
     .select()
     .from(products)
+    .where(eq(products.isHidden, false))
     .orderBy(desc(products.createdAt));
 
   return NextResponse.json({ products: rows.map(toProductDTO) });

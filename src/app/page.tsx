@@ -1,4 +1,4 @@
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
 import { toProductDTO } from "@/lib/types";
@@ -11,6 +11,7 @@ export default async function HomePage() {
   const rows = await db
     .select()
     .from(products)
+    .where(eq(products.isHidden, false))
     .orderBy(desc(products.createdAt));
 
   return <CatalogClient initialProducts={rows.map(toProductDTO)} />;

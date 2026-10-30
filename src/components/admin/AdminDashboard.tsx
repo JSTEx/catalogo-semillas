@@ -42,7 +42,7 @@ interface FormState {
   stock: number;
 }
 
-type StatusFilter = "all" | ProductStatus;
+type StatusFilter = "all" | ProductStatus | "hidden";
 type SortKey = "status" | "name" | "recent" | "oldest";
 
 const emptyForm: FormState = {
@@ -152,7 +152,9 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
     const q = normalizeSearch(query.trim());
     const list = items.filter((p) => {
       const matchesQuery = !q || normalizeSearch(p.name).includes(q);
-      const matchesFilter = filter === "all" || p.status === filter;
+      const matchesFilter =
+        filter === "all" ||
+        (filter === "hidden" ? p.isHidden : p.status === filter);
       return matchesQuery && matchesFilter;
     });
     if (sort === "status") return sortByStatus(list);
@@ -172,7 +174,10 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
   }, [items, query, filter, sort]);
 
   const counts = useMemo(() => {
-    const c: Record<string, number> = { all: items.length };
+    const c: Record<string, number> = {
+      all: items.length,
+      hidden: items.filter((p) => p.isHidden).length,
+    };
     for (const s of PRODUCT_STATUSES) c[s] = 0;
     for (const p of items) c[p.status] = (c[p.status] ?? 0) + 1;
     return c;
@@ -185,6 +190,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
       label: STATUS_META[s].short,
       count: counts[s] ?? 0,
     })),
+    { key: "hidden", label: "Ocultos", count: counts.hidden },
   ];
 
   const pendingOrders = useMemo(
@@ -239,6 +245,48 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
   function renderActions(product: ProductDTO) {
     return (
       <div className="flex items-center gap-1">
+        <button
+          type="button"
+          disabled={busyId === product.id}
+          onClick={() => changeVisibility(product, !product.isHidden)}
+          className="flex h-9 w-9 items-center justify-center rounded-full text-stone-500 transition-colors hover:bg-stone-100 hover:text-stone-800 disabled:opacity-50 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+          aria-label={product.isHidden ? "Mostrar en catálogo" : "Ocultar del catálogo"}
+          title={product.isHidden ? "Mostrar en catálogo" : "Ocultar del catálogo"}
+        >
+          {product.isHidden ? (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-4 w-4"
+              aria-hidden="true"
+            >
+              <path d="M3 3l18 18" />
+              <path d="M10.6 10.6a2 2 0 0 0 2.8 2.8" />
+              <path d="M9.9 5.2A10.7 10.7 0 0 1 12 5c5 0 8.3 4.5 9 7-.3 1-1 2.1-2 3.1" />
+              <path d="M6.2 6.2C3.9 7.7 2.5 10 2 12c.5 1.8 3.8 7 10 7 1.2 0 2.3-.2 3.3-.6" />
+            </svg>
+          ) : (
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-4 w-4"
+              aria-hidden="true"
+            >
+              <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          )}
+        </button>
         <button
           type="button"
           onClick={() => openEdit(product)}
@@ -314,6 +362,25 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
       const res = await api(`/api/products/${product.id}`, {
         method: "PATCH",
         body: JSON.stringify({ status }),
+      });
+      const data = (await res.json()) as { product: ProductDTO };
+      setItems((prev) =>
+        prev.map((p) => (p.id === product.id ? data.product : p)),
+      );
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al actualizar");
+    } finally {
+      setBusyId(null);
+    }
+  }
+
+  async function changeVisibility(product: ProductDTO, isHidden: boolean) {
+    setError(null);
+    setBusyId(product.id);
+    try {
+      const res = await api(`/api/products/${product.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ isHidden }),
       });
       const data = (await res.json()) as { product: ProductDTO };
       setItems((prev) =>
@@ -787,15 +854,22 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                 filter === f.key
                   ? f.key === "all"
                     ? "border-brand-500 bg-brand-500 text-white shadow-sm"
-                    : `${STATUS_META[f.key].solid} border-transparent text-white shadow-sm`
+                    : f.key === "hidden"
+                      ? "border-stone-600 bg-stone-600 text-white shadow-sm dark:border-stone-500 dark:bg-stone-500"
+                      : `${STATUS_META[f.key].solid} border-transparent text-white shadow-sm`
                   : f.key === "all"
                     ? "border-stone-200 bg-white/70 text-stone-600 hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300"
-                    : STATUS_META[f.key].badge,
+                    : f.key === "hidden"
+                      ? "border-stone-200 bg-stone-100 text-stone-600 hover:bg-stone-200 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-300 dark:hover:bg-stone-700"
+                      : STATUS_META[f.key].badge,
               ].join(" ")}
             >
               {f.key !== "all" && (
                 <span
-                  className={["h-2 w-2 rounded-full", STATUS_META[f.key].dot].join(" ")}
+                  className={[
+                    "h-2 w-2 rounded-full",
+                    f.key === "hidden" ? "bg-stone-500" : STATUS_META[f.key].dot,
+                  ].join(" ")}
                   aria-hidden="true"
                 />
               )}
@@ -861,9 +935,16 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                     />
                   </div>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-stone-800 dark:text-stone-100">
-                      {product.name}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="truncate text-sm font-semibold text-stone-800 dark:text-stone-100">
+                        {product.name}
+                      </p>
+                      {product.isHidden && (
+                        <span className="shrink-0 rounded-full bg-stone-100 px-2 py-0.5 text-[10px] font-semibold text-stone-600 dark:bg-stone-800 dark:text-stone-300">
+                          Oculto
+                        </span>
+                      )}
+                    </div>
                     <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
                       <AvailabilityBadge status={product.status} size="sm" />
                       <span className="text-sm font-semibold text-brand-600 dark:text-brand-400">
@@ -892,6 +973,11 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                       sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20vw"
                       className="object-contain"
                     />
+                    {product.isHidden && (
+                      <span className="absolute left-2 top-2 rounded-full bg-stone-900/80 px-2 py-1 text-[10px] font-semibold text-white">
+                        Oculto
+                      </span>
+                    )}
                     <div className="absolute right-2 top-2">
                       <AvailabilityBadge status={product.status} size="sm" />
                     </div>
@@ -927,6 +1013,11 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       className="object-contain"
                     />
+                    {product.isHidden && (
+                      <span className="absolute left-3 top-3 rounded-full bg-stone-900/80 px-2.5 py-1 text-xs font-semibold text-white">
+                        Oculto
+                      </span>
+                    )}
                     <div className="absolute right-3 top-3">
                       <AvailabilityBadge status={product.status} />
                     </div>

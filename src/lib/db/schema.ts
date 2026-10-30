@@ -82,6 +82,7 @@ export const products = enableRowLevelSecurity(pgTable(
     category: varchar("category", { length: 40 }).default("otros").notNull(),
     description: text("description"),
     status: productStatusEnum("status").default("available").notNull(),
+    isHidden: boolean("is_hidden").default(false).notNull(),
     imageUrl: text("image_url").notNull(),
     imageUrls: jsonb("image_urls")
       .$type<string[]>()
