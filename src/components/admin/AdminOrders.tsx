@@ -25,7 +25,7 @@ interface Props {
 }
 
 const LAYOUT: Record<string, string> = {
-  grid: "grid grid-cols-1 gap-4 lg:grid-cols-2",
+  grid: "grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2",
   compact: "grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3",
   list: "flex flex-col gap-2",
 };
@@ -196,7 +196,7 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
       return (
         <article
           key={order.id}
-          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 rounded-2xl border border-stone-200/70 bg-white/70 p-3 shadow-sm backdrop-blur-md dark:border-stone-800/70 dark:bg-stone-900/70"
+          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 rounded-xl border border-stone-200 bg-white p-2.5 shadow-sm dark:border-stone-700 dark:bg-stone-900 sm:rounded-2xl sm:p-3"
         >
           <div className="min-w-0">
             <p className="truncate text-sm font-bold text-stone-900 dark:text-stone-100">
@@ -252,8 +252,8 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
       <article
         key={order.id}
         className={[
-          "flex flex-col gap-3 rounded-3xl border border-stone-200/70 bg-gradient-to-b from-white/90 to-white/70 shadow-sm backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg dark:border-stone-800/70 dark:from-stone-900/90 dark:to-stone-900/70",
-          "p-4 sm:p-5",
+          "flex flex-col gap-2.5 rounded-2xl border border-stone-200 bg-white shadow-sm transition-colors dark:border-stone-700 dark:bg-stone-900",
+          "p-3 sm:gap-3 sm:p-5",
         ].join(" ")}
       >
         <header className="flex items-start justify-between gap-3">
@@ -268,7 +268,7 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
           <StatusBadge status={order.status} />
         </header>
 
-        <div className="flex items-center gap-3 rounded-2xl bg-stone-50/80 px-3 py-2.5 dark:bg-stone-800/40">
+        <div className="flex items-center gap-3 rounded-xl bg-stone-50 px-3 py-2 dark:bg-stone-800">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-sm font-bold text-stone-600 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-300 dark:ring-stone-700">
             {order.customerName.slice(0, 1).toUpperCase()}
           </span>
@@ -414,7 +414,7 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Buscar por N°, nombre, telefono o producto"
             aria-label="Buscar pedidos"
-            className="w-full rounded-2xl border border-stone-200 bg-white/80 py-3 pl-11 pr-4 text-sm text-stone-800 outline-none backdrop-blur-md transition-all duration-300 placeholder:text-stone-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-100 dark:placeholder:text-stone-500 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
+            className="w-full rounded-xl border border-stone-200 bg-white py-2.5 pl-10 pr-3 text-sm text-stone-800 outline-none placeholder:text-stone-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:placeholder:text-stone-400 dark:focus:border-brand-500 dark:focus:ring-brand-500/30 sm:rounded-2xl sm:py-3 sm:pl-11 sm:pr-4"
           />
         </div>
         <div className="ml-auto">
@@ -422,12 +422,12 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
         </div>
       </div>
 
-      <div className="mb-5 flex flex-wrap items-center gap-2">
+      <div className="mb-4 grid grid-cols-2 gap-1.5 sm:mb-5 sm:flex sm:flex-wrap sm:gap-2">
         <button
           type="button"
           onClick={() => setFilter("all")}
           className={[
-            "inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all duration-300",
+            "inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border px-2 py-1.5 text-[11px] font-medium transition-colors duration-200 sm:justify-start sm:gap-2 sm:px-3.5 sm:text-sm",
             filter === "all"
               ? "border-brand-500 bg-brand-500 text-white shadow-sm"
               : "border-stone-200 bg-white/70 text-stone-600 hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300",
@@ -444,7 +444,7 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
             type="button"
             onClick={() => setFilter(s)}
             className={[
-              "inline-flex items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all duration-300",
+              "inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border px-2 py-1.5 text-[11px] font-medium transition-colors duration-200 sm:justify-start sm:gap-2 sm:px-3.5 sm:text-sm",
               filter === s
                 ? ORDER_STATUS_META[s].active
                 : "border-stone-200 bg-white/70 text-stone-600 hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300",
@@ -469,7 +469,7 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
       )}
 
       {filtered.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-stone-300 bg-white/50 py-20 text-center text-sm text-stone-500 backdrop-blur-md dark:border-stone-700 dark:bg-stone-900/50 dark:text-stone-400">
+        <div         className="rounded-2xl border border-dashed border-stone-300 bg-white py-14 text-center text-sm text-stone-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-400 sm:rounded-3xl sm:py-20">
           No hay pedidos en esta vista.
         </div>
       ) : (

@@ -370,24 +370,24 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
   ];
 
   return (
-    <div className="flex flex-col gap-6">
-      <section aria-labelledby="stats-overview-title" className="space-y-3">
+    <div className="flex flex-col gap-4 sm:gap-6">
+      <section aria-labelledby="stats-overview-title" className="space-y-2.5 sm:space-y-3">
         <div>
           <h2 id="stats-overview-title" className="text-lg font-semibold text-stone-800 dark:text-stone-100">Resumen financiero</h2>
           <p className="text-sm text-stone-500 dark:text-stone-400">Ingresos, gastos y actividad de tus pedidos en un solo lugar.</p>
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 xl:grid-cols-6">
         {kpiCards.map((k) => (
-          <div key={k.label} className="rounded-2xl border border-stone-200/70 bg-white/70 px-3 py-3 shadow-sm backdrop-blur-md sm:px-4 dark:border-stone-800/70 dark:bg-stone-900/70">
-            <p className="text-[11px] uppercase tracking-wide text-stone-400 dark:text-stone-500">{k.label}</p>
+          <div key={k.label} className="rounded-xl border border-stone-200 bg-white px-2.5 py-2.5 shadow-sm dark:border-stone-700 dark:bg-stone-900 sm:rounded-2xl sm:px-4 sm:py-3">
+            <p className="text-[10px] font-medium uppercase leading-tight tracking-wide text-stone-500 dark:text-stone-300 sm:text-[11px]">{k.label}</p>
             <p className={["mt-1 break-words text-base font-bold sm:text-xl", k.accent].join(" ")}>{k.value}</p>
           </div>
         ))}
         </div>
       </section>
 
-      <div className="rounded-3xl border border-stone-200/70 bg-white/70 shadow-sm backdrop-blur-md dark:border-stone-800/70 dark:bg-stone-900/70">
-        <div className="flex flex-col gap-3 border-b border-stone-200/70 px-5 py-4 sm:flex-row sm:items-center sm:justify-between dark:border-stone-800/70">
+      <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm dark:border-stone-700 dark:bg-stone-900 sm:rounded-3xl">
+        <div className="flex flex-col gap-3 border-b border-stone-200 px-3.5 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4 dark:border-stone-700">
           <div className="flex items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5"><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z" /><path d="M8 7h8" /><path d="M8 11h8" /><path d="M8 15h5" /></svg>
@@ -417,7 +417,7 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
         </div>
 
         {showForm && (
-          <form ref={formRef} onSubmit={submitExpense} className="grid grid-cols-1 gap-3 border-b border-stone-200/70 bg-stone-50/60 p-5 lg:grid-cols-12 dark:border-stone-800/70 dark:bg-stone-950/30">
+          <form ref={formRef} onSubmit={submitExpense} className="grid grid-cols-1 gap-3 border-b border-stone-200 bg-stone-50 p-3.5 sm:p-5 lg:grid-cols-12 dark:border-stone-700 dark:bg-stone-950">
             <div className="lg:col-span-12">
               <h4 className="text-sm font-semibold text-stone-800 dark:text-stone-100">{editingId ? "Editar gasto" : "Nuevo gasto"}</h4>
               <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">Completa los datos y conserva o agrega comprobantes antes de guardar.</p>
@@ -482,13 +482,13 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
             </div>
           </form>
         )}
-        <div className="border-t border-stone-200/70 dark:border-stone-800/70">
+        <div className="border-t border-stone-200 dark:border-stone-700">
           {expenses.length === 0 ? (
             <p className="py-10 text-center text-sm text-stone-400">Aún no registras gastos.</p>
           ) : (
-            <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-3">
+            <div className="grid gap-2.5 p-3 sm:grid-cols-2 sm:gap-3 sm:p-5 xl:grid-cols-3">
               {expenses.map((e) => (
-                <article key={e.id} className={["flex min-w-0 flex-col justify-between gap-4 rounded-2xl border p-4 transition-colors", editingId === e.id ? "border-amber-300 bg-amber-50/60 dark:border-amber-500/40 dark:bg-amber-500/10" : "border-stone-200/70 bg-white/70 hover:border-stone-300 dark:border-stone-800 dark:bg-stone-900/50 dark:hover:border-stone-700"].join(" ")}>
+                <article key={e.id} className={["flex min-w-0 flex-col justify-between gap-3 rounded-xl border p-3 transition-colors sm:rounded-2xl sm:p-4", editingId === e.id ? "border-amber-300 bg-amber-50 dark:border-amber-500/50 dark:bg-amber-950/40" : "border-stone-200 bg-white hover:border-stone-300 dark:border-stone-700 dark:bg-stone-800/70 dark:hover:border-stone-600"].join(" ")}>
                   <div className="flex min-w-0 flex-1 items-start gap-3">
                     {e.imageUrl ? (
                       <button type="button" onClick={() => setPreview(e.imageUrl)} className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-stone-200 dark:border-stone-700">
@@ -509,7 +509,7 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
                       {e.notes && <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">{e.notes}</p>}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between gap-3 border-t border-stone-200/70 pt-3 dark:border-stone-800/70">
+                  <div className="flex items-center justify-between gap-3 border-t border-stone-200 pt-2.5 dark:border-stone-700">
                     <p className="text-base font-bold text-rose-600 dark:text-rose-400">-{formatMoney(e.amountCents)}</p>
                     <div className="flex items-center gap-1.5">
                       <button type="button" onClick={() => startEdit(e)} disabled={undo !== null} className="flex h-9 items-center justify-center gap-1.5 rounded-xl border border-stone-200 px-2.5 text-xs font-medium text-stone-600 transition-colors hover:border-stone-300 hover:bg-white hover:text-stone-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-stone-100" aria-label="Editar gasto">
@@ -550,8 +550,8 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
           <p className="text-sm text-stone-500 dark:text-stone-400">Consulta el comportamiento de ingresos, pedidos y productos.</p>
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
-        <div className="rounded-3xl border border-stone-200/70 bg-white/70 p-5 shadow-sm backdrop-blur-md xl:col-span-8 dark:border-stone-800/70 dark:bg-stone-900/70">
+      <div className="grid grid-cols-1 gap-3 sm:gap-4 xl:grid-cols-12">
+        <div className="rounded-2xl border border-stone-200 bg-white p-3.5 shadow-sm sm:rounded-3xl sm:p-5 xl:col-span-8 dark:border-stone-700 dark:bg-stone-900">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-sm font-semibold text-stone-700 dark:text-stone-200">Ingresos vs Gastos (últimos 6 meses)</h3>
             <span className="text-xs text-stone-400 dark:text-stone-500">Valores en USD</span>
@@ -580,7 +580,7 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
           </div>
         </div>
 
-        <div className="rounded-3xl border border-stone-200/70 bg-white/70 p-5 shadow-sm backdrop-blur-md xl:col-span-4 dark:border-stone-800/70 dark:bg-stone-900/70">
+        <div className="rounded-2xl border border-stone-200 bg-white p-3.5 shadow-sm sm:rounded-3xl sm:p-5 xl:col-span-4 dark:border-stone-700 dark:bg-stone-900">
           <h3 className="mb-4 text-sm font-semibold text-stone-700 dark:text-stone-200">Gastos por categoría</h3>
           {expensesByCat.length === 0 ? (
             <p className="py-16 text-center text-sm text-stone-400">Sin gastos registrados.</p>
@@ -611,7 +611,7 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
           )}
         </div>
 
-        <div className="rounded-3xl border border-stone-200/70 bg-white/70 p-5 shadow-sm backdrop-blur-md xl:col-span-5 dark:border-stone-800/70 dark:bg-stone-900/70">
+        <div className="rounded-2xl border border-stone-200 bg-white p-3.5 shadow-sm sm:rounded-3xl sm:p-5 xl:col-span-5 dark:border-stone-700 dark:bg-stone-900">
           <h3 className="mb-4 text-sm font-semibold text-stone-700 dark:text-stone-200">Productos más vendidos (unidades)</h3>
           {topProducts.length === 0 ? (
             <p className="py-16 text-center text-sm text-stone-400">Sin datos aún.</p>
@@ -630,7 +630,7 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
           )}
         </div>
 
-        <div className="rounded-3xl border border-stone-200/70 bg-white/70 p-5 shadow-sm backdrop-blur-md xl:col-span-3 dark:border-stone-800/70 dark:bg-stone-900/70">
+        <div className="rounded-2xl border border-stone-200 bg-white p-3.5 shadow-sm sm:rounded-3xl sm:p-5 xl:col-span-3 dark:border-stone-700 dark:bg-stone-900">
           <h3 className="mb-4 text-sm font-semibold text-stone-700 dark:text-stone-200">Pedidos por forma de pago</h3>
           {byPayment.length === 0 ? (
             <p className="py-16 text-center text-sm text-stone-400">Sin datos aún.</p>
@@ -648,7 +648,7 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
           )}
         </div>
 
-        <div className="rounded-3xl border border-stone-200/70 bg-white/70 p-5 shadow-sm backdrop-blur-md xl:col-span-4 dark:border-stone-800/70 dark:bg-stone-900/70">
+        <div className="rounded-2xl border border-stone-200 bg-white p-3.5 shadow-sm sm:rounded-3xl sm:p-5 xl:col-span-4 dark:border-stone-700 dark:bg-stone-900">
           <h3 className="mb-4 text-sm font-semibold text-stone-700 dark:text-stone-200">Pedidos (últimos 14 días)</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">

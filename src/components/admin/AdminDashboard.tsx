@@ -497,8 +497,8 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
 
   return (
     <div className="min-h-dvh">
-      <header className="sticky top-0 z-40 border-b border-stone-200/60 bg-white/70 backdrop-blur-md dark:border-stone-800/60 dark:bg-stone-900/70">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+      <header className="sticky top-0 z-40 border-b border-stone-200/80 bg-white/95 backdrop-blur-md dark:border-stone-700 dark:bg-stone-950/95">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-3 py-3 sm:px-6 sm:py-4">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
               <Image
@@ -555,7 +555,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
         </div>
       </header>
 
-      <nav className="mx-auto grid max-w-7xl grid-cols-2 gap-1 px-4 pt-4 sm:flex sm:flex-wrap sm:px-6 sm:pt-5">
+      <nav className="mx-auto mt-3 grid max-w-7xl grid-cols-2 gap-1 rounded-2xl border border-stone-200 bg-white p-1.5 shadow-sm dark:border-stone-700 dark:bg-stone-900 sm:mt-5 sm:flex sm:flex-wrap sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:dark:bg-transparent sm:px-6">
         {(
           [
             {
@@ -621,7 +621,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
             type="button"
             onClick={() => setTab(t.key)}
             className={[
-              "inline-flex w-full items-center justify-center gap-1.5 rounded-2xl px-2 py-2.5 text-xs font-semibold transition-all duration-300 sm:w-auto sm:justify-start sm:gap-2 sm:px-4 sm:py-2 sm:text-sm",
+              "inline-flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-xs font-semibold transition-colors duration-200 sm:min-h-10 sm:w-auto sm:justify-start sm:gap-2 sm:px-4 sm:text-sm",
               tab === t.key
                 ? "bg-brand-500 text-white shadow-sm"
                 : "text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800",
@@ -657,7 +657,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
         ))}
       </nav>
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      <main className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-8">
         {tab === "products" ? (
           <>
         <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -732,7 +732,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
           </div>
         </div>
 
-        <div className="mb-5 grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="mb-4 grid grid-cols-2 gap-2 sm:mb-5 sm:grid-cols-3 lg:grid-cols-5">
           {[
             { label: "Total", value: counts.all, dot: "bg-stone-400" },
             {
@@ -758,7 +758,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
           ].map((s) => (
             <div
               key={s.label}
-              className="flex items-center gap-3 rounded-2xl border border-stone-200/70 bg-white/70 px-4 py-3 shadow-sm backdrop-blur-md dark:border-stone-800/70 dark:bg-stone-900/70"
+              className="flex items-center gap-2 rounded-xl border border-stone-200 bg-white px-3 py-2.5 shadow-sm dark:border-stone-700 dark:bg-stone-900 sm:gap-3 sm:rounded-2xl sm:px-4 sm:py-3"
             >
               <span
                 className={["h-2.5 w-2.5 shrink-0 rounded-full", s.dot].join(" ")}
@@ -775,14 +775,15 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
           ))}
         </div>
 
-        <div className="mb-6 flex flex-wrap items-center gap-2">
+        <div className="mb-4 flex flex-col gap-2 sm:mb-6">
+          <div className="grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
           {filters.map((f) => (
             <button
               key={f.key}
               type="button"
               onClick={() => setFilter(f.key)}
               className={[
-                "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200 sm:px-3.5 sm:text-sm",
+                "inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border px-2 py-1.5 text-[11px] font-medium transition-colors duration-200 sm:justify-start sm:gap-2 sm:px-3.5 sm:text-sm",
                 filter === f.key
                   ? f.key === "all"
                     ? "border-brand-500 bg-brand-500 text-white shadow-sm"
@@ -811,13 +812,13 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
               </span>
             </button>
           ))}
-
-          <div className="ml-auto flex items-center gap-2">
+          </div>
+          <div className="flex items-center justify-between gap-2">
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value as SortKey)}
               aria-label="Ordenar productos"
-              className="h-10 cursor-pointer rounded-2xl border border-stone-200 bg-white/70 pl-3 pr-8 text-sm text-stone-600 shadow-sm outline-none backdrop-blur-md focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:focus:border-brand-500 dark:focus:ring-brand-500/30"
+              className="h-9 min-w-0 flex-1 cursor-pointer rounded-xl border border-stone-200 bg-white px-3 text-xs text-stone-600 shadow-sm outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:focus:border-brand-500 dark:focus:ring-brand-500/30 sm:h-10 sm:flex-none sm:rounded-2xl sm:pl-3 sm:pr-8 sm:text-sm"
             >
               {SORT_OPTIONS.map((o) => (
                 <option key={o.key} value={o.key}>
