@@ -486,37 +486,37 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
           {expenses.length === 0 ? (
             <p className="py-10 text-center text-sm text-stone-400">Aún no registras gastos.</p>
           ) : (
-            <div className="grid gap-2.5 p-3 sm:grid-cols-2 sm:gap-3 sm:p-5 xl:grid-cols-3">
+            <div className="grid grid-cols-2 gap-2 p-2.5 sm:gap-3 sm:p-5 xl:grid-cols-3">
               {expenses.map((e) => (
-                <article key={e.id} className={["flex min-w-0 flex-col justify-between gap-3 rounded-xl border p-3 transition-colors sm:rounded-2xl sm:p-4", editingId === e.id ? "border-amber-300 bg-amber-50 dark:border-amber-500/50 dark:bg-amber-950/40" : "border-stone-200 bg-white hover:border-stone-300 dark:border-stone-700 dark:bg-stone-800/70 dark:hover:border-stone-600"].join(" ")}>
-                  <div className="flex min-w-0 flex-1 items-start gap-3">
+                <article key={e.id} className={["flex min-w-0 flex-col justify-between gap-2 rounded-xl border p-2 transition-colors sm:gap-3 sm:rounded-2xl sm:p-4", editingId === e.id ? "border-amber-300 bg-amber-50 dark:border-amber-500/50 dark:bg-amber-950/40" : "border-stone-200 bg-white hover:border-stone-300 dark:border-stone-700 dark:bg-stone-800/70 dark:hover:border-stone-600"].join(" ")}>
+                  <div className="flex min-w-0 flex-1 items-start gap-2 sm:gap-3">
                     {e.imageUrl ? (
-                      <button type="button" onClick={() => setPreview(e.imageUrl)} className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-stone-200 dark:border-stone-700">
+                      <button type="button" onClick={() => setPreview(e.imageUrl)} className="h-9 w-9 shrink-0 overflow-hidden rounded-lg border border-stone-200 dark:border-stone-600 sm:h-14 sm:w-14 sm:rounded-xl">
                         <img src={e.imageUrl} alt="" className="h-full w-full object-cover" />
                       </button>
                     ) : (
-                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border border-dashed border-stone-300 text-stone-400 dark:border-stone-700">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-6 w-6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" x2="12" y1="3" y2="15" /></svg>
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-dashed border-stone-300 text-stone-500 dark:border-stone-600 dark:text-stone-300 sm:h-14 sm:w-14 sm:rounded-xl">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="h-4 w-4 sm:h-6 sm:w-6"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" x2="12" y1="3" y2="15" /></svg>
                       </div>
                     )}
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-stone-800 dark:text-stone-100">{e.concept}</p>
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-stone-400 dark:text-stone-500">
-                        <span className="rounded-full bg-stone-100 px-2 py-0.5 dark:bg-stone-800">{EXPENSE_CATEGORY_META[e.category].label}</span>
+                      <p className="line-clamp-2 text-[11px] font-semibold leading-tight text-stone-900 dark:text-stone-100 sm:text-sm">{e.concept}</p>
+                      <div className="mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[9px] text-stone-600 dark:text-stone-300 sm:gap-2 sm:text-xs">
+                        <span className="rounded-full bg-stone-100 px-1.5 py-0.5 dark:bg-stone-700">{EXPENSE_CATEGORY_META[e.category].label}</span>
                         <span>{formatDate(e.createdAt)}</span>
-                        {e.imageUrls && e.imageUrls.length > 0 && <span>{e.imageUrls.length} {e.imageUrls.length === 1 ? "comprobante" : "comprobantes"}</span>}
+                        {e.imageUrls && e.imageUrls.length > 0 && <span>{e.imageUrls.length} img.</span>}
                       </div>
-                      {e.notes && <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">{e.notes}</p>}
+                      {e.notes && <p className="mt-1 line-clamp-2 text-[10px] text-stone-600 dark:text-stone-300 sm:text-xs">{e.notes}</p>}
                     </div>
                   </div>
-                  <div className="flex items-center justify-between gap-3 border-t border-stone-200 pt-2.5 dark:border-stone-700">
-                    <p className="text-base font-bold text-rose-600 dark:text-rose-400">-{formatMoney(e.amountCents)}</p>
-                    <div className="flex items-center gap-1.5">
-                      <button type="button" onClick={() => startEdit(e)} disabled={undo !== null} className="flex h-9 items-center justify-center gap-1.5 rounded-xl border border-stone-200 px-2.5 text-xs font-medium text-stone-600 transition-colors hover:border-stone-300 hover:bg-white hover:text-stone-900 disabled:cursor-not-allowed disabled:opacity-50 dark:border-stone-700 dark:text-stone-300 dark:hover:bg-stone-800 dark:hover:text-stone-100" aria-label="Editar gasto">
+                  <div className="flex items-center justify-between gap-1.5 border-t border-stone-200 pt-2 dark:border-stone-700 sm:gap-3 sm:pt-2.5">
+                    <p className="text-xs font-bold text-rose-700 dark:text-rose-300 sm:text-base">-{formatMoney(e.amountCents)}</p>
+                    <div className="flex items-center gap-1 sm:gap-1.5">
+                      <button type="button" onClick={() => startEdit(e)} disabled={undo !== null} className="flex h-8 w-8 items-center justify-center rounded-lg border border-stone-200 text-xs font-medium text-stone-700 transition-colors hover:border-stone-300 hover:bg-white hover:text-stone-900 disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:w-auto sm:gap-1.5 sm:rounded-xl sm:px-2.5 dark:border-stone-600 dark:text-stone-200 dark:hover:bg-stone-700 dark:hover:text-white" aria-label="Editar gasto">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
                         <span className="hidden sm:inline">Editar</span>
                       </button>
-                      <button type="button" onClick={() => removeExpense(e)} disabled={undo !== null} className="flex h-9 items-center justify-center gap-1.5 rounded-xl border border-stone-200 px-2.5 text-xs font-medium text-stone-600 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 dark:border-stone-700 dark:text-stone-300 dark:hover:border-red-500/40 dark:hover:bg-red-500/15 dark:hover:text-red-300" aria-label="Eliminar gasto">
+                      <button type="button" onClick={() => removeExpense(e)} disabled={undo !== null} className="flex h-8 w-8 items-center justify-center rounded-lg border border-stone-200 text-xs font-medium text-stone-700 transition-colors hover:border-red-200 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50 sm:h-9 sm:w-auto sm:gap-1.5 sm:rounded-xl sm:px-2.5 dark:border-stone-600 dark:text-stone-200 dark:hover:border-red-500/50 dark:hover:bg-red-950 dark:hover:text-red-200" aria-label="Eliminar gasto">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /></svg>
                         <span className="hidden sm:inline">Eliminar</span>
                       </button>

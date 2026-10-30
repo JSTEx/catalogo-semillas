@@ -54,7 +54,7 @@ export default function ViewToggle({ value, onChange }: Props) {
   return (
     <div
       role="group"
-      aria-label="Vista de productos"
+      aria-label="Cambiar vista"
       className="inline-flex shrink-0 rounded-2xl border border-stone-200 bg-white/70 p-1 shadow-sm backdrop-blur-md dark:border-stone-700 dark:bg-stone-900/70"
     >
       {OPTIONS.map((opt) => {

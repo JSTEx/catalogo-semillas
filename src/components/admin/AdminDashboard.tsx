@@ -660,7 +660,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
       <main className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-8">
         {tab === "products" ? (
           <>
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative w-full sm:max-w-sm">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -685,11 +685,11 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
             />
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
             <button
               type="button"
               onClick={() => setStudioOpen(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-brand-200 bg-brand-50 px-5 py-3 text-sm font-semibold text-brand-700 transition-all duration-300 hover:bg-brand-100 dark:border-brand-500/30 dark:bg-brand-500/10 dark:text-brand-300 dark:hover:bg-brand-500/20"
+              className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-xl border border-brand-200 bg-brand-50 px-2 py-2.5 text-[11px] font-semibold text-brand-700 transition-colors hover:bg-brand-100 sm:gap-2 sm:rounded-2xl sm:px-5 sm:py-3 sm:text-sm dark:border-brand-500/40 dark:bg-brand-950/60 dark:text-brand-200 dark:hover:bg-brand-900/70"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -713,7 +713,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                 setError(null);
                 setForm({ ...emptyForm });
               }}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-brand-500 px-5 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:bg-brand-600 hover:shadow-lg"
+              className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-xl bg-brand-500 px-2 py-2.5 text-[11px] font-semibold text-white shadow-sm transition-colors hover:bg-brand-600 sm:gap-2 sm:rounded-2xl sm:px-5 sm:py-3 sm:text-sm"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"

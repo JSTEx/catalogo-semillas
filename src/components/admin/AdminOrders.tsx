@@ -26,7 +26,7 @@ interface Props {
 
 const LAYOUT: Record<string, string> = {
   grid: "grid grid-cols-1 gap-3 sm:gap-4 lg:grid-cols-2",
-  compact: "grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3",
+  compact: "grid grid-cols-2 gap-2 sm:grid-cols-2 xl:grid-cols-3",
   list: "flex flex-col gap-2",
 };
 
@@ -196,39 +196,48 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
       return (
         <article
           key={order.id}
-          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 rounded-xl border border-stone-200 bg-white p-2.5 shadow-sm dark:border-stone-700 dark:bg-stone-900 sm:rounded-2xl sm:p-3"
+          className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-1.5 gap-y-1.5 rounded-xl border border-stone-200 bg-white p-2 shadow-sm dark:border-stone-700 dark:bg-stone-900 sm:gap-x-3 sm:gap-y-2 sm:rounded-2xl sm:p-3"
         >
           <div className="min-w-0">
-            <p className="truncate text-sm font-bold text-stone-900 dark:text-stone-100">
+            <p className="truncate text-xs font-bold text-stone-900 dark:text-stone-100 sm:text-sm">
               Pedido N° {order.number}
             </p>
-            <p className="truncate text-[11px] text-stone-500 dark:text-stone-400">
+            <p className="truncate text-[9px] text-stone-600 dark:text-stone-300 sm:text-[11px]">
               {date}
             </p>
           </div>
-          <StatusBadge status={order.status} />
+          <span className="scale-[0.82] origin-right sm:scale-100"><StatusBadge status={order.status} /></span>
 
-          <div className="col-span-2 flex min-w-0 items-center gap-2 rounded-xl bg-stone-50/80 px-2.5 py-2 dark:bg-stone-800/40">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white text-xs font-bold text-stone-600 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-300 dark:ring-stone-700">
+          <div className="col-span-2 flex min-w-0 items-center gap-1.5 rounded-lg bg-stone-50 px-2 py-1.5 dark:bg-stone-800 sm:gap-2 sm:rounded-xl sm:px-2.5 sm:py-2">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-[10px] font-bold text-stone-600 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-200 dark:ring-stone-600 sm:h-7 sm:w-7 sm:text-xs">
               {order.customerName.slice(0, 1).toUpperCase()}
             </span>
-            <p className="min-w-0 truncate text-sm font-medium text-stone-800 dark:text-stone-100">
+            <p className="min-w-0 truncate text-[11px] font-semibold text-stone-800 dark:text-stone-100 sm:text-sm">
               {order.customerName}
             </p>
-            <span className="ml-auto shrink-0 text-[11px] text-stone-500 dark:text-stone-400">
+            <span className="ml-auto shrink-0 text-[9px] text-stone-600 dark:text-stone-300 sm:text-[11px]">
               {units} {units === 1 ? "unidad" : "unidades"}
             </span>
           </div>
 
-          <div className="col-span-2 flex items-center justify-between gap-3">
-            <span className="text-base font-bold text-stone-900 dark:text-stone-100">
+          <div className="col-span-2 flex min-w-0 items-center gap-1 overflow-hidden text-[9px] text-stone-600 dark:text-stone-300 sm:gap-2 sm:text-[11px]">
+            <span className="truncate rounded-full bg-stone-100 px-1.5 py-0.5 dark:bg-stone-700 sm:px-2">
+              {DELIVERY_META[order.delivery].label}
+            </span>
+            <span className="truncate rounded-full bg-stone-100 px-1.5 py-0.5 dark:bg-stone-700 sm:px-2">
+              {PAYMENT_META[order.payment].label}
+            </span>
+          </div>
+
+          <div className="col-span-2 flex items-center justify-between gap-2 border-t border-stone-200 pt-1.5 dark:border-stone-700 sm:gap-3 sm:pt-2">
+            <span className="text-sm font-extrabold text-brand-700 dark:text-brand-300 sm:text-base">
               {formatMoney(order.totalCents)}
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
               <button
                 type="button"
                 onClick={() => setOpenId(order.id)}
-                className="inline-flex min-h-9 items-center justify-center rounded-xl bg-brand-500 px-4 text-xs font-semibold text-white transition-colors hover:bg-brand-600"
+                className="inline-flex min-h-8 items-center justify-center rounded-lg bg-brand-500 px-2 text-[10px] font-semibold text-white transition-colors hover:bg-brand-600 sm:min-h-9 sm:rounded-xl sm:px-4 sm:text-xs"
               >
                 Ver detalle
               </button>
@@ -238,7 +247,7 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
                 rel="noopener noreferrer"
                 aria-label={`Contactar por WhatsApp al cliente del pedido ${order.number}`}
                 title="Contactar por WhatsApp"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-300"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950 dark:text-emerald-300 sm:h-9 sm:w-9 sm:rounded-xl"
               >
                 <WhatsAppIcon />
               </a>
@@ -263,7 +272,7 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
                 Pedido N° {order.number}
               </p>
             </div>
-            <p className="mt-0.5 text-xs text-stone-500 dark:text-stone-400">{date}</p>
+            <p className="mt-0.5 text-xs text-stone-600 dark:text-stone-300">{date}</p>
           </div>
           <StatusBadge status={order.status} />
         </header>
@@ -282,7 +291,7 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 text-xs text-stone-500 dark:text-stone-400">
+        <div className="flex flex-wrap items-center gap-1.5 text-xs text-stone-600 dark:text-stone-300">
           <span className="rounded-full bg-stone-100 px-2.5 py-1 dark:bg-stone-800">
             {DELIVERY_META[order.delivery].label}
           </span>
@@ -302,11 +311,11 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
           </p>
         )}
 
-        <div className="mt-auto flex items-center justify-between rounded-2xl border border-stone-200/70 px-4 py-2.5 text-sm dark:border-stone-800/70">
-          <span className="text-xs text-stone-500 dark:text-stone-400">
+        <div className="mt-auto flex items-center justify-between rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 text-sm dark:border-brand-500/30 dark:bg-brand-950/50 sm:rounded-2xl sm:px-4 sm:py-2.5">
+          <span className="text-xs font-medium text-stone-600 dark:text-stone-300">
             {units} {units === 1 ? "unidad" : "unidades"}
           </span>
-          <span className="text-base font-bold text-stone-900 dark:text-stone-100">
+          <span className="text-lg font-extrabold text-brand-700 dark:text-brand-300">
             {formatMoney(order.totalCents)}
           </span>
         </div>
@@ -343,23 +352,23 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
     return (
       <article
         key={order.id}
-        className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 rounded-2xl border border-stone-200/70 bg-white/70 p-3 shadow-sm backdrop-blur-md transition-all duration-300 hover:shadow-md sm:flex sm:gap-3 dark:border-stone-800/70 dark:bg-stone-900/70"
+        className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 rounded-xl border border-stone-200 bg-white p-2.5 shadow-sm sm:rounded-2xl sm:p-3 dark:border-stone-700 dark:bg-stone-900"
       >
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-stone-800 dark:text-stone-100">
             Pedido N° {order.number}
           </p>
-          <p className="truncate text-xs text-stone-500 dark:text-stone-400">
+          <p className="truncate text-xs text-stone-600 dark:text-stone-300">
             {date} · {order.customerName}
           </p>
         </div>
         <div className="flex items-center gap-2 sm:order-last">
           <StatusBadge status={order.status} />
-          <span className="shrink-0 text-sm font-bold text-stone-900 dark:text-stone-100">
+          <span className="shrink-0 rounded-lg bg-brand-50 px-2 py-1 text-base font-extrabold text-brand-700 dark:bg-brand-950/60 dark:text-brand-300 sm:text-lg">
             {formatMoney(order.totalCents)}
           </span>
         </div>
-        <div className="col-span-2 flex min-w-0 flex-wrap items-center gap-1.5 text-[11px] text-stone-500 dark:text-stone-400 sm:col-span-1 sm:flex-1 sm:flex-nowrap sm:gap-2 sm:text-xs">
+        <div className="col-span-2 flex min-w-0 flex-wrap items-center gap-1.5 text-[11px] text-stone-600 dark:text-stone-300 sm:col-span-1 sm:flex-1 sm:flex-nowrap sm:gap-2 sm:text-xs">
           <span>{units} {units === 1 ? "unidad" : "unidades"}</span>
           <span className="rounded-full bg-stone-100 px-2 py-1 dark:bg-stone-800">
             {DELIVERY_META[order.delivery].label}
