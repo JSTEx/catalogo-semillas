@@ -49,8 +49,10 @@ function DepartmentPicker({
         onClick={() => setOpen((current) => !current)}
         className={`${inputClass} flex items-center justify-between gap-3 text-left`}
       >
-        <span className={value ? "" : "text-stone-500 dark:text-stone-400"}>
-          {value || "Selecciona tu departamento"}
+        <span
+          className={`min-w-0 flex-1 truncate ${value ? "" : "text-stone-500 dark:text-stone-400"}`}
+        >
+          {value || "Elige departamento"}
         </span>
         <svg
           xmlns="http://www.w3.org/2000/svg"
