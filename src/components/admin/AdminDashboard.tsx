@@ -584,15 +584,15 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
     <div className="min-h-dvh">
       <header className="sticky top-0 z-40 border-b border-stone-200/80 bg-white/95 backdrop-blur-md dark:border-stone-700 dark:bg-stone-950/95">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-3 py-3 sm:px-6 sm:py-4">
-          <div className="flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:ring-stone-700">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-stone-200 sm:h-10 sm:w-10 dark:bg-stone-900 dark:ring-stone-700">
               <Image
                 src="/logo.png"
                 alt=""
                 width={720}
                 height={720}
                 aria-hidden="true"
-                className="h-7 w-7 dark:hidden"
+                className="h-6 w-6 sm:h-7 sm:w-7 dark:hidden"
               />
               <Image
                 src="/logo-dark.png"
@@ -600,24 +600,26 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                 width={720}
                 height={720}
                 aria-hidden="true"
-                className="hidden h-7 w-7 dark:block"
+                className="hidden h-6 w-6 sm:h-7 sm:w-7 dark:block"
               />
             </span>
-            <div>
-              <h1 className="text-lg font-bold tracking-tight text-stone-900 dark:text-stone-100">
+            <div className="min-w-0">
+              <h1 className="truncate text-base font-bold tracking-tight text-stone-900 sm:text-lg dark:text-stone-100">
                 Administracion
               </h1>
-              <p className="text-xs text-stone-500 dark:text-stone-400">Sesion: {username}{adminRole === "superadmin" ? " · Superadmin" : adminRole === "admin" ? " · Admin" : ""}</p>
+              <p className="max-w-[48vw] truncate text-[10px] text-stone-500 sm:max-w-none sm:text-xs dark:text-stone-400">
+                Sesion: {username}{adminRole === "superadmin" ? " · Superadmin" : adminRole === "admin" ? " · Admin" : ""}
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <ThemeToggle className="h-8 w-12 sm:w-14" />
             <Link
               href="/"
               aria-label="Ir al catalogo"
               title="Ir al catalogo"
-              className="inline-flex items-center gap-2 rounded-2xl border border-stone-200 bg-white/70 px-3 py-2 text-sm font-medium text-stone-600 transition-all duration-300 hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:border-brand-500/40 dark:hover:text-brand-300"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-stone-200 bg-white/70 text-sm font-medium text-stone-600 transition-all duration-300 hover:border-brand-200 hover:text-brand-700 sm:h-auto sm:w-auto sm:gap-2 sm:rounded-2xl sm:px-3 sm:py-2 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300 dark:hover:border-brand-500/40 dark:hover:text-brand-300"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -850,7 +852,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
         </div>
 
         <div className="mb-4 flex flex-col gap-2 sm:mb-6">
-          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+          <div className="no-scrollbar -mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
           {filters.map((f) => (
             <button
               key={f.key}
