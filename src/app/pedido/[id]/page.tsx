@@ -34,10 +34,10 @@ export async function generateMetadata({
       description,
       images: [
         {
-          url: "/og-night.png",
+          url: "/og-tracking.png",
           width: 1200,
           height: 630,
-          alt: "JecsitoShop: semillas, snacks y más para disfrutar",
+          alt: "Seguimiento de pedido en JecsitoShop",
         },
       ],
     },
@@ -45,7 +45,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       title: `${title} | JecsitoShop`,
       description,
-      images: ["/og-night.png"],
+      images: ["/og-tracking.png"],
     },
   };
 }

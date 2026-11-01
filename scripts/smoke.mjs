@@ -26,7 +26,7 @@ async function getStatus(path) {
 
 console.log(`Smoke contra ${BASE}\n`);
 
-for (const path of ["/", "/logo.png", "/og-night.png", "/icons/favicon.png", "/icons/apple-icon.png"]) {
+for (const path of ["/", "/logo.png", "/og-night.png", "/og-tracking.png", "/icons/favicon.png", "/icons/apple-icon.png"]) {
   const status = await getStatus(path).catch(() => 0);
   check(`GET ${path}`, status === 200, `-> ${status}`);
 }
@@ -136,6 +136,14 @@ for (const path of [
     /name="robots" content="noindex,\s*nofollow,\s*noarchive"/.test(page),
   );
 }
+
+const trackingHtml = await fetch(
+  BASE + "/pedido/00000000-0000-4000-8000-000000000001",
+).then((r) => r.text()).catch(() => "");
+check(
+  "seguimiento usa su propia imagen Open Graph",
+  /og:image" content="[^"]*\/og-tracking\.png"/.test(trackingHtml),
+);
 
 if (process.env.SMOKE_WRITE === "1") {
   const cookie = process.env.ADMIN_COOKIE;
