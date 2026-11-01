@@ -614,8 +614,7 @@ export default function CheckoutModal({ open, onClose }: Props) {
                     Tarifa fija de envío: {formatMoney(HOME_DELIVERY_FEE_CENTS)}
                   </p>
                   <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
-                    Por el momento, el envío a domicilio solo está disponible
-                    pagando por transferencia.
+                    Envío a domicilio: pago únicamente por transferencia.
                   </p>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <label className="block space-y-1.5 text-sm font-medium text-stone-700 dark:text-stone-300">
@@ -692,17 +691,11 @@ export default function CheckoutModal({ open, onClose }: Props) {
                     Transferencia
                   </button>
                 </div>
-                {delivery === "domicilio" && (
-                  <p className="text-xs text-stone-500 dark:text-stone-400">
-                    Para coordinar el envío, te compartiremos los datos para
-                    realizar la transferencia. Envía tu comprobante por
-                    WhatsApp.
-                  </p>
-                )}
                 {payment === "transferencia" && (
-                  <p className="text-xs text-amber-700 dark:text-amber-300">
-                    Si pagas por transferencia, despues de enviar el pedido
-                    podras enviarnos el comprobante por WhatsApp.
+                  <p className="text-xs text-stone-500 dark:text-stone-400">
+                    {delivery === "domicilio"
+                      ? "Envía tu comprobante por WhatsApp; coordinaremos el envío al confirmar el pago."
+                      : "Envía tu comprobante por WhatsApp para confirmar tu pago."}
                   </p>
                 )}
               </div>
