@@ -44,6 +44,15 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return jsonError(parsed.error.issues[0]?.message ?? "Datos invalidos", 400);
   }
+  if (
+    parsed.data.delivery === "domicilio" &&
+    parsed.data.payment !== "transferencia"
+  ) {
+    return jsonError(
+      "Por el momento, el envío a domicilio solo está disponible con transferencia",
+      400,
+    );
+  }
 
   const ids = [...new Set(parsed.data.items.map((it) => it.productId))];
   const rows = await db.select().from(products).where(inArray(products.id, ids));

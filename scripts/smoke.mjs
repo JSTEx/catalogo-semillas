@@ -66,7 +66,7 @@ const incompleteDelivery = await fetch(BASE + "/api/orders", {
     customerName: "Smoke",
     customerPhone: "50370009999",
     delivery: "domicilio",
-    payment: "efectivo",
+    payment: "transferencia",
     items: [{ productId: "00000000-0000-4000-8000-000000000001", quantity: 1 }],
   }),
 }).catch(() => null);
@@ -74,6 +74,27 @@ check(
   "envio a domicilio requiere los datos de Boxful",
   incompleteDelivery?.status === 400,
   `-> ${incompleteDelivery?.status ?? 0}`,
+);
+const cashDelivery = await fetch(BASE + "/api/orders", {
+  method: "POST",
+  headers: ORIGIN,
+  body: JSON.stringify({
+    customerName: "Smoke",
+    customerPhone: "50370009999",
+    delivery: "domicilio",
+    department: "San Salvador",
+    municipality: "Ilopango",
+    streetAddress: "Residencial de prueba, casa 1",
+    reference: "Portón negro frente al parque",
+    payment: "efectivo",
+    items: [{ productId: "00000000-0000-4000-8000-000000000001", quantity: 1 }],
+  }),
+}).catch(() => null);
+const cashDeliveryError = await cashDelivery?.json().catch(() => null);
+check(
+  "envio a domicilio solo permite transferencia",
+  cashDelivery?.status === 400 &&
+    cashDeliveryError?.error?.includes("solo está disponible con transferencia"),
 );
 
 const statusRes = await fetch(BASE + "/api/orders/status?ids=", { headers: { Origin: BASE } }).catch(() => null);
