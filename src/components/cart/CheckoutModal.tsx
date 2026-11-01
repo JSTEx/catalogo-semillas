@@ -80,7 +80,7 @@ function DepartmentPicker({
           <div
             role="listbox"
             aria-label="Departamentos de El Salvador"
-            className="mt-2 grid max-h-48 grid-cols-2 gap-1 overflow-y-auto"
+            className="mt-2 grid max-h-48 grid-cols-1 gap-1 overflow-y-auto"
           >
             {filtered.map((department) => (
               <button
@@ -94,7 +94,7 @@ function DepartmentPicker({
                   setQuery("");
                 }}
                 className={[
-                  "rounded-xl px-3 py-2 text-left text-sm transition-colors hover:bg-brand-50 dark:hover:bg-brand-500/10",
+                  "w-full rounded-xl px-3 py-2.5 text-left text-sm leading-5 transition-colors hover:bg-brand-50 dark:hover:bg-brand-500/10",
                   value === department
                     ? "bg-brand-50 font-semibold text-brand-800 dark:bg-brand-500/15 dark:text-brand-200"
                     : "text-stone-700 dark:text-stone-200",
