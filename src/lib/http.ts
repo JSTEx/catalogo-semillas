@@ -39,6 +39,59 @@ export function jsonError(
   );
 }
 
+export type LimitedFormDataResult =
+  | { ok: true; formData: FormData }
+  | { ok: false; reason: "too_large" | "invalid" };
+
+export async function readFormDataWithLimit(
+  req: Request,
+  maxBytes: number,
+): Promise<LimitedFormDataResult> {
+  const contentType = req.headers.get("content-type") ?? "";
+  if (!contentType.toLowerCase().startsWith("multipart/form-data;")) {
+    return { ok: false, reason: "invalid" };
+  }
+
+  const contentLength = req.headers.get("content-length");
+  if (contentLength !== null) {
+    const declaredLength = Number(contentLength);
+    if (!Number.isSafeInteger(declaredLength) || declaredLength < 0) {
+      return { ok: false, reason: "invalid" };
+    }
+    if (declaredLength > maxBytes) {
+      return { ok: false, reason: "too_large" };
+    }
+  }
+
+  if (!req.body) return { ok: false, reason: "invalid" };
+
+  const reader = req.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    totalBytes += value.byteLength;
+    if (totalBytes > maxBytes) {
+      await reader.cancel();
+      return { ok: false, reason: "too_large" };
+    }
+    chunks.push(value);
+  }
+
+  try {
+    const body = Buffer.concat(chunks, totalBytes);
+    const formData = await new Response(body, {
+      headers: { "content-type": contentType },
+    }).formData();
+    return { ok: true, formData };
+  } catch {
+    return { ok: false, reason: "invalid" };
+  }
+}
+
 /**
  * Comprueba sesion + origen en endpoints de administracion.
  * Devuelve el administrador autorizado o una respuesta de error lista para retornar.

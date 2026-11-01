@@ -202,7 +202,7 @@ export default function ImageStudio({
             <input
               ref={fileRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept=".jpg,.jpeg,.png,.webp"
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 if (f) void uploadFile(f);

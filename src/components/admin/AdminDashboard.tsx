@@ -1295,7 +1295,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
                   ref={fileRef}
                   type="file"
                   multiple
-                  accept="image/jpeg,image/png,image/webp"
+                  accept=".jpg,.jpeg,.png,.webp"
                   disabled={form.images.length >= MAX_PRODUCT_IMAGES}
                   onChange={(e) =>
                     onFileChange(Array.from(e.target.files ?? []))

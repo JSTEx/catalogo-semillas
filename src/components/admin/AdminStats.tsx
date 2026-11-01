@@ -666,7 +666,7 @@ export default function AdminStats({
                   )}
                   {uploading ? "Subiendo..." : editingId ? "Agregar imágenes" : "Subir imágenes"}
                 </button>
-                <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp" multiple className="hidden" onChange={(e) => uploadFiles(e.target.files)} />
+                <input ref={fileRef} type="file" accept=".jpg,.jpeg,.png,.webp" multiple className="hidden" onChange={(e) => uploadFiles(e.target.files)} />
               </div>
               {form.imageUrls.length > 0 && (
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-6">

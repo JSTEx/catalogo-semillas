@@ -557,7 +557,7 @@ export default function OrderTracker({
               <input
                 ref={receiptInputRef}
                 type="file"
-                accept="image/jpeg,image/png,image/webp"
+                accept=".jpg,.jpeg,.png,.webp"
                 className="hidden"
                 disabled={uploadingReceipt}
                 onChange={(e) => {

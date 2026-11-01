@@ -830,7 +830,7 @@ export default function AdminOrders({
                     Subir comprobante
                     <input
                       type="file"
-                      accept="image/jpeg,image/png,image/webp"
+                      accept=".jpg,.jpeg,.png,.webp"
                       className="hidden"
                       disabled={busyId === active.id}
                       onChange={(e) => {

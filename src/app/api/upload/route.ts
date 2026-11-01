@@ -3,7 +3,7 @@ import sharp from "sharp";
 import { validateImage } from "@/lib/file-validation";
 import { uploadImage } from "@/lib/storage";
 import { MAX_IMAGE_BYTES } from "@/lib/validation";
-import { jsonError, requireAdmin } from "@/lib/http";
+import { jsonError, readFormDataWithLimit, requireAdmin } from "@/lib/http";
 
 export const runtime = "nodejs";
 
@@ -15,21 +15,22 @@ export async function POST(req: Request) {
   if (!guard.authorized) return guard.response;
 
   const maxMb = MAX_IMAGE_BYTES / 1024 / 1024;
-
-  // Rechazo temprano por tamano declarado.
-  const contentLength = Number(req.headers.get("content-length") ?? "0");
-  if (contentLength && contentLength > MAX_IMAGE_BYTES + 64 * 1024) {
+  const formResult = await readFormDataWithLimit(
+    req,
+    MAX_IMAGE_BYTES + 64 * 1024,
+  );
+  if (!formResult.ok && formResult.reason === "too_large") {
     return jsonError(`La imagen supera el limite de ${maxMb}MB`, 413);
   }
-
-  let form: FormData;
-  try {
-    form = await req.formData();
-  } catch {
+  if (!formResult.ok) {
     return jsonError("Formulario invalido", 400);
   }
 
-  const file = form.get("file");
+  const files = formResult.formData.getAll("file");
+  const file = files[0];
+  if (files.length !== 1) {
+    return jsonError("Se requiere exactamente un archivo de imagen", 400);
+  }
   if (!(file instanceof File)) {
     return jsonError("Se requiere un archivo de imagen", 400);
   }
@@ -46,9 +47,12 @@ export async function POST(req: Request) {
     return jsonError(result.error ?? "Imagen no valida", 400);
   }
 
+  let optimized: Buffer;
   try {
-    // Optimizar: redimensionar y convertir a WebP manteniendo máxima calidad percibida
-    const optimized = await sharp(buffer)
+    optimized = await sharp(buffer, {
+      failOn: "error",
+      limitInputPixels: 40_000_000,
+    })
       .rotate()
       .resize(MAX_DIMENSION, MAX_DIMENSION, {
         fit: "inside",
@@ -60,7 +64,11 @@ export async function POST(req: Request) {
         smartSubsample: true,
       })
       .toBuffer();
+  } catch {
+    return jsonError("La imagen esta dañada o sus dimensiones no son validas", 400);
+  }
 
+  try {
     const url = await uploadImage(optimized, "image/webp");
     return NextResponse.json({ url }, { status: 201 });
   } catch {

@@ -3,11 +3,17 @@ import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { MAX_IMAGE_BYTES, productIdSchema } from "@/lib/validation";
-import { isSameOrigin, jsonError, getClientIp } from "@/lib/http";
+import {
+  isSameOrigin,
+  jsonError,
+  getClientIp,
+  readFormDataWithLimit,
+} from "@/lib/http";
 import { checkReceiptRateLimit } from "@/lib/rate-limit";
 import { validateImage } from "@/lib/file-validation";
 import { uploadImage } from "@/lib/storage";
 import { toPublicOrderDTO } from "@/lib/types";
+import sharp from "sharp";
 
 export const runtime = "nodejs";
 
@@ -53,21 +59,22 @@ export async function POST(req: Request, { params }: Params) {
   }
 
   const maxMb = MAX_IMAGE_BYTES / 1024 / 1024;
-
-  // Rechazo temprano por tamano declarado.
-  const contentLength = Number(req.headers.get("content-length") ?? "0");
-  if (contentLength && contentLength > MAX_IMAGE_BYTES + 64 * 1024) {
+  const formResult = await readFormDataWithLimit(
+    req,
+    MAX_IMAGE_BYTES + 64 * 1024,
+  );
+  if (!formResult.ok && formResult.reason === "too_large") {
     return jsonError(`La imagen supera el limite de ${maxMb}MB`, 413);
   }
-
-  let form: FormData;
-  try {
-    form = await req.formData();
-  } catch {
+  if (!formResult.ok) {
     return jsonError("Formulario invalido", 400);
   }
 
-  const file = form.get("file");
+  const files = formResult.formData.getAll("file");
+  const file = files[0];
+  if (files.length !== 1) {
+    return jsonError("Se requiere exactamente un archivo de imagen", 400);
+  }
   if (!(file instanceof File)) {
     return jsonError("Se requiere un archivo de imagen", 400);
   }
@@ -84,9 +91,29 @@ export async function POST(req: Request, { params }: Params) {
     return jsonError(result.error ?? "Imagen no valida", 400);
   }
 
+  let sanitized: Buffer;
+  try {
+    sanitized = await sharp(buffer, {
+      failOn: "error",
+      limitInputPixels: 24_000_000,
+    })
+      .rotate()
+      .resize(3000, 3000, {
+        fit: "inside",
+        withoutEnlargement: true,
+      })
+      .webp({ quality: 90 })
+      .toBuffer();
+  } catch {
+    return jsonError(
+      "La imagen esta dañada o sus dimensiones no son validas",
+      400,
+    );
+  }
+
   let url: string;
   try {
-    url = await uploadImage(buffer, result.mime!);
+    url = await uploadImage(sanitized, "image/webp");
   } catch {
     return jsonError("No se pudo subir la imagen", 502);
   }
