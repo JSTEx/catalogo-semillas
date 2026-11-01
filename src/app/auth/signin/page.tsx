@@ -12,7 +12,7 @@ export const metadata: Metadata = {
     description: "Accede a tu cuenta y consulta tus pedidos de JecsitoShop.",
     images: [
       {
-        url: "/og.png",
+        url: "/og-minimal.png",
         width: 1200,
         height: 630,
         alt: "JecsitoShop: semillas, snacks y más para disfrutar",
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Iniciar sesión | JecsitoShop",
     description: "Accede a tu cuenta y consulta tus pedidos de JecsitoShop.",
-    images: ["/og.png"],
+    images: ["/og-minimal.png"],
   },
 };
 

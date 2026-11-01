@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     description: "Acceso privado para administrar la tienda JecsitoShop.",
     images: [
       {
-        url: "/og.png",
+        url: "/og-minimal.png",
         width: 1200,
         height: 630,
         alt: "JecsitoShop: semillas, snacks y más para disfrutar",
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Administración | JecsitoShop",
     description: "Acceso privado para administrar la tienda JecsitoShop.",
-    images: ["/og.png"],
+    images: ["/og-minimal.png"],
   },
 };
 

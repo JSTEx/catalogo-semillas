@@ -14,7 +14,7 @@ export const metadata: Metadata = {
       "Consulta el historial y el estado de tus pedidos en JecsitoShop.",
     images: [
       {
-        url: "/og.png",
+        url: "/og-minimal.png",
         width: 1200,
         height: 630,
         alt: "JecsitoShop: semillas, snacks y más para disfrutar",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     title: "Mis pedidos | JecsitoShop",
     description:
       "Consulta el historial y el estado de tus pedidos en JecsitoShop.",
-    images: ["/og.png"],
+    images: ["/og-minimal.png"],
   },
 };
 
