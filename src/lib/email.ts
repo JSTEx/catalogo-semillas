@@ -267,7 +267,7 @@ function card(inner: string): string {
 function detailRow(label: string, value: string): string {
   return `<tr>
     <td style="padding:4px 0;color:${MUTED};font-size:13px;vertical-align:top;">${label}</td>
-    <td style="padding:4px 0;color:${INK};font-size:13px;text-align:right;font-weight:600;">${value}</td>
+    <td style="padding:4px 0;color:${INK};font-size:13px;text-align:right;font-weight:600;white-space:pre-line;">${value}</td>
   </tr>`;
 }
 

@@ -62,7 +62,6 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
   const [query, setQuery] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [shippingDraft, setShippingDraft] = useState<Record<string, string>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [view, setView] = useViewMode("admin-orders-view", "grid");
   const [openId, setOpenId] = useState<string | null>(null);
@@ -144,14 +143,6 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
     } finally {
       setBusyId(null);
     }
-  }
-
-  function saveShipping(order: OrderDTO) {
-    const raw = shippingDraft[order.id];
-    if (raw === undefined) return;
-    const cents = Math.max(0, Math.round((parseFloat(raw) || 0) * 100));
-    if (cents === order.shippingCents) return;
-    patch(order.id, { shippingCents: cents });
   }
 
   async function copyLink(id: string) {
@@ -550,12 +541,14 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
               )}
               <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
                 {DELIVERY_META[active.delivery].label}
-                {active.delivery === "domicilio" && active.address
-                  ? ` · ${active.address}`
-                  : ""}
                 {" · "}
                 {PAYMENT_META[active.payment].label}
               </p>
+              {active.delivery === "domicilio" && active.address && (
+                <p className="mt-2 whitespace-pre-line break-words text-xs text-stone-600 dark:text-stone-300">
+                  {active.address}
+                </p>
+              )}
             </div>
 
             <ul className="flex flex-col gap-1 text-sm">
@@ -649,32 +642,9 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
             </div>
 
             <div className="flex items-center justify-between border-t border-stone-200/60 pt-3 text-sm dark:border-stone-800/60">
-              <div className="flex items-center gap-2">
-                <span className="text-stone-500 dark:text-stone-400">Envio $</span>
-                <input
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  inputMode="decimal"
-                  value={
-                    shippingDraft[active.id] ??
-                    (active.shippingCents === 0
-                      ? ""
-                      : (active.shippingCents / 100).toFixed(2))
-                  }
-                  onChange={(e) =>
-                    setShippingDraft((prev) => ({
-                      ...prev,
-                      [active.id]: e.target.value,
-                    }))
-                  }
-                  onBlur={() => saveShipping(active)}
-                  disabled={busyId === active.id}
-                  placeholder="0.00"
-                  aria-label="Costo de envio"
-                  className="h-8 w-20 rounded-xl border border-stone-200 bg-white/80 px-2 text-sm text-stone-700 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900/80 dark:text-stone-200"
-                />
-              </div>
+              <span className="text-stone-500 dark:text-stone-400">
+                Envío: {formatMoney(active.shippingCents)}
+              </span>
               <span className="text-base font-bold text-stone-900 dark:text-stone-100">
                 Total: {formatMoney(active.totalCents)}
               </span>

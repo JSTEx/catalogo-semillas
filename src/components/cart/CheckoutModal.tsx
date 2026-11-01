@@ -11,6 +11,10 @@ import {
 } from "@/lib/orders";
 import { saveMyOrder } from "@/lib/my-order";
 import type { OrderDTO } from "@/lib/types";
+import {
+  EL_SALVADOR_DEPARTMENTS,
+  HOME_DELIVERY_FEE_CENTS,
+} from "@/lib/delivery";
 
 interface Props {
   open: boolean;
@@ -29,7 +33,10 @@ export default function CheckoutModal({ open, onClose }: Props) {
   const [email, setEmail] = useState("");
   const [notifyEmail, setNotifyEmail] = useState(false);
   const [delivery, setDelivery] = useState<Delivery>("retiro");
-  const [address, setAddress] = useState("");
+  const [department, setDepartment] = useState("");
+  const [municipality, setMunicipality] = useState("");
+  const [streetAddress, setStreetAddress] = useState("");
+  const [reference, setReference] = useState("");
   const [payment, setPayment] = useState<Payment>("efectivo");
   const [notes, setNotes] = useState("");
   const [step, setStep] = useState<Step>("form");
@@ -60,7 +67,10 @@ export default function CheckoutModal({ open, onClose }: Props) {
     setEmail("");
     setNotifyEmail(false);
     setDelivery("retiro");
-    setAddress("");
+    setDepartment("");
+    setMunicipality("");
+    setStreetAddress("");
+    setReference("");
     setPayment("efectivo");
     setNotes("");
     setStep("form");
@@ -83,8 +93,15 @@ export default function CheckoutModal({ open, onClose }: Props) {
     ) {
       return "Escribe un correo valido";
     }
-    if (delivery === "domicilio" && address.trim().length < 5) {
-      return "Para domicilio indica una direccion exacta";
+    if (delivery === "domicilio") {
+      if (!department) return "Selecciona un departamento";
+      if (municipality.trim().length < 2) return "Escribe el municipio";
+      if (streetAddress.trim().length < 5) {
+        return "Escribe la dirección exacta";
+      }
+      if (reference.trim().length < 2) {
+        return "Escribe una referencia para ubicarte";
+      }
     }
     return null;
   }
@@ -113,7 +130,12 @@ export default function CheckoutModal({ open, onClose }: Props) {
           customerEmail: email.trim() || undefined,
           notifyEmail: notifyEmail && email.trim().length > 0,
           delivery,
-          address: delivery === "domicilio" ? address.trim() : undefined,
+          department: delivery === "domicilio" ? department : undefined,
+          municipality:
+            delivery === "domicilio" ? municipality.trim() : undefined,
+          streetAddress:
+            delivery === "domicilio" ? streetAddress.trim() : undefined,
+          reference: delivery === "domicilio" ? reference.trim() : undefined,
           payment,
           notes: notes.trim() || undefined,
           items: items.map((it) => ({
@@ -157,8 +179,17 @@ export default function CheckoutModal({ open, onClose }: Props) {
     ].join(" ");
 
   const deliveryLabel =
-    delivery === "domicilio" ? "Domicilio (Uber)" : "Retiro / Entrega directa";
+    delivery === "domicilio" ? "Envío a domicilio" : "Retiro / Entrega directa";
   const paymentLabel = payment === "transferencia" ? "Transferencia" : "Efectivo";
+  const shippingCents =
+    delivery === "domicilio" ? HOME_DELIVERY_FEE_CENTS : 0;
+  const orderTotalCents = totalCents + shippingCents;
+  const deliveryAddress = [
+    `Departamento: ${department}`,
+    `Municipio: ${municipality}`,
+    `Dirección exacta: ${streetAddress}`,
+    `Referencia: ${reference}`,
+  ].join("\n");
 
   return (
     <div
@@ -178,9 +209,10 @@ export default function CheckoutModal({ open, onClose }: Props) {
             </h2>
             <p className="max-w-sm text-sm text-stone-500 dark:text-stone-400">
               {success.delivery === "domicilio"
-                ? "Te contactaremos para confirmar el costo del envio segun tu zona."
+                ? `El envío a domicilio tiene una tarifa fija de ${formatMoney(HOME_DELIVERY_FEE_CENTS)}.`
                 : "Te contactaremos para coordinar la entrega."}{" "}
-              Total: <strong>{formatMoney(success.totalCents)}</strong>.
+              Total del pedido:{" "}
+              <strong>{formatMoney(success.totalCents)}</strong>.
             </p>
 
             {success.payment === "transferencia" && (
@@ -264,9 +296,18 @@ export default function CheckoutModal({ open, onClose }: Props) {
                 <dt className="text-stone-500 dark:text-stone-400">Entrega</dt>
                 <dd className="text-right font-medium text-stone-800 dark:text-stone-100">
                   {deliveryLabel}
-                  {delivery === "domicilio" && address ? ` · ${address}` : ""}
                 </dd>
               </div>
+              {delivery === "domicilio" && (
+                <div className="rounded-2xl bg-stone-50/80 px-4 py-3 dark:bg-stone-800/50">
+                  <dt className="text-stone-500 dark:text-stone-400">
+                    Dirección de entrega
+                  </dt>
+                  <dd className="mt-1 whitespace-pre-line text-right font-medium text-stone-800 dark:text-stone-100">
+                    {deliveryAddress}
+                  </dd>
+                </div>
+              )}
               <div className="flex items-start justify-between gap-3 rounded-2xl bg-stone-50/80 px-4 py-3 dark:bg-stone-800/50">
                 <dt className="text-stone-500 dark:text-stone-400">Pago</dt>
                 <dd className="text-right font-medium text-stone-800 dark:text-stone-100">
@@ -299,21 +340,32 @@ export default function CheckoutModal({ open, onClose }: Props) {
               ))}
             </ul>
 
-            <div className="mt-3 flex items-center justify-between px-1">
-              <span className="text-sm text-stone-500 dark:text-stone-400">
-                Subtotal
-              </span>
-              <span className="text-lg font-bold text-stone-900 dark:text-stone-100">
-                {formatMoney(totalCents)}
-              </span>
-            </div>
-
-            {delivery === "domicilio" && (
-              <p className="mt-3 rounded-2xl bg-amber-50 px-4 py-2.5 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
-                El costo del envio depende de tu zona y se confirma al
-                contactarte.
-              </p>
-            )}
+            <dl className="mt-3 space-y-2 rounded-2xl bg-stone-50/80 px-4 py-3 text-sm dark:bg-stone-800/50">
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-stone-500 dark:text-stone-400">Subtotal</dt>
+                <dd className="font-medium text-stone-800 dark:text-stone-100">
+                  {formatMoney(totalCents)}
+                </dd>
+              </div>
+              {delivery === "domicilio" && (
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-stone-500 dark:text-stone-400">
+                    Envío a domicilio (tarifa fija)
+                  </dt>
+                  <dd className="font-medium text-stone-800 dark:text-stone-100">
+                    {formatMoney(shippingCents)}
+                  </dd>
+                </div>
+              )}
+              <div className="flex items-center justify-between gap-3 border-t border-stone-200 pt-2 dark:border-stone-700">
+                <dt className="font-semibold text-stone-700 dark:text-stone-200">
+                  Total
+                </dt>
+                <dd className="text-lg font-bold text-stone-900 dark:text-stone-100">
+                  {formatMoney(orderTotalCents)}
+                </dd>
+              </div>
+            </dl>
 
             {error && (
               <p
@@ -349,29 +401,50 @@ export default function CheckoutModal({ open, onClose }: Props) {
               Finalizar pedido
             </h2>
             <p className="mb-5 text-sm text-stone-500 dark:text-stone-400">
-              Subtotal: <strong>{formatMoney(totalCents)}</strong>. Sin pagos en
-              linea: coordinas el pago al contactarte.
+              Subtotal: <strong>{formatMoney(totalCents)}</strong>
+              {delivery === "domicilio" && (
+                <>
+                  {" "}
+                  · Envío a domicilio:{" "}
+                  <strong>{formatMoney(HOME_DELIVERY_FEE_CENTS)}</strong>
+                </>
+              )}
+              . El total final se muestra antes de confirmar. El pago se
+              coordina al contactarte.
             </p>
 
             <form onSubmit={goReview} className="space-y-4">
+              <p className="text-xs text-stone-500 dark:text-stone-400">
+                Los campos marcados con * son obligatorios.
+              </p>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Tu nombre"
-                  aria-label="Tu nombre"
-                  maxLength={80}
-                  className={inputClass}
-                />
-                <input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="Tu telefono (WhatsApp)"
-                  aria-label="Tu telefono"
-                  inputMode="tel"
-                  maxLength={20}
-                  className={inputClass}
-                />
+                <label className="block space-y-1.5 text-sm font-medium text-stone-700 dark:text-stone-300">
+                  Nombre completo *
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Tu nombre"
+                    aria-label="Nombre completo"
+                    autoComplete="name"
+                    required
+                    maxLength={80}
+                    className={inputClass}
+                  />
+                </label>
+                <label className="block space-y-1.5 text-sm font-medium text-stone-700 dark:text-stone-300">
+                  Teléfono *
+                  <input
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="Tu teléfono (WhatsApp)"
+                    aria-label="Teléfono"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    required
+                    maxLength={20}
+                    className={inputClass}
+                  />
+                </label>
               </div>
 
               <div className="space-y-2">
@@ -426,26 +499,83 @@ export default function CheckoutModal({ open, onClose }: Props) {
                     aria-pressed={delivery === "domicilio"}
                     className={radioClass(delivery === "domicilio")}
                   >
-                    Domicilio (Uber)
+                    Envío a domicilio
                   </button>
                 </div>
               </div>
 
               {delivery === "domicilio" && (
-                <div className="space-y-1.5">
-                  <input
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="Direccion exacta con punto de referencia"
-                    aria-label="Direccion exacta de entrega"
-                    maxLength={200}
-                    className={inputClass}
-                  />
-                  <p className="text-xs text-amber-700 dark:text-amber-300">
-                    Escribe la direccion completa (calle, casa, colonia y una
-                    referencia). El costo del envio depende de la zona y se
-                    confirma al contactarte.
+                <div className="space-y-3 rounded-2xl border border-stone-200 bg-stone-50/70 p-4 dark:border-stone-700 dark:bg-stone-800/40">
+                  <div>
+                    <p className="text-sm font-semibold text-stone-800 dark:text-stone-100">
+                      Datos para coordinar el envío
+                    </p>
+                    <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
+                      Completa estos datos para que la empresa de mensajería
+                      pueda ubicarte.
+                    </p>
+                  </div>
+                  <p className="rounded-xl bg-brand-50 px-3 py-2 text-sm font-semibold text-brand-800 dark:bg-brand-500/10 dark:text-brand-200">
+                    Tarifa fija de envío: {formatMoney(HOME_DELIVERY_FEE_CENTS)}
                   </p>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <label className="block space-y-1.5 text-sm font-medium text-stone-700 dark:text-stone-300">
+                      Departamento *
+                      <select
+                        value={department}
+                        onChange={(e) => setDepartment(e.target.value)}
+                        aria-label="Departamento"
+                        autoComplete="address-level1"
+                        required
+                        className={inputClass}
+                      >
+                        <option value="">Selecciona tu departamento</option>
+                        {EL_SALVADOR_DEPARTMENTS.map((item) => (
+                          <option key={item} value={item}>
+                            {item}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="block space-y-1.5 text-sm font-medium text-stone-700 dark:text-stone-300">
+                      Municipio *
+                      <input
+                        value={municipality}
+                        onChange={(e) => setMunicipality(e.target.value)}
+                        placeholder="Tu municipio"
+                        aria-label="Municipio"
+                        autoComplete="address-level2"
+                        maxLength={80}
+                        required
+                        className={inputClass}
+                      />
+                    </label>
+                  </div>
+                  <label className="block space-y-1.5 text-sm font-medium text-stone-700 dark:text-stone-300">
+                    Dirección exacta *
+                    <input
+                      value={streetAddress}
+                      onChange={(e) => setStreetAddress(e.target.value)}
+                      placeholder="Calle, colonia y número de casa"
+                      aria-label="Dirección exacta"
+                      autoComplete="street-address"
+                      maxLength={200}
+                      required
+                      className={inputClass}
+                    />
+                  </label>
+                  <label className="block space-y-1.5 text-sm font-medium text-stone-700 dark:text-stone-300">
+                    Referencia para ubicarte *
+                    <input
+                      value={reference}
+                      onChange={(e) => setReference(e.target.value)}
+                      placeholder="Ej. portón negro, última casa a la izquierda"
+                      aria-label="Referencia para ubicarte"
+                      maxLength={180}
+                      required
+                      className={inputClass}
+                    />
+                  </label>
                 </div>
               )}
 

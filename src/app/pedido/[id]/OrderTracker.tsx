@@ -471,7 +471,7 @@ export default function OrderTracker({
             </dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-stone-500 dark:text-stone-400">Envio</dt>
+            <dt className="text-stone-500 dark:text-stone-400">Envío</dt>
             <dd className="font-medium text-stone-700 dark:text-stone-200">
               {order.shippingCents > 0
                 ? formatMoney(order.shippingCents)

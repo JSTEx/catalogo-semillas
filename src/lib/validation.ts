@@ -125,7 +125,10 @@ export const createOrderSchema = z
     customerEmail: customerEmailSchema.optional(),
     notifyEmail: z.boolean().default(false),
     delivery: z.enum(["retiro", "domicilio"]).default("retiro"),
-    address: sanitizedString(1, 200, "La direccion").optional(),
+    department: sanitizedString(2, 80, "El departamento").optional(),
+    municipality: sanitizedString(2, 80, "El municipio").optional(),
+    streetAddress: sanitizedString(5, 200, "La dirección exacta").optional(),
+    reference: sanitizedString(2, 180, "La referencia").optional(),
     payment: z.enum(["efectivo", "transferencia"]).default("efectivo"),
     notes: sanitizedString(1, 300, "Las notas").optional(),
     items: z
@@ -133,9 +136,22 @@ export const createOrderSchema = z
       .min(1, "El pedido debe tener al menos un producto")
       .max(30, "Demasiados productos en el pedido"),
   })
-  .refine((data) => data.delivery !== "domicilio" || (data.address ?? "").length > 0, {
-    path: ["address"],
-    message: "Para envio a domicilio es obligatorio indicar la direccion",
+  .superRefine((data, ctx) => {
+    if (data.delivery !== "domicilio") return;
+    for (const [field, value, message] of [
+      ["department", data.department, "Selecciona un departamento"],
+      ["municipality", data.municipality, "Escribe el municipio"],
+      ["streetAddress", data.streetAddress, "Escribe la dirección exacta"],
+      ["reference", data.reference, "Escribe una referencia para ubicarte"],
+    ] as const) {
+      if (!value || value.length < 2) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [field],
+          message,
+        });
+      }
+    }
   })
   .refine((data) => !data.notifyEmail || !!data.customerEmail, {
     path: ["customerEmail"],

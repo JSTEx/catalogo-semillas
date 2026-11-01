@@ -3,6 +3,7 @@
 import { useCart } from "./CartProvider";
 import SeedImage from "../SeedImage";
 import { formatMoney } from "@/lib/money";
+import { HOME_DELIVERY_FEE_CENTS } from "@/lib/delivery";
 import { useBackdropClose } from "@/lib/use-backdrop-close";
 
 interface Props {
@@ -184,7 +185,8 @@ export default function CartDrawer({ open, onClose, onCheckout }: Props) {
               </button>
             </div>
             <p className="mt-3 text-center text-[11px] text-stone-400 dark:text-stone-500">
-              Si eliges domicilio, el costo del envio se confirma al contactarte.
+              El envío a domicilio tiene una tarifa fija de{" "}
+              {formatMoney(HOME_DELIVERY_FEE_CENTS)}.
             </p>
           </footer>
         )}

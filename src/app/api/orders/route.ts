@@ -10,6 +10,7 @@ import { reserveStock } from "@/lib/inventory";
 import { sendNewOrderEmail, sendCustomerOrderEmail } from "@/lib/email";
 import { toOrderDTO, type OrderItem } from "@/lib/types";
 import { auth } from "@/auth";
+import { HOME_DELIVERY_FEE_CENTS, formatDeliveryAddress } from "@/lib/delivery";
 
 export const runtime = "nodejs";
 
@@ -83,6 +84,21 @@ export async function POST(req: Request) {
 
   const session = await auth();
   const customerId = session?.user?.id ?? null;
+  const shippingCents =
+    parsed.data.delivery === "domicilio" ? HOME_DELIVERY_FEE_CENTS : 0;
+  let address: string | null = null;
+  if (parsed.data.delivery === "domicilio") {
+    const { department, municipality, streetAddress, reference } = parsed.data;
+    if (!department || !municipality || !streetAddress || !reference) {
+      return jsonError("Completa todos los datos para el envio a domicilio", 400);
+    }
+    address = formatDeliveryAddress({
+      department,
+      municipality,
+      streetAddress,
+      reference,
+    });
+  }
 
   const dto = await db.transaction(async (tx) => {
     const reserved = await reserveStock(tx, items);
@@ -97,13 +113,13 @@ export async function POST(req: Request) {
         customerEmail: parsed.data.customerEmail ?? null,
         notifyEmail: parsed.data.notifyEmail,
         delivery: parsed.data.delivery,
-        address: parsed.data.address ?? null,
+        address,
         payment: parsed.data.payment,
         notes: parsed.data.notes ?? null,
         items,
         productsTotal,
-        shippingCents: 0,
-        totalCents: productsTotal,
+        shippingCents,
+        totalCents: productsTotal + shippingCents,
       })
       .returning();
 

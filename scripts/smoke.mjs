@@ -59,6 +59,23 @@ const productMutation = await fetch(BASE + "/api/products", {
 }).catch(() => null);
 check("ediciones protegidas sin sesión", productMutation?.status === 401, `-> ${productMutation?.status ?? 0}`);
 
+const incompleteDelivery = await fetch(BASE + "/api/orders", {
+  method: "POST",
+  headers: ORIGIN,
+  body: JSON.stringify({
+    customerName: "Smoke",
+    customerPhone: "50370009999",
+    delivery: "domicilio",
+    payment: "efectivo",
+    items: [{ productId: "00000000-0000-4000-8000-000000000001", quantity: 1 }],
+  }),
+}).catch(() => null);
+check(
+  "envio a domicilio requiere los datos de Boxful",
+  incompleteDelivery?.status === 400,
+  `-> ${incompleteDelivery?.status ?? 0}`,
+);
+
 const statusRes = await fetch(BASE + "/api/orders/status?ids=", { headers: { Origin: BASE } }).catch(() => null);
 check("GET /api/orders/status (batch)", statusRes?.status === 200, `-> ${statusRes?.status ?? 0}`);
 
@@ -127,10 +144,30 @@ if (process.env.SMOKE_WRITE === "1") {
     const createdOrder = await fetch(BASE + "/api/orders", {
       method: "POST",
       headers: ORIGIN,
-      body: JSON.stringify({ customerName: "Smoke", customerPhone: "50370009999", delivery: "retiro", payment: "efectivo", items: [{ productId, quantity: 1 }] }),
+      body: JSON.stringify({
+        customerName: "Smoke",
+        customerPhone: "50370009999",
+        delivery: "domicilio",
+        department: "San Salvador",
+        municipality: "Ilopango",
+        streetAddress: "Residencial de prueba, casa 1",
+        reference: "Portón negro frente al parque",
+        payment: "efectivo",
+        items: [{ productId, quantity: 1 }],
+      }),
     }).then((r) => r.json());
     const orderId = createdOrder.order?.id;
     check("crear pedido de prueba", Boolean(orderId));
+    check(
+      "envio domicilio aplica tarifa fija y total correcto",
+      createdOrder.order?.shippingCents === 450 &&
+        createdOrder.order?.totalCents === createdOrder.order?.productsTotal + 450,
+    );
+    check(
+      "guardar datos estructurados de Boxful",
+      createdOrder.order?.address?.includes("Departamento: San Salvador") &&
+        createdOrder.order?.address?.includes("Referencia: Portón negro frente al parque"),
+    );
 
     if (orderId) {
       const cancel = await fetch(`${BASE}/api/orders/${orderId}/cancel`, {

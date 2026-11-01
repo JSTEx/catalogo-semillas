@@ -8,6 +8,7 @@ import { holdsStock, releaseStock, reserveStock } from "@/lib/inventory";
 import { deleteUnusedImages } from "@/lib/image-cleanup";
 import { sendCustomerOrderEmail } from "@/lib/email";
 import { toOrderDTO, toPublicOrderDTO, type OrderItem } from "@/lib/types";
+import { HOME_DELIVERY_FEE_CENTS } from "@/lib/delivery";
 
 export const runtime = "nodejs";
 
@@ -53,7 +54,12 @@ export async function PATCH(req: Request, { params }: Params) {
 
   const patch = { ...parsed.data } as Record<string, unknown>;
   if (parsed.data.shippingCents !== undefined) {
-    patch.totalCents = existing.productsTotal + parsed.data.shippingCents;
+    const fixedShipping =
+      existing.delivery === "domicilio" ? HOME_DELIVERY_FEE_CENTS : 0;
+    if (parsed.data.shippingCents !== fixedShipping) {
+      return jsonError("El costo de envío es fijo para esta forma de entrega", 400);
+    }
+    patch.totalCents = existing.productsTotal + fixedShipping;
   }
   if (parsed.data.status !== undefined) {
     if (parsed.data.status === "delivered") {

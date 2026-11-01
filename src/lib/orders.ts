@@ -74,7 +74,7 @@ export type DeliveryType = (typeof DELIVERY_TYPES)[number];
 
 export const DELIVERY_META: Record<DeliveryType, { label: string }> = {
   retiro: { label: "Retiro / Entrega directa" },
-  domicilio: { label: "Domicilio" },
+  domicilio: { label: "Envío a domicilio" },
 };
 
 export const EXPENSE_CATEGORIES = [
