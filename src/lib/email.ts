@@ -552,7 +552,9 @@ function customerHtml(order: OrderDTO, status: OrderStatus): string {
       tracking
         ? `<div style="margin-top:20px;text-align:center;">${button(
             tracking,
-            order.payment === "transferencia" && !order.paymentConfirmedAt
+            order.payment === "transferencia" &&
+            !order.paymentConfirmedAt &&
+            visibleStatus !== "cancelled"
               ? "Subir comprobante y ver pedido"
               : "Ver estado de mi pedido",
             "solid",

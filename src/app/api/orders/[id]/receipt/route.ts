@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { MAX_IMAGE_BYTES, productIdSchema } from "@/lib/validation";
@@ -13,6 +13,7 @@ import {
 import { checkReceiptRateLimit } from "@/lib/rate-limit";
 import { validateImage } from "@/lib/file-validation";
 import {
+  deleteStoredImage,
   downloadPrivateReceipt,
   uploadPrivateReceipt,
 } from "@/lib/storage";
@@ -154,10 +155,27 @@ export async function POST(req: Request, { params }: Params) {
   const [updated] = await db
     .update(orders)
     .set({ receiptUrl: url, updatedAt: new Date() })
-    .where(eq(orders.id, id))
+    .where(
+      and(
+        eq(orders.id, id),
+        ne(orders.status, "cancelled"),
+        isNull(orders.paymentConfirmedAt),
+        isNull(orders.receiptUrl),
+      ),
+    )
     .returning();
 
-  if (!updated) return jsonError("Pedido no encontrado", 404);
+  if (!updated) {
+    try {
+      await deleteStoredImage(url);
+    } catch (error) {
+      console.error("[receipt] no se pudo limpiar un comprobante rechazado:", error);
+    }
+    return jsonError(
+      "El pedido ya no admite comprobantes. Actualiza el seguimiento.",
+      409,
+    );
+  }
 
   return NextResponse.json({ order: toPublicOrderDTO(updated) }, { status: 201 });
 }

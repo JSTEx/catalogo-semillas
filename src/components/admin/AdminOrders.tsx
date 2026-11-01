@@ -461,8 +461,8 @@ export default function AdminOrders({
 
   return (
     <div>
-      <div className="mb-3 flex items-center gap-2">
-        <div className="relative min-w-0 flex-1 sm:max-w-sm">
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="relative min-w-0 flex-1">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -485,46 +485,31 @@ export default function AdminOrders({
             className="w-full rounded-xl border border-stone-200 bg-white py-2.5 pl-10 pr-3 text-sm text-stone-800 outline-none placeholder:text-stone-400 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:placeholder:text-stone-400 dark:focus:border-brand-500 dark:focus:ring-brand-500/30 sm:rounded-2xl sm:py-3 sm:pl-11 sm:pr-4"
           />
         </div>
-        <div className="ml-auto">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 sm:flex sm:items-center">
+          <label className="sr-only" htmlFor="admin-order-status-filter">
+            Filtrar pedidos por estado
+          </label>
+          <select
+            id="admin-order-status-filter"
+            value={filter}
+            onChange={(event) => setFilter(event.target.value as "all" | OrderStatus)}
+            className="h-10 min-w-0 rounded-xl border border-stone-200 bg-white px-3 text-xs font-medium text-stone-700 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:focus:border-brand-500 dark:focus:ring-brand-500/30 sm:h-11 sm:min-w-48 sm:rounded-2xl sm:text-sm"
+          >
+            <option value="all">Todos los pedidos ({counts.all})</option>
+            {ORDER_STATUSES.map((status) => (
+              <option key={status} value={status}>
+                {ORDER_STATUS_META[status].short} ({counts[status]})
+              </option>
+            ))}
+          </select>
           <ViewToggle value={view} onChange={setView} />
         </div>
       </div>
 
-      <div className="mb-4 grid grid-cols-2 gap-1.5 sm:mb-5 sm:flex sm:flex-wrap sm:gap-2">
-        <button
-          type="button"
-          onClick={() => setFilter("all")}
-          className={[
-            "inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border px-2 py-1.5 text-[11px] font-medium transition-colors duration-200 sm:justify-start sm:gap-2 sm:px-3.5 sm:text-sm",
-            filter === "all"
-              ? "border-brand-500 bg-brand-500 text-white shadow-sm"
-              : "border-stone-200 bg-white/70 text-stone-600 hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300",
-          ].join(" ")}
-        >
-          Todos
-          <span className="rounded-full bg-black/10 px-1.5 text-xs dark:bg-white/10">
-            {counts.all}
-          </span>
-        </button>
-        {ORDER_STATUSES.map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => setFilter(s)}
-            className={[
-              "inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border px-2 py-1.5 text-[11px] font-medium transition-colors duration-200 sm:justify-start sm:gap-2 sm:px-3.5 sm:text-sm",
-              filter === s
-                ? ORDER_STATUS_META[s].active
-                : "border-stone-200 bg-white/70 text-stone-600 hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:bg-stone-900/70 dark:text-stone-300",
-            ].join(" ")}
-          >
-            <span className={["h-2 w-2 rounded-full", ORDER_STATUS_META[s].dot].join(" ")} />
-            {ORDER_STATUS_META[s].short}
-            <span className="rounded-full bg-black/10 px-1.5 text-xs dark:bg-white/10">
-              {counts[s]}
-            </span>
-          </button>
-        ))}
+      <div className="mb-4 flex items-center justify-between gap-2 sm:mb-5">
+        <p className="text-xs text-stone-500 dark:text-stone-400">
+          {filtered.length} de {counts.all} {counts.all === 1 ? "pedido" : "pedidos"}
+        </p>
       </div>
 
       {error && (

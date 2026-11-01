@@ -197,6 +197,24 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
     () => orders.filter((o) => o.status === "new").length,
     [orders],
   );
+  const sectionInfo = {
+    products: {
+      title: "Productos",
+      description: "Administra el catálogo, disponibilidad y existencias.",
+    },
+    orders: {
+      title: "Pedidos",
+      description: "Revisa pagos, prepara pedidos y actualiza su progreso.",
+    },
+    stats: {
+      title: "Resumen",
+      description: "Consulta el rendimiento de ventas y gastos.",
+    },
+    admins: {
+      title: "Administradores",
+      description: "Controla quién puede acceder al panel.",
+    },
+  }[tab];
 
   function openEdit(product: ProductDTO) {
     setError(null);
@@ -622,7 +640,14 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
         </div>
       </header>
 
-      <nav className="mx-auto mt-3 grid max-w-7xl grid-cols-2 gap-1 rounded-2xl border border-stone-200 bg-white p-1.5 shadow-sm dark:border-stone-700 dark:bg-stone-900 sm:mt-5 sm:flex sm:flex-wrap sm:border-0 sm:bg-transparent sm:p-0 sm:shadow-none sm:dark:bg-transparent sm:px-6">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-3 py-4 sm:px-6 lg:grid-cols-[220px_minmax(0,1fr)] lg:gap-8 lg:py-8">
+      <nav
+        aria-label="Secciones de administración"
+        className={[
+          "fixed inset-x-0 bottom-0 z-40 grid gap-1 border-t border-stone-200 bg-white/95 p-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] backdrop-blur-md dark:border-stone-700 dark:bg-stone-950/95 lg:sticky lg:top-24 lg:col-start-1 lg:row-start-1 lg:flex lg:h-fit lg:flex-col lg:gap-1 lg:rounded-2xl lg:border lg:p-2 lg:shadow-sm",
+          adminRole === "superadmin" ? "grid-cols-4" : "grid-cols-3",
+        ].join(" ")}
+      >
         {(
           [
             {
@@ -687,8 +712,9 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
             key={t.key}
             type="button"
             onClick={() => setTab(t.key)}
+            aria-current={tab === t.key ? "page" : undefined}
             className={[
-              "inline-flex min-h-10 w-full items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-xs font-semibold transition-colors duration-200 sm:min-h-10 sm:w-auto sm:justify-start sm:gap-2 sm:px-4 sm:text-sm",
+              "inline-flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-[10px] font-semibold leading-tight transition-colors duration-200 lg:min-h-11 lg:flex-row lg:justify-start lg:gap-3 lg:px-3 lg:py-2 lg:text-sm",
               tab === t.key
                 ? "bg-brand-500 text-white shadow-sm"
                 : "text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-800",
@@ -702,12 +728,12 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
               strokeWidth="2"
               strokeLinecap="round"
               strokeLinejoin="round"
-              className="h-4 w-4"
+              className="h-4 w-4 shrink-0"
               aria-hidden="true"
             >
               {t.icon}
             </svg>
-            {t.label}
+            <span className="truncate">{t.key === "admins" ? "Admins" : t.label}</span>
             {t.badge > 0 && (
               <span
                 className={[
@@ -724,10 +750,26 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
         ))}
       </nav>
 
-      <main className="mx-auto max-w-7xl px-3 py-4 sm:px-6 sm:py-8">
+      <main className="min-w-0 pb-24 lg:col-start-2 lg:row-start-1 lg:pb-8">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-3 border-b border-stone-200 pb-4 dark:border-stone-700 sm:mb-6 sm:pb-5">
+          <div>
+            <h2 className="text-xl font-bold tracking-tight text-stone-900 dark:text-stone-100 sm:text-2xl">
+              {sectionInfo.title}
+            </h2>
+            <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
+              {sectionInfo.description}
+            </p>
+          </div>
+          {tab === "orders" && pendingOrders > 0 && (
+            <span className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">
+              <span className="h-2 w-2 rounded-full bg-amber-500" />
+              {pendingOrders} {pendingOrders === 1 ? "pedido nuevo" : "pedidos nuevos"}
+            </span>
+          )}
+        </div>
         {tab === "products" ? (
           <>
-        <div className="mb-4 flex flex-col gap-3 sm:mb-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-4 flex flex-col gap-2 sm:mb-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative w-full sm:max-w-sm">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -799,58 +841,23 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
           </div>
         </div>
 
-        <div className="mb-4 grid grid-cols-2 gap-2 sm:mb-5 sm:grid-cols-3 lg:grid-cols-5">
-          {[
-            { label: "Total", value: counts.all, dot: "bg-stone-400" },
-            {
-              label: STATUS_META.available.short,
-              value: counts.available,
-              dot: STATUS_META.available.dot,
-            },
-            {
-              label: STATUS_META.low_stock.short,
-              value: counts.low_stock,
-              dot: STATUS_META.low_stock.dot,
-            },
-            {
-              label: STATUS_META.coming_soon.short,
-              value: counts.coming_soon,
-              dot: STATUS_META.coming_soon.dot,
-            },
-            {
-              label: STATUS_META.out_of_stock.short,
-              value: counts.out_of_stock,
-              dot: STATUS_META.out_of_stock.dot,
-            },
-          ].map((s) => (
-            <div
-              key={s.label}
-              className="flex items-center gap-2 rounded-xl border border-stone-200 bg-white px-3 py-2.5 shadow-sm dark:border-stone-700 dark:bg-stone-900 sm:gap-3 sm:rounded-2xl sm:px-4 sm:py-3"
-            >
-              <span
-                className={["h-2.5 w-2.5 shrink-0 rounded-full", s.dot].join(" ")}
-              />
-              <div className="min-w-0">
-                <p className="text-lg font-bold leading-none text-stone-800 dark:text-stone-100">
-                  {s.value}
-                </p>
-                <p className="truncate text-[11px] text-stone-500 dark:text-stone-400">
-                  {s.label}
-                </p>
-              </div>
-            </div>
-          ))}
+        <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-xs text-stone-500 shadow-sm dark:border-stone-700 dark:bg-stone-900 dark:text-stone-400">
+          <span><strong className="text-stone-800 dark:text-stone-100">{counts.all}</strong> productos</span>
+          <span aria-hidden="true" className="text-stone-300 dark:text-stone-600">•</span>
+          <span><strong className="text-stone-800 dark:text-stone-100">{counts.available}</strong> disponibles</span>
+          <span aria-hidden="true" className="text-stone-300 dark:text-stone-600">•</span>
+          <span><strong className="text-stone-800 dark:text-stone-100">{counts.low_stock + counts.out_of_stock}</strong> con poco stock o agotados</span>
         </div>
 
         <div className="mb-4 flex flex-col gap-2 sm:mb-6">
-          <div className="grid grid-cols-2 gap-1.5 sm:flex sm:flex-wrap sm:gap-2">
+          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
           {filters.map((f) => (
             <button
               key={f.key}
               type="button"
               onClick={() => setFilter(f.key)}
               className={[
-                "inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full border px-2 py-1.5 text-[11px] font-medium transition-colors duration-200 sm:justify-start sm:gap-2 sm:px-3.5 sm:text-sm",
+                "inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition-colors duration-200 sm:gap-2 sm:px-3.5 sm:text-sm",
                 filter === f.key
                   ? f.key === "all"
                     ? "border-brand-500 bg-brand-500 text-white shadow-sm"
@@ -1065,6 +1072,7 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
           <AdminUsers canManage={adminRole === "superadmin"} />
         ) : null}
       </main>
+      </div>
 
       {form && (
         <div
