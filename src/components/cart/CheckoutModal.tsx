@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react";
 import { useCart } from "./CartProvider";
 import { formatMoney } from "@/lib/money";
 import {
-  businessWhatsAppLink,
   customerWhatsAppLink,
   orderTrackingPath,
 } from "@/lib/orders";
@@ -311,18 +310,14 @@ export default function CheckoutModal({ open, onClose }: Props) {
               <div className="w-full rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-left text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
                 <p className="font-semibold">Pago por transferencia</p>
                 <p className="mt-1">
-                  Recuerda enviar tu comprobante de transferencia por WhatsApp
-                  para confirmar el pago.
+                  Usa el enlace de seguimiento para subir tu comprobante. El
+                  pago se confirmará cuando verifiquemos el ingreso.
                 </p>
                 <a
-                  href={businessWhatsAppLink(
-                    `Hola! Adjunto el comprobante de transferencia de mi pedido N° ${success.number}.`,
-                  )}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href={orderTrackingPath(success.id)}
                   className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-300 bg-white px-4 py-2.5 text-xs font-semibold text-amber-800 transition-colors hover:bg-amber-100 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200"
                 >
-                  Enviar comprobante por WhatsApp
+                  Subir comprobante y ver estado
                 </a>
               </div>
             )}
@@ -694,8 +689,8 @@ export default function CheckoutModal({ open, onClose }: Props) {
                 {payment === "transferencia" && (
                   <p className="text-xs text-stone-500 dark:text-stone-400">
                     {delivery === "domicilio"
-                      ? "Envía tu comprobante por WhatsApp; coordinaremos el envío al confirmar el pago."
-                      : "Envía tu comprobante por WhatsApp para confirmar tu pago."}
+                      ? "Sube el comprobante desde el seguimiento. Despacharemos el pedido cuando verifiquemos el pago."
+                      : "Sube el comprobante desde el seguimiento para que podamos verificar el pago."}
                   </p>
                 )}
               </div>

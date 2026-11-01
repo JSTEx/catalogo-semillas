@@ -34,7 +34,7 @@ export const orderStatusEnum = pgEnum("order_status", [
   "confirmed",
   "preparing",
   "ready",
-  "in_transit",
+  "dispatched",
   "delivered",
   "cancelled",
 ]);
@@ -147,6 +147,7 @@ export const orders = enableRowLevelSecurity(pgTable(
     totalCents: integer("total_cents").default(0).notNull(),
     notes: text("notes"),
     receiptUrl: text("receipt_url"),
+    paymentConfirmedAt: timestamp("payment_confirmed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .defaultNow()
       .notNull(),

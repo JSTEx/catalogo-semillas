@@ -162,6 +162,7 @@ export const createOrderSchema = z
 export const updateOrderSchema = z
   .object({
     status: z.enum(ORDER_STATUSES).optional(),
+    paymentConfirmed: z.boolean().optional(),
     shippingCents: z
       .number()
       .int()

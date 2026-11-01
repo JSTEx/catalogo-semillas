@@ -45,6 +45,9 @@ export async function POST(req: Request, { params }: Params) {
   if (order.payment !== "transferencia") {
     return jsonError("Este pedido no es por transferencia.", 409);
   }
+  if (order.paymentConfirmedAt) {
+    return jsonError("El pago de este pedido ya fue confirmado.", 409);
+  }
   if (order.receiptUrl) {
     return jsonError("Ya se subio un comprobante para este pedido.", 409);
   }

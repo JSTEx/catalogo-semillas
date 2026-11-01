@@ -26,7 +26,7 @@ const ORDER_STATUSES: OrderStatus[] = [
   "confirmed",
   "preparing",
   "ready",
-  "in_transit",
+  "dispatched",
   "delivered",
   "cancelled",
 ];
@@ -143,7 +143,7 @@ export function isActiveOrder(status: OrderStatus): boolean {
     status === "confirmed" ||
     status === "preparing" ||
     status === "ready" ||
-    status === "in_transit"
+    status === "dispatched"
   );
 }
 

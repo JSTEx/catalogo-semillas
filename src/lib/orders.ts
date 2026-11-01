@@ -20,7 +20,7 @@ export const ORDER_STATUSES = [
   "confirmed",
   "preparing",
   "ready",
-  "in_transit",
+  "dispatched",
   "delivered",
   "cancelled",
 ] as const;
@@ -55,9 +55,9 @@ export const ORDER_STATUS_META: Record<
     dot: "bg-teal-500",
     active: "border-teal-500 bg-teal-500 text-white",
   },
-  in_transit: {
-    label: "En camino",
-    short: "En camino",
+  dispatched: {
+    label: "Despachado",
+    short: "Despachado",
     dot: "bg-violet-500",
     active: "border-violet-500 bg-violet-500 text-white",
   },
@@ -237,7 +237,7 @@ export function statusNotifyMessage(order: OrderDTO): string {
     confirmed: `Hola ${order.customerName}! Tu pedido N° ${order.number} quedo confirmado.`,
     preparing: `Hola ${order.customerName}! Estamos preparando tu pedido N° ${order.number}.`,
     ready: `Hola ${order.customerName}! Tu pedido N° ${order.number} está ${orderStatusLabel(visibleStatus, order.delivery).toLocaleLowerCase("es")}.`,
-    in_transit: `Hola ${order.customerName}! Tu pedido N° ${order.number} va en camino.`,
+    dispatched: `Hola ${order.customerName}! Tu pedido N° ${order.number} ya fue despachado por la empresa de envíos.`,
     delivered: `Hola ${order.customerName}! Tu pedido N° ${order.number} fue entregado. Gracias por tu compra!`,
     cancelled: `Hola ${order.customerName}! Tu pedido N° ${order.number} fue cancelado. Escribenos si tienes dudas.`,
   };
@@ -291,7 +291,7 @@ export const ORDER_STATUS_FLOW: OrderStatus[] = [
   "confirmed",
   "preparing",
   "ready",
-  "in_transit",
+  "dispatched",
   "delivered",
 ];
 
@@ -299,7 +299,7 @@ export function orderStatusForDelivery(
   status: OrderStatus,
   delivery: DeliveryType,
 ): OrderStatus {
-  return status === "in_transit" && delivery === "retiro" ? "ready" : status;
+  return status === "dispatched" && delivery === "retiro" ? "ready" : status;
 }
 
 export function orderStatusLabel(
@@ -326,7 +326,7 @@ export function orderStatusDescription(
       delivery === "domicilio"
         ? "Tu pedido está listo para entregar a la mensajería"
         : "Tu pedido está listo; coordinaremos la entrega contigo",
-    in_transit: "La mensajería lleva tu pedido hacia ti",
+    dispatched: "La empresa de envíos ya recibió tu pedido",
     delivered: "Tu pedido fue entregado",
     cancelled: "Este pedido fue cancelado",
   };
@@ -336,7 +336,7 @@ export function orderStatusDescription(
 export function orderStatusFlow(delivery: DeliveryType): OrderStatus[] {
   return delivery === "domicilio"
     ? ORDER_STATUS_FLOW
-    : ORDER_STATUS_FLOW.filter((status) => status !== "in_transit");
+    : ORDER_STATUS_FLOW.filter((status) => status !== "dispatched");
 }
 
 /** Indice del estado dentro del flujo visible; -1 si está cancelado. */

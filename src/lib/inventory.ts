@@ -23,7 +23,7 @@ export function holdsStock(status: OrderStatus): boolean {
     status === "confirmed" ||
     status === "preparing" ||
     status === "ready" ||
-    status === "in_transit" ||
+    status === "dispatched" ||
     status === "delivered"
   );
 }

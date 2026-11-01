@@ -74,7 +74,7 @@ export interface OrderDTO {
     | "confirmed"
     | "preparing"
     | "ready"
-    | "in_transit"
+    | "dispatched"
     | "delivered"
     | "cancelled";
   items: OrderItem[];
@@ -87,6 +87,7 @@ export interface OrderDTO {
   totalCents: number;
   notes: string | null;
   receiptUrl: string | null;
+  paymentConfirmedAt: string | null;
   createdAt: string;
   updatedAt: string;
   deliveredAt: string | null;
@@ -121,6 +122,7 @@ export function toOrderDTO(
     totalCents: o.totalCents,
     notes: o.notes,
     receiptUrl: o.receiptUrl ?? null,
+    paymentConfirmedAt: o.paymentConfirmedAt?.toISOString() ?? null,
     createdAt: o.createdAt.toISOString(),
     updatedAt: o.updatedAt.toISOString(),
     deliveredAt: o.deliveredAt ? o.deliveredAt.toISOString() : null,
@@ -148,7 +150,7 @@ export interface PublicOrderDTO {
     | "confirmed"
     | "preparing"
     | "ready"
-    | "in_transit"
+    | "dispatched"
     | "delivered"
     | "cancelled";
   items: OrderItem[];
@@ -156,6 +158,7 @@ export interface PublicOrderDTO {
   shippingCents: number;
   totalCents: number;
   hasReceipt: boolean;
+  paymentConfirmedAt: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -172,6 +175,7 @@ export function toPublicOrderDTO(o: Order): PublicOrderDTO {
     shippingCents: o.shippingCents,
     totalCents: o.totalCents,
     hasReceipt: Boolean(o.receiptUrl),
+    paymentConfirmedAt: o.paymentConfirmedAt?.toISOString() ?? null,
     createdAt: o.createdAt.toISOString(),
     updatedAt: o.updatedAt.toISOString(),
   };

@@ -6,7 +6,10 @@ import { productIdSchema, updateOrderSchema } from "@/lib/validation";
 import { requireAdmin, jsonError } from "@/lib/http";
 import { holdsStock, releaseStock, reserveStock } from "@/lib/inventory";
 import { deleteUnusedImages } from "@/lib/image-cleanup";
-import { sendCustomerOrderEmail } from "@/lib/email";
+import {
+  sendCustomerOrderEmail,
+  sendCustomerPaymentConfirmedEmail,
+} from "@/lib/email";
 import { toOrderDTO, toPublicOrderDTO, type OrderItem } from "@/lib/types";
 import {
   HOME_DELIVERY_FEE_CENTS,
@@ -57,6 +60,10 @@ export async function PATCH(req: Request, { params }: Params) {
   if (!existing) return jsonError("Pedido no encontrado", 404);
 
   const patch = { ...parsed.data } as Record<string, unknown>;
+  if (parsed.data.paymentConfirmed !== undefined) {
+    patch.paymentConfirmedAt = parsed.data.paymentConfirmed ? new Date() : null;
+    delete patch.paymentConfirmed;
+  }
   if (parsed.data.shippingProviderId !== undefined) {
     if (guard.admin.role !== "superadmin") {
       return jsonError("Solo el superadmin puede ver y guardar costos de envío", 403);
@@ -94,15 +101,43 @@ export async function PATCH(req: Request, { params }: Params) {
   }
   if (parsed.data.status !== undefined) {
     if (
-      parsed.data.status === "in_transit" &&
+      parsed.data.status === "cancelled" &&
+      (existing.status === "dispatched" || existing.status === "delivered")
+    ) {
+      return jsonError(
+        "Un pedido despachado o entregado no se puede cancelar desde el panel",
+        409,
+      );
+    }
+    if (
+      parsed.data.status === "dispatched" &&
       existing.delivery !== "domicilio"
     ) {
       return jsonError(
-        "El estado En camino solo aplica a pedidos con envío a domicilio",
+        "El estado Despachado solo aplica a pedidos con envío a domicilio",
         400,
       );
     }
+    if (
+      parsed.data.status === "dispatched" &&
+      existing.payment === "transferencia" &&
+      !existing.paymentConfirmedAt
+    ) {
+      return jsonError(
+        "Confirma el pago por transferencia antes de despachar el pedido",
+        409,
+      );
+    }
     if (parsed.data.status === "delivered") {
+      if (
+        existing.payment === "transferencia" &&
+        !existing.paymentConfirmedAt
+      ) {
+        return jsonError(
+          "Confirma el pago por transferencia antes de marcar el pedido como entregado",
+          409,
+        );
+      }
       if (existing.status !== "delivered" || !existing.deliveredAt) {
         patch.deliveredAt = new Date();
       }
@@ -150,6 +185,9 @@ export async function PATCH(req: Request, { params }: Params) {
 
   if (parsed.data.status && parsed.data.status !== existing.status) {
     after(() => sendCustomerOrderEmail(dto));
+  }
+  if (parsed.data.paymentConfirmed === true && !existing.paymentConfirmedAt) {
+    after(() => sendCustomerPaymentConfirmedEmail(dto));
   }
 
   if (

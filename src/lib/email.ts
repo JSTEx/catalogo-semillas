@@ -40,28 +40,28 @@ import {
  *   cliente de correo.
  * - El pie lleva razon social y direccion fisica (identificacion del remitente).
  *
- * El diseno usa el modo nocturno del sitio (fondo carbon + esmeralda).
+ * La plantilla usa una paleta clara para mantener la lectura en cualquier cliente.
  * Si no hay proveedor configurado, no se envia nada (la app sigue normal).
  */
 let client: Resend | null = null;
 let smtp: Transporter | null = null;
 
-/* Paleta basada en el modo oscuro del sitio (globals.css + brand esmeralda). */
-const PAGE = "#0c0a09";
-const CARD = "#1c1917";
-const SURFACE = "#292524";
-const LINE = "#292524";
-const INK = "#f5f5f4";
-const TEXT = "#e7e5e4";
-const MUTED = "#a8a29e";
+/* Paleta clara y de alto contraste compatible con clientes de correo. */
+const PAGE = "#f3f6f5";
+const CARD = "#ffffff";
+const SURFACE = "#f8faf9";
+const LINE = "#e2e8e5";
+const INK = "#17211d";
+const TEXT = "#34423b";
+const MUTED = "#64736b";
 const BRAND = "#10b981";
-const BRAND_SOFT = "#34d399";
-const BRAND_INK = "#064e3b";
-const TRACKING = "#38bdf8";
-const TRACKING_INK = "#082f49";
-const NOTE_BG = "#3f2d0a";
-const NOTE_LINE = "#78350f";
-const NOTE_TEXT = "#fde68a";
+const BRAND_SOFT = "#047857";
+const BRAND_INK = "#ecfdf5";
+const TRACKING = "#d1fae5";
+const TRACKING_INK = "#065f46";
+const NOTE_BG = "#fffbeb";
+const NOTE_LINE = "#fcd34d";
+const NOTE_TEXT = "#78350f";
 
 function apiKey(): string | undefined {
   return process.env.RESEND_API_KEY;
@@ -204,25 +204,25 @@ async function sendEmail(
 const FONT =
   "system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 
-/** Marco visual comun: fondo oscuro, encabezado de marca y pie. */
+/** Marco visual claro y adaptable para clientes de correo. */
 function shell(preheader: string, inner: string, footer: string): string {
   return `<!doctype html>
 <html lang="es">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="color-scheme" content="dark" />
-    <meta name="supported-color-schemes" content="dark" />
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
   </head>
   <body style="margin:0;padding:0;background:${PAGE};font-family:${FONT};">
     <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${escapeHtml(
       preheader,
     )}</div>
     <div style="padding:28px 12px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;">
         <tr>
           <td>
-            <div style="background:${CARD};border:1px solid ${LINE};border-bottom:2px solid ${BRAND};border-radius:18px 18px 0 0;padding:20px 26px;">
+            <div style="background:${CARD};border:1px solid ${LINE};border-bottom:3px solid ${BRAND};border-radius:18px 18px 0 0;padding:20px 26px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td style="vertical-align:middle;">
@@ -242,7 +242,7 @@ function shell(preheader: string, inner: string, footer: string): string {
           </td>
         </tr>
       </table>
-      <p style="max-width:560px;margin:18px auto 0;text-align:center;color:#57534e;font-size:12px;line-height:1.5;">${footer}</p>
+      <p style="max-width:600px;margin:18px auto 0;text-align:center;color:${MUTED};font-size:12px;line-height:1.6;">${footer}</p>
     </div>
   </body>
 </html>`;
@@ -256,7 +256,7 @@ function button(
   const style = {
     solid: `background:${BRAND};color:${BRAND_INK};border:1px solid ${BRAND};`,
     sky: `background:${TRACKING};color:${TRACKING_INK};border:1px solid ${TRACKING};`,
-    outline: `background:${SURFACE};color:${TEXT};border:1px solid #44403c;`,
+    outline: `background:${SURFACE};color:${TEXT};border:1px solid #cbd5d1;`,
   }[variant];
   return `<a href="${href}" style="display:inline-block;${style}text-decoration:none;font-size:14px;font-weight:700;padding:12px 20px;border-radius:12px;margin:0 8px 8px 0;">${label}</a>`;
 }
@@ -266,7 +266,7 @@ function sectionTitle(label: string): string {
 }
 
 function card(inner: string): string {
-  return `<div style="background:${SURFACE};border:1px solid #44403c;border-radius:14px;padding:16px;">${inner}</div>`;
+  return `<div style="background:${SURFACE};border:1px solid ${LINE};border-radius:14px;padding:16px;">${inner}</div>`;
 }
 
 function detailRow(label: string, value: string): string {
@@ -284,7 +284,7 @@ function itemsTable(order: OrderDTO): string {
       <td width="54" style="padding:8px 12px 8px 0;vertical-align:middle;">
         <img src="${escapeHtml(
           it.imageUrl,
-        )}" width="44" height="44" alt="" style="border-radius:10px;background:#0c0a09;display:block;object-fit:contain;" />
+        )}" width="44" height="44" alt="" style="border-radius:10px;background:#f1f5f3;display:block;object-fit:contain;" />
       </td>
       <td style="padding:8px 0;vertical-align:middle;font-size:14px;color:${INK};font-weight:600;">
         ${escapeHtml(it.name)}
@@ -304,10 +304,10 @@ function itemsTable(order: OrderDTO): string {
 function totalsBox(order: OrderDTO): string {
   const row = (label: string, value: string, strong = false) =>
     `<tr>
-      <td style="padding:2px 0;color:${strong ? "#a7f3d0" : MUTED};font-size:${strong ? "15px" : "13px"};font-weight:${strong ? "800" : "400"};">${label}</td>
-      <td style="padding:2px 0;text-align:right;color:${strong ? "#ecfdf5" : TEXT};font-size:${strong ? "15px" : "13px"};font-weight:${strong ? "800" : "600"};">${value}</td>
+      <td style="padding:4px 0;color:${strong ? BRAND_SOFT : MUTED};font-size:${strong ? "16px" : "13px"};font-weight:${strong ? "800" : "400"};">${label}</td>
+      <td style="padding:4px 0;text-align:right;color:${strong ? BRAND_SOFT : TEXT};font-size:${strong ? "16px" : "13px"};font-weight:${strong ? "800" : "600"};">${value}</td>
     </tr>`;
-  return `<div style="background:${BRAND_INK};border:1px solid #047857;border-radius:14px;padding:14px 16px;margin-top:16px;">
+  return `<div style="background:${BRAND_INK};border:1px solid #a7f3d0;border-radius:14px;padding:14px 16px;margin-top:16px;">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       ${row("Subtotal", formatMoney(order.productsTotal))}
       ${
@@ -364,6 +364,54 @@ function businessHtml(order: OrderDTO): string {
   );
 }
 
+export async function sendCustomerPaymentConfirmedEmail(
+  order: OrderDTO,
+): Promise<void> {
+  if (!order.notifyEmail || !order.customerEmail) return;
+  const tracking = orderTrackingUrl(order.id);
+  const title = `Pago confirmado · Pedido N° ${order.number}`;
+  const inner = `
+    <div style="text-align:center;margin-bottom:20px;">
+      <div style="font-size:36px;line-height:1;">✅</div>
+      <h1 style="margin:10px 0 6px;color:${INK};font-size:22px;font-weight:800;">Pago confirmado</h1>
+      <p style="margin:0;color:${MUTED};font-size:14px;">Pedido N° ${order.number}</p>
+    </div>
+    <p style="margin:0 0 18px;color:${TEXT};font-size:15px;line-height:1.6;text-align:center;">
+      Hola ${escapeHtml(order.customerName)}, verificamos tu pago. Continuaremos con la preparación y entrega de tu pedido.
+    </p>
+    ${sectionTitle("Resumen del pedido")}
+    ${card(itemsTable(order))}
+    ${totalsBox(order)}
+    ${
+      tracking
+        ? `<div style="margin-top:20px;text-align:center;">${button(
+            tracking,
+            "Ver estado de mi pedido",
+            "solid",
+          )}</div>`
+        : ""
+    }`;
+  await sendEmail(
+    [order.customerEmail],
+    title,
+    shell(title, inner, "Recibes este correo porque solicitaste actualizaciones de tu pedido. JecsitoShop."),
+    [
+      title,
+      "",
+      `Hola ${order.customerName}, verificamos tu pago.`,
+      "Continuaremos con la preparación y entrega de tu pedido.",
+      "",
+      orderItemsSummary(order.items),
+      "",
+      `Total: ${formatMoney(order.totalCents)}`,
+      tracking ? `Estado del pedido: ${tracking}` : null,
+    ]
+      .filter((line): line is string => line !== null)
+      .join("\n"),
+    unsubscribeHeaders(order),
+  );
+}
+
 function businessText(order: OrderDTO): string {
   const tracking = orderTrackingUrl(order.id);
   return [
@@ -378,6 +426,15 @@ function businessText(order: OrderDTO): string {
     order.shippingCents > 0 ? `Envio: ${formatMoney(order.shippingCents)}` : null,
     `Total: ${formatMoney(order.totalCents)}`,
     `Pago: ${PAYMENT_META[order.payment].label}`,
+    `Estado del pago: ${
+      order.paymentConfirmedAt
+        ? "Confirmado"
+        : order.payment === "transferencia" && order.receiptUrl
+          ? "Comprobante recibido, en verificacion"
+          : order.payment === "transferencia"
+            ? "Pendiente de confirmacion"
+            : "Pendiente de pago"
+    }`,
     `Entrega: ${DELIVERY_META[order.delivery].label}`,
     order.address ? `Direccion: ${order.address}` : null,
     order.notes ? `Notas: ${order.notes}` : null,
@@ -406,7 +463,7 @@ const CUSTOMER_STATUS_TITLES: Record<OrderStatus, string> = {
   confirmed: "Tu pedido fue confirmado",
   preparing: "Estamos preparando tu pedido",
   ready: "Tu pedido está listo",
-  in_transit: "Tu pedido va en camino",
+  dispatched: "Tu pedido fue despachado",
   delivered: "Tu pedido fue entregado",
   cancelled: "Tu pedido fue cancelado",
 };
@@ -416,7 +473,7 @@ const CUSTOMER_STATUS_LINES: Record<OrderStatus, string> = {
   confirmed: "Tu pedido quedo confirmado. Pronto lo preparamos.",
   preparing: "Estamos preparando tu pedido.",
   ready: "Tu pedido está listo.",
-  in_transit: "Tu pedido ya va en camino.",
+  dispatched: "La empresa de envíos ya recibió tu pedido.",
   delivered: "Tu pedido fue entregado. Gracias por tu compra.",
   cancelled: "Tu pedido fue cancelado. Escribenos si tienes dudas.",
 };
@@ -426,7 +483,7 @@ const CUSTOMER_STATUS_EMOJI: Record<OrderStatus, string> = {
   confirmed: "✅",
   preparing: "📦",
   ready: "✅",
-  in_transit: "🚚",
+  dispatched: "📦",
   delivered: "🎉",
   cancelled: "⚠️",
 };
@@ -441,7 +498,7 @@ function customerStatusTitle(order: OrderDTO, status: OrderStatus): string {
 
 function customerStatusLine(order: OrderDTO, status: OrderStatus): string {
   const visibleStatus = orderStatusForDelivery(status, order.delivery);
-  if (visibleStatus === "ready" || visibleStatus === "in_transit") {
+  if (visibleStatus === "ready" || visibleStatus === "dispatched") {
     return `${orderStatusDescription(visibleStatus, order.delivery)}.`;
   }
   return CUSTOMER_STATUS_LINES[visibleStatus];
@@ -454,10 +511,11 @@ function customerHtml(order: OrderDTO, status: OrderStatus): string {
   const tracking = orderTrackingUrl(order.id);
   const receiptNote =
     order.payment === "transferencia" &&
+    !order.paymentConfirmedAt &&
     visibleStatus !== "delivered" &&
     visibleStatus !== "cancelled"
       ? note(
-          "Recuerda enviarnos el comprobante de tu transferencia por WhatsApp para confirmar el pago.",
+          "Sube tu comprobante desde el enlace de seguimiento. Confirmaremos el pago cuando verifiquemos el ingreso.",
         )
       : "";
 
@@ -473,13 +531,31 @@ function customerHtml(order: OrderDTO, status: OrderStatus): string {
     ${sectionTitle("Tu pedido")}
     ${card(itemsTable(order))}
     ${totalsBox(order)}
+    ${card(
+      `<table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+        ${detailRow("Forma de pago", PAYMENT_META[order.payment].label)}
+        ${detailRow(
+          "Estado del pago",
+          order.paymentConfirmedAt
+            ? "Confirmado"
+            : order.payment === "transferencia" && order.receiptUrl
+              ? "Comprobante recibido · en verificación"
+              : order.payment === "transferencia"
+                ? "Pendiente de confirmación"
+                : "Pendiente de pago",
+        )}
+        ${detailRow("Entrega", DELIVERY_META[order.delivery].label)}
+      </table>`,
+    )}
     ${receiptNote}
     ${
       tracking
         ? `<div style="margin-top:20px;text-align:center;">${button(
             tracking,
-            "Ver estado de mi pedido",
-            "sky",
+            order.payment === "transferencia" && !order.paymentConfirmedAt
+              ? "Subir comprobante y ver pedido"
+              : "Ver estado de mi pedido",
+            "solid",
           )}</div>`
         : ""
     }`;
@@ -510,9 +586,10 @@ function customerText(order: OrderDTO, status: OrderStatus): string {
     `Entrega: ${DELIVERY_META[order.delivery].label}`,
     order.address ? `Direccion: ${order.address}` : null,
     order.payment === "transferencia" &&
+    !order.paymentConfirmedAt &&
     visibleStatus !== "delivered" &&
     visibleStatus !== "cancelled"
-      ? "Recuerda enviarnos el comprobante de tu transferencia por WhatsApp."
+      ? "Sube tu comprobante desde el enlace de seguimiento. Confirmaremos el pago cuando verifiquemos el ingreso."
       : null,
     "",
     tracking ? `Estado del pedido: ${tracking}` : null,

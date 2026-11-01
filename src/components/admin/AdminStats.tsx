@@ -40,7 +40,7 @@ const ACTIVE_STATUSES = [
   "confirmed",
   "preparing",
   "ready",
-  "in_transit",
+  "dispatched",
 ];
 const CHART_COLORS = ["#10b981", "#f59e0b", "#0ea5e9", "#8b5cf6", "#f43f5e", "#14b8a6"];
 

@@ -56,10 +56,10 @@ const HERO: Record<OrderStatus, { emoji: string; bg: string; line: string }> = {
     bg: "border-teal-200 bg-gradient-to-br from-teal-500/15 via-teal-500/5 to-transparent dark:border-teal-500/30",
     line: "Tu pedido está listo.",
   },
-  in_transit: {
-    emoji: "🚚",
+  dispatched: {
+    emoji: "📦",
     bg: "border-violet-200 bg-gradient-to-br from-violet-500/15 via-violet-500/5 to-transparent dark:border-violet-500/30",
-    line: "Tu pedido va en camino.",
+    line: "La empresa de envíos ya recibió tu pedido.",
   },
   delivered: {
     emoji: "🎉",
@@ -528,21 +528,31 @@ export default function OrderTracker({
             </svg>
             Pago por transferencia
           </h2>
-          {(order as { hasReceipt?: boolean }).hasReceipt ? (
+          {order.paymentConfirmedAt ? (
+            <p className="mt-1 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+              Pago confirmado. Gracias.
+            </p>
+          ) : order.hasReceipt ? (
             <p className="mt-1 text-sm text-amber-800 dark:text-amber-300/90">
-              {order.status === "delivered"
-                ? "Gracias por tu pago. Comprobante registrado."
-                : "Ya subiste el comprobante. Te avisaremos cuando lo confirmemos."}
+              Comprobante recibido. Estamos verificando el pago; te avisaremos
+              cuando quede confirmado.
+            </p>
+          ) : order.status === "delivered" ? (
+            <p className="mt-1 text-sm text-amber-800 dark:text-amber-300/90">
+              El pedido figura como entregado, pero el pago aún no está
+              confirmado. Escríbenos para revisarlo.
             </p>
           ) : (
             <p className="mt-1 text-sm text-amber-800 dark:text-amber-300/90">
-              {order.status === "delivered"
-                ? "Gracias por tu pago."
-                : "Sube el comprobante de transferencia aquí para agilizar la entrega."}
+              Sube el comprobante de transferencia. El pago se confirmará cuando
+              verifiquemos el ingreso.
             </p>
           )}
 
-          {canUploadReceipt && !(order as { hasReceipt?: boolean }).hasReceipt && (
+          {canUploadReceipt &&
+            !order.paymentConfirmedAt &&
+            !order.hasReceipt &&
+            order.status !== "delivered" && (
             <div className="mt-3">
               <input
                 ref={receiptInputRef}
