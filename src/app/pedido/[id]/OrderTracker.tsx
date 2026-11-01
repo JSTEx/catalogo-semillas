@@ -534,8 +534,8 @@ export default function OrderTracker({
             </p>
           ) : order.hasReceipt ? (
             <p className="mt-1 text-sm text-amber-800 dark:text-amber-300/90">
-              Comprobante recibido. Estamos verificando el pago; te avisaremos
-              cuando quede confirmado.
+              Recibimos el archivo del comprobante, pero el pago aún no está
+              confirmado. Lo verificaremos y te avisaremos.
             </p>
           ) : order.status === "delivered" ? (
             <p className="mt-1 text-sm text-amber-800 dark:text-amber-300/90">

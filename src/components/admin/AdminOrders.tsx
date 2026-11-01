@@ -792,7 +792,7 @@ export default function AdminOrders({
                   {active.paymentConfirmedAt
                     ? "Pago confirmado"
                     : active.payment === "transferencia" && active.receiptUrl
-                      ? "Comprobante recibido"
+                      ? "Archivo recibido · sin verificar"
                       : "Pendiente"}
                 </span>
               </div>

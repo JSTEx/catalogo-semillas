@@ -430,7 +430,7 @@ function businessText(order: OrderDTO): string {
       order.paymentConfirmedAt
         ? "Confirmado"
         : order.payment === "transferencia" && order.receiptUrl
-          ? "Comprobante recibido, en verificacion"
+          ? "Archivo del comprobante recibido; pago no confirmado"
           : order.payment === "transferencia"
             ? "Pendiente de confirmacion"
             : "Pendiente de pago"
@@ -515,7 +515,7 @@ function customerHtml(order: OrderDTO, status: OrderStatus): string {
     visibleStatus !== "delivered" &&
     visibleStatus !== "cancelled"
       ? note(
-          "Sube tu comprobante desde el enlace de seguimiento. Confirmaremos el pago cuando verifiquemos el ingreso.",
+          "Recibimos el archivo del comprobante, pero esto no confirma el pago. Verificaremos el ingreso y te avisaremos.",
         )
       : "";
 
@@ -539,7 +539,7 @@ function customerHtml(order: OrderDTO, status: OrderStatus): string {
           order.paymentConfirmedAt
             ? "Confirmado"
             : order.payment === "transferencia" && order.receiptUrl
-              ? "Comprobante recibido · en verificación"
+              ? "Archivo recibido · pago aún no confirmado"
               : order.payment === "transferencia"
                 ? "Pendiente de confirmación"
                 : "Pendiente de pago",
