@@ -52,6 +52,16 @@ const adminList = await fetch(BASE + "/api/admin/allowed", {
 }).catch(() => null);
 check("lista de administradores protegida", adminList?.status === 401, `-> ${adminList?.status ?? 0}`);
 
+const privateReceipt = await fetch(
+  `${BASE}/api/orders/00000000-0000-4000-8000-000000000001/receipt`,
+  { headers: { Origin: BASE } },
+).catch(() => null);
+check(
+  "descarga de comprobantes protegida",
+  privateReceipt?.status === 401,
+  `-> ${privateReceipt?.status ?? 0}`,
+);
+
 const productMutation = await fetch(BASE + "/api/products", {
   method: "POST",
   headers: ORIGIN,

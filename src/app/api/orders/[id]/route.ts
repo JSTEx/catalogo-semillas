@@ -10,7 +10,11 @@ import {
   sendCustomerOrderEmail,
   sendCustomerPaymentConfirmedEmail,
 } from "@/lib/email";
-import { toOrderDTO, toPublicOrderDTO, type OrderItem } from "@/lib/types";
+import {
+  toAdminOrderDTO,
+  toPublicOrderDTO,
+  type OrderItem,
+} from "@/lib/types";
 import {
   HOME_DELIVERY_FEE_CENTS,
   isDeliveryCarrierId,
@@ -166,7 +170,7 @@ export async function PATCH(req: Request, { params }: Params) {
           if (!reserved) throw new Error("STOCK_INSUFICIENTE");
         }
       }
-      return toOrderDTO(updated, guard.admin.role === "superadmin");
+      return toAdminOrderDTO(updated, guard.admin.role === "superadmin");
     })
     .catch((err) => {
       if (err instanceof Error && err.message === "STOCK_INSUFICIENTE") {

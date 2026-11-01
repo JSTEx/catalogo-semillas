@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import { db } from "./db";
-import { deleteImageByUrl } from "./storage";
+import { deleteStoredImage } from "./storage";
 
 /**
  * Indica si una imagen sigue referenciada por un producto, por el historial de
@@ -30,7 +30,7 @@ export async function deleteUnusedImages(urls: string[]): Promise<void> {
   for (const url of new Set(urls.filter(Boolean))) {
     try {
       if (await isImageInUse(url)) continue;
-      await deleteImageByUrl(url);
+      await deleteStoredImage(url);
     } catch (error) {
       console.error("[storage] no se pudo limpiar una imagen:", error);
     }

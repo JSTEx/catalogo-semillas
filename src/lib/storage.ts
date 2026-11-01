@@ -25,11 +25,98 @@ function getBucket(): string {
   return process.env.SUPABASE_STORAGE_BUCKET || "seeds";
 }
 
+function getReceiptBucket(): string {
+  return process.env.SUPABASE_RECEIPTS_BUCKET || "payment-receipts";
+}
+
 const MIME_TO_EXT: Record<AllowedImageMime, string> = {
   "image/jpeg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
 };
+
+const PRIVATE_RECEIPT_PREFIX = "private-receipt:";
+const RECEIPT_OBJECT_PATH =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.webp$/i;
+let receiptBucketCheck: Promise<void> | null = null;
+
+export function isPrivateReceiptReference(value: string): boolean {
+  return (
+    value.startsWith(PRIVATE_RECEIPT_PREFIX) &&
+    RECEIPT_OBJECT_PATH.test(value.slice(PRIVATE_RECEIPT_PREFIX.length))
+  );
+}
+
+async function ensurePrivateReceiptBucket(): Promise<SupabaseClient> {
+  const client = getAdminClient();
+  if (!receiptBucketCheck) {
+    receiptBucketCheck = (async () => {
+      const { data, error } = await client.storage.listBuckets();
+      if (error) {
+        throw new Error(
+          `No se pudo verificar el bucket privado: ${error.message}`,
+        );
+      }
+      const bucket = data.find((item) => item.name === getReceiptBucket());
+      if (!bucket) {
+        throw new Error(
+          `No existe el bucket privado de comprobantes "${getReceiptBucket()}".`,
+        );
+      }
+      if (bucket.public) {
+        throw new Error("El bucket de comprobantes debe ser privado.");
+      }
+    })();
+  }
+  try {
+    await receiptBucketCheck;
+  } catch (error) {
+    receiptBucketCheck = null;
+    throw error;
+  }
+  return client;
+}
+
+export async function uploadPrivateReceipt(buffer: Buffer): Promise<string> {
+  const client = await ensurePrivateReceiptBucket();
+  const objectPath = `${crypto.randomUUID()}.webp`;
+  const { error } = await client.storage
+    .from(getReceiptBucket())
+    .upload(objectPath, buffer, {
+      contentType: "image/webp",
+      upsert: false,
+      cacheControl: "0",
+    });
+  if (error) throw new Error(`Error al subir el comprobante: ${error.message}`);
+  return `${PRIVATE_RECEIPT_PREFIX}${objectPath}`;
+}
+
+export async function downloadPrivateReceipt(reference: string): Promise<Buffer> {
+  if (!isPrivateReceiptReference(reference)) {
+    throw new Error("Referencia de comprobante privado no válida.");
+  }
+  const client = await ensurePrivateReceiptBucket();
+  const objectPath = reference.slice(PRIVATE_RECEIPT_PREFIX.length);
+  const { data, error } = await client.storage
+    .from(getReceiptBucket())
+    .download(objectPath);
+  if (error) throw new Error(`Error al leer el comprobante: ${error.message}`);
+  return Buffer.from(await data.arrayBuffer());
+}
+
+export async function deleteStoredImage(reference: string): Promise<boolean> {
+  if (!isPrivateReceiptReference(reference)) {
+    return deleteImageByUrl(reference);
+  }
+
+  const client = await ensurePrivateReceiptBucket();
+  const objectPath = reference.slice(PRIVATE_RECEIPT_PREFIX.length);
+  const { error } = await client.storage
+    .from(getReceiptBucket())
+    .remove([objectPath]);
+  if (error) throw new Error(`Error al borrar el comprobante: ${error.message}`);
+  return true;
+}
 
 /**
  * Sube una imagen a Supabase Storage con un nombre UUID aleatorio para

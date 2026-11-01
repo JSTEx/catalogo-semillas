@@ -5,7 +5,7 @@ import { expenses, orders, products } from "@/lib/db/schema";
 import { auth } from "@/auth";
 import {
   toProductDTO,
-  toOrderDTOList,
+  toAdminOrderDTOList,
   toExpenseDTOList,
 } from "@/lib/types";
 import AdminDashboard from "@/components/admin/AdminDashboard";
@@ -47,7 +47,7 @@ export default async function AdminPage() {
   return (
     <AdminDashboard
       initialProducts={productRows.map(toProductDTO)}
-      initialOrders={toOrderDTOList(orderRows, admin.role === "superadmin")}
+      initialOrders={toAdminOrderDTOList(orderRows, admin.role === "superadmin")}
       initialExpenses={toExpenseDTOList(expenseRows)}
       username={admin.email || "admin"}
       adminRole={admin.role}

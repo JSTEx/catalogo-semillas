@@ -8,16 +8,49 @@ import {
   jsonError,
   getClientIp,
   readFormDataWithLimit,
+  requireAdmin,
 } from "@/lib/http";
 import { checkReceiptRateLimit } from "@/lib/rate-limit";
 import { validateImage } from "@/lib/file-validation";
-import { uploadImage } from "@/lib/storage";
+import {
+  downloadPrivateReceipt,
+  uploadPrivateReceipt,
+} from "@/lib/storage";
 import { toPublicOrderDTO } from "@/lib/types";
 import sharp from "sharp";
 
 export const runtime = "nodejs";
 
 type Params = { params: Promise<{ id: string }> };
+
+export async function GET(req: Request, { params }: Params) {
+  const guard = await requireAdmin(req);
+  if (!guard.authorized) return guard.response;
+
+  const { id } = await params;
+  if (!productIdSchema.safeParse(id).success) {
+    return jsonError("Identificador no valido", 400);
+  }
+
+  const [order] = await db.select().from(orders).where(eq(orders.id, id));
+  if (!order?.receiptUrl?.startsWith("private-receipt:")) {
+    return jsonError("Comprobante no encontrado", 404);
+  }
+
+  try {
+    const image = await downloadPrivateReceipt(order.receiptUrl);
+    return new Response(new Uint8Array(image), {
+      headers: {
+        "Content-Type": "image/webp",
+        "Content-Disposition": 'inline; filename="comprobante.webp"',
+        "Cache-Control": "private, no-store",
+        "X-Content-Type-Options": "nosniff",
+      },
+    });
+  } catch {
+    return jsonError("No se pudo cargar el comprobante", 502);
+  }
+}
 
 /**
  * Sube el comprobante de pago de un pedido por parte del cliente.
@@ -113,7 +146,7 @@ export async function POST(req: Request, { params }: Params) {
 
   let url: string;
   try {
-    url = await uploadImage(sanitized, "image/webp");
+    url = await uploadPrivateReceipt(sanitized);
   } catch {
     return jsonError("No se pudo subir la imagen", 502);
   }

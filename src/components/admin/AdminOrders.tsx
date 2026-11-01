@@ -195,16 +195,29 @@ export default function AdminOrders({
     try {
       const fd = new FormData();
       fd.append("file", file);
-      const upRes = await fetch("/api/upload", { method: "POST", body: fd });
+      const upRes = await fetch(`/api/orders/${order.id}/receipt`, {
+        method: "POST",
+        body: fd,
+      });
       const upData = (await upRes.json().catch(() => null)) as
-        | { url?: string; error?: string }
+        | { error?: string }
         | null;
-      if (!upRes.ok || !upData?.url) {
+      if (!upRes.ok) {
         throw new Error(upData?.error ?? "No se pudo subir el comprobante");
       }
-      await patch(order.id, { receiptUrl: upData.url });
+      onOrdersChange((prev) =>
+        prev.map((item) =>
+          item.id === order.id
+            ? {
+                ...item,
+                receiptUrl: `/api/orders/${order.id}/receipt`,
+              }
+            : item,
+        ),
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al subir el comprobante");
+    } finally {
       setBusyId(null);
     }
   }

@@ -136,6 +136,28 @@ export function toOrderDTOList(
   return rows.map((row) => toOrderDTO(row, includeShippingCosts));
 }
 
+export function toAdminOrderDTO(
+  order: Order,
+  includeShippingCosts = false,
+): OrderDTO {
+  const dto = toOrderDTO(order, includeShippingCosts);
+  return {
+    ...dto,
+    receiptUrl: order.receiptUrl
+      ? order.receiptUrl.startsWith("private-receipt:")
+        ? `/api/orders/${order.id}/receipt`
+        : order.receiptUrl
+      : null,
+  };
+}
+
+export function toAdminOrderDTOList(
+  rows: Order[],
+  includeShippingCosts = false,
+): OrderDTO[] {
+  return rows.map((row) => toAdminOrderDTO(row, includeShippingCosts));
+}
+
 /**
  * Version publica de un pedido para la pagina de seguimiento del cliente.
  * Omite datos privados (nombre, telefono, direccion y notas del cliente).
