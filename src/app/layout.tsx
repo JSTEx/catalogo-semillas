@@ -34,7 +34,7 @@ export const metadata: Metadata = {
       "Explora semillas, snacks y productos para disfrutar. Haz tu pedido en línea con opción de envío a domicilio o retiro.",
     images: [
       {
-        url: "/og-minimal.png",
+        url: "/og-night.png",
         width: 1200,
         height: 630,
         alt: "JecsitoShop: semillas, snacks y más para disfrutar",
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     title: "JecsitoShop | Semillas, snacks y más",
     description:
       "Explora semillas, snacks y productos para disfrutar. Haz tu pedido en línea con opción de envío a domicilio o retiro.",
-    images: ["/og-minimal.png"],
+    images: ["/og-night.png"],
   },
   icons: {
     icon: [

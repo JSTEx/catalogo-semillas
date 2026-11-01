@@ -26,7 +26,7 @@ async function getStatus(path) {
 
 console.log(`Smoke contra ${BASE}\n`);
 
-for (const path of ["/", "/logo.png", "/og-minimal.png", "/icons/favicon.png", "/icons/apple-icon.png"]) {
+for (const path of ["/", "/logo.png", "/og-night.png", "/icons/favicon.png", "/icons/apple-icon.png"]) {
   const status = await getStatus(path).catch(() => 0);
   check(`GET ${path}`, status === 200, `-> ${status}`);
 }
