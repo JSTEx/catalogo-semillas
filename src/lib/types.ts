@@ -73,6 +73,10 @@ export interface OrderDTO {
   items: OrderItem[];
   productsTotal: number;
   shippingCents: number;
+  shippingProviderId?: string | null;
+  shippingProviderBaseCents?: number | null;
+  shippingCommissionBps?: number | null;
+  shippingCommissionCents?: number | null;
   totalCents: number;
   notes: string | null;
   receiptUrl: string | null;
@@ -81,7 +85,10 @@ export interface OrderDTO {
   deliveredAt: string | null;
 }
 
-export function toOrderDTO(o: Order): OrderDTO {
+export function toOrderDTO(
+  o: Order,
+  includeShippingCosts = false,
+): OrderDTO {
   return {
     id: o.id,
     number: o.number,
@@ -96,6 +103,14 @@ export function toOrderDTO(o: Order): OrderDTO {
     items: (o.items ?? []) as OrderItem[],
     productsTotal: o.productsTotal,
     shippingCents: o.shippingCents,
+    ...(includeShippingCosts
+      ? {
+          shippingProviderId: o.shippingProviderId,
+          shippingProviderBaseCents: o.shippingProviderBaseCents,
+          shippingCommissionBps: o.shippingCommissionBps,
+          shippingCommissionCents: o.shippingCommissionCents,
+        }
+      : {}),
     totalCents: o.totalCents,
     notes: o.notes,
     receiptUrl: o.receiptUrl ?? null,
@@ -105,8 +120,11 @@ export function toOrderDTO(o: Order): OrderDTO {
   };
 }
 
-export function toOrderDTOList(rows: Order[]): OrderDTO[] {
-  return rows.map(toOrderDTO);
+export function toOrderDTOList(
+  rows: Order[],
+  includeShippingCosts = false,
+): OrderDTO[] {
+  return rows.map((row) => toOrderDTO(row, includeShippingCosts));
 }
 
 /**

@@ -169,6 +169,7 @@ export const updateOrderSchema = z
       .min(0, "El envio no puede ser negativo")
       .max(10_000_000)
       .optional(),
+    shippingProviderId: z.string().max(40).nullable().optional(),
     notes: sanitizedString(1, 300, "Las notas").optional(),
     receiptUrl: imageUrlSchema.nullable().optional(),
   })

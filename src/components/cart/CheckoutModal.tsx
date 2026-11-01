@@ -25,6 +25,96 @@ type Delivery = "retiro" | "domicilio";
 type Payment = "efectivo" | "transferencia";
 type Step = "form" | "review";
 
+function DepartmentPicker({
+  value,
+  onChange,
+  inputClass,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  inputClass: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const filtered = EL_SALVADOR_DEPARTMENTS.filter((department) =>
+    department.toLocaleLowerCase("es").includes(query.trim().toLocaleLowerCase("es")),
+  );
+
+  return (
+    <div>
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        className={`${inputClass} flex items-center justify-between gap-3 text-left`}
+      >
+        <span className={value ? "" : "text-stone-500 dark:text-stone-400"}>
+          {value || "Selecciona tu departamento"}
+        </span>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={`h-4 w-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+      {open && (
+        <div className="mt-2 rounded-2xl border border-stone-200 bg-white p-2 shadow-lg dark:border-stone-700 dark:bg-stone-900">
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Buscar departamento"
+            aria-label="Buscar departamento"
+            autoComplete="off"
+            className="w-full rounded-xl border border-stone-200 bg-stone-50 px-3 py-2 text-sm text-stone-800 outline-none focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100 dark:placeholder:text-stone-400"
+          />
+          <div
+            role="listbox"
+            aria-label="Departamentos de El Salvador"
+            className="mt-2 grid max-h-48 grid-cols-2 gap-1 overflow-y-auto"
+          >
+            {filtered.map((department) => (
+              <button
+                type="button"
+                role="option"
+                aria-selected={value === department}
+                key={department}
+                onClick={() => {
+                  onChange(department);
+                  setOpen(false);
+                  setQuery("");
+                }}
+                className={[
+                  "rounded-xl px-3 py-2 text-left text-sm transition-colors hover:bg-brand-50 dark:hover:bg-brand-500/10",
+                  value === department
+                    ? "bg-brand-50 font-semibold text-brand-800 dark:bg-brand-500/15 dark:text-brand-200"
+                    : "text-stone-700 dark:text-stone-200",
+                ].join(" ")}
+              >
+                {department}
+              </button>
+            ))}
+            {filtered.length === 0 && (
+              <p className="col-span-2 px-3 py-4 text-center text-sm text-stone-500 dark:text-stone-400">
+                No encontramos ese departamento.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function CheckoutModal({ open, onClose }: Props) {
   const { items, totalCents, clear } = useCart();
   const { data: session, status: sessionStatus } = useSession();
@@ -521,21 +611,11 @@ export default function CheckoutModal({ open, onClose }: Props) {
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <label className="block space-y-1.5 text-sm font-medium text-stone-700 dark:text-stone-300">
                       Departamento *
-                      <select
+                      <DepartmentPicker
                         value={department}
-                        onChange={(e) => setDepartment(e.target.value)}
-                        aria-label="Departamento"
-                        autoComplete="address-level1"
-                        required
-                        className={inputClass}
-                      >
-                        <option value="">Selecciona tu departamento</option>
-                        {EL_SALVADOR_DEPARTMENTS.map((item) => (
-                          <option key={item} value={item}>
-                            {item}
-                          </option>
-                        ))}
-                      </select>
+                        onChange={setDepartment}
+                        inputClass={inputClass}
+                      />
                     </label>
                     <label className="block space-y-1.5 text-sm font-medium text-stone-700 dark:text-stone-300">
                       Municipio *

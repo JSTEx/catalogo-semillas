@@ -8,7 +8,11 @@ import { holdsStock, releaseStock, reserveStock } from "@/lib/inventory";
 import { deleteUnusedImages } from "@/lib/image-cleanup";
 import { sendCustomerOrderEmail } from "@/lib/email";
 import { toOrderDTO, toPublicOrderDTO, type OrderItem } from "@/lib/types";
-import { HOME_DELIVERY_FEE_CENTS } from "@/lib/delivery";
+import {
+  HOME_DELIVERY_FEE_CENTS,
+  isDeliveryCarrierId,
+  quoteDeliveryCarrier,
+} from "@/lib/delivery";
 
 export const runtime = "nodejs";
 
@@ -53,6 +57,33 @@ export async function PATCH(req: Request, { params }: Params) {
   if (!existing) return jsonError("Pedido no encontrado", 404);
 
   const patch = { ...parsed.data } as Record<string, unknown>;
+  if (parsed.data.shippingProviderId !== undefined) {
+    if (guard.admin.role !== "superadmin") {
+      return jsonError("Solo el superadmin puede ver y guardar costos de envío", 403);
+    }
+    if (existing.delivery !== "domicilio") {
+      return jsonError("Este pedido no tiene envío a domicilio", 400);
+    }
+    if (parsed.data.shippingProviderId === null) {
+      patch.shippingProviderId = null;
+      patch.shippingProviderBaseCents = null;
+      patch.shippingCommissionBps = null;
+      patch.shippingCommissionCents = null;
+    } else {
+      if (!isDeliveryCarrierId(parsed.data.shippingProviderId)) {
+        return jsonError("Empresa de envío no válida", 400);
+      }
+      const quote = quoteDeliveryCarrier(
+        parsed.data.shippingProviderId,
+        existing.totalCents,
+        existing.payment === "efectivo",
+      );
+      patch.shippingProviderId = quote.carrierId;
+      patch.shippingProviderBaseCents = quote.baseFeeCents;
+      patch.shippingCommissionBps = quote.commissionBps;
+      patch.shippingCommissionCents = quote.commissionCents;
+    }
+  }
   if (parsed.data.shippingCents !== undefined) {
     const fixedShipping =
       existing.delivery === "domicilio" ? HOME_DELIVERY_FEE_CENTS : 0;
@@ -91,7 +122,7 @@ export async function PATCH(req: Request, { params }: Params) {
           if (!reserved) throw new Error("STOCK_INSUFICIENTE");
         }
       }
-      return toOrderDTO(updated);
+      return toOrderDTO(updated, guard.admin.role === "superadmin");
     })
     .catch((err) => {
       if (err instanceof Error && err.message === "STOCK_INSUFICIENTE") {

@@ -160,8 +160,8 @@ if (process.env.SMOKE_WRITE === "1") {
     check("crear pedido de prueba", Boolean(orderId));
     check(
       "envio domicilio aplica tarifa fija y total correcto",
-      createdOrder.order?.shippingCents === 450 &&
-        createdOrder.order?.totalCents === createdOrder.order?.productsTotal + 450,
+      createdOrder.order?.shippingCents === 499 &&
+        createdOrder.order?.totalCents === createdOrder.order?.productsTotal + 499,
     );
     check(
       "guardar datos estructurados de Boxful",

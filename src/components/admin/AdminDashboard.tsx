@@ -1049,12 +1049,17 @@ export default function AdminDashboard({ initialProducts, initialOrders, initial
         )}
           </>
         ) : tab === "orders" ? (
-          <AdminOrders orders={orders} onOrdersChange={setOrders} />
+          <AdminOrders
+            orders={orders}
+            onOrdersChange={setOrders}
+            canSeeShippingCosts={adminRole === "superadmin"}
+          />
         ) : tab === "stats" ? (
           <AdminStats
             orders={orders}
             expenses={expenses}
             onExpensesChange={setExpenses}
+            canSeeShippingCosts={adminRole === "superadmin"}
           />
         ) : tab === "admins" ? (
           <AdminUsers canManage={adminRole === "superadmin"} />

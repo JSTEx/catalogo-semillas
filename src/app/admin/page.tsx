@@ -47,7 +47,7 @@ export default async function AdminPage() {
   return (
     <AdminDashboard
       initialProducts={productRows.map(toProductDTO)}
-      initialOrders={toOrderDTOList(orderRows)}
+      initialOrders={toOrderDTOList(orderRows, admin.role === "superadmin")}
       initialExpenses={toExpenseDTOList(expenseRows)}
       username={admin.email || "admin"}
       adminRole={admin.role}

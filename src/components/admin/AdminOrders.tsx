@@ -18,10 +18,16 @@ import { normalizeSearch } from "@/lib/search";
 import { useViewMode } from "@/lib/use-view-mode";
 import { useBackdropClose } from "@/lib/use-backdrop-close";
 import ViewToggle from "@/components/ViewToggle";
+import {
+  DELIVERY_CARRIERS,
+  HOME_DELIVERY_FEE_CENTS,
+  quoteDeliveryCarrier,
+} from "@/lib/delivery";
 
 interface Props {
   orders: OrderDTO[];
   onOrdersChange: Dispatch<SetStateAction<OrderDTO[]>>;
+  canSeeShippingCosts: boolean;
 }
 
 const LAYOUT: Record<string, string> = {
@@ -57,7 +63,11 @@ function StatusBadge({ status }: { status: OrderStatus }) {
   );
 }
 
-export default function AdminOrders({ orders, onOrdersChange }: Props) {
+export default function AdminOrders({
+  orders,
+  onOrdersChange,
+  canSeeShippingCosts,
+}: Props) {
   const [filter, setFilter] = useState<"all" | OrderStatus>("all");
   const [query, setQuery] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -94,6 +104,19 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
     () => orders.find((o) => o.id === openId) ?? null,
     [orders, openId],
   );
+  const activeCarrierQuotes =
+    canSeeShippingCosts && active?.delivery === "domicilio"
+      ? DELIVERY_CARRIERS.map((carrier) =>
+          quoteDeliveryCarrier(
+            carrier.id,
+            active.totalCents,
+            active.payment === "efectivo",
+          ),
+        )
+      : [];
+  const cheapestCarrierCost = activeCarrierQuotes.length
+    ? Math.min(...activeCarrierQuotes.map((quote) => quote.totalCostCents))
+    : 0;
 
   async function patch(id: string, body: Record<string, unknown>) {
     setError(null);
@@ -218,6 +241,18 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
             <span className="truncate rounded-full bg-stone-100 px-1.5 py-0.5 dark:bg-stone-700 sm:px-2">
               {PAYMENT_META[order.payment].label}
             </span>
+            {canSeeShippingCosts && order.shippingProviderId && (
+              <span className="truncate rounded-full bg-brand-50 px-1.5 py-0.5 font-semibold text-brand-800 dark:bg-brand-500/10 dark:text-brand-200 sm:px-2">
+                {DELIVERY_CARRIERS.find(
+                  (carrier) => carrier.id === order.shippingProviderId,
+                )?.name ?? order.shippingProviderId}
+                {" · "}
+                {formatMoney(
+                  (order.shippingProviderBaseCents ?? 0) +
+                    (order.shippingCommissionCents ?? 0),
+                )}
+              </span>
+            )}
           </div>
 
           <div className="col-span-2 flex items-center justify-between gap-2 rounded-lg border border-brand-200 bg-brand-50 px-2 py-1.5 dark:border-stone-700 dark:bg-stone-800 sm:gap-3 sm:rounded-xl sm:px-3 sm:py-2">
@@ -289,6 +324,18 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
           <span className="rounded-full bg-stone-100 px-2.5 py-1 dark:bg-stone-800">
             {PAYMENT_META[order.payment].label}
           </span>
+          {canSeeShippingCosts && order.shippingProviderId && (
+            <span className="rounded-full bg-brand-50 px-2.5 py-1 font-semibold text-brand-800 dark:bg-brand-500/10 dark:text-brand-200">
+              {DELIVERY_CARRIERS.find(
+                (carrier) => carrier.id === order.shippingProviderId,
+              )?.name ?? order.shippingProviderId}
+              {" · "}
+              {formatMoney(
+                (order.shippingProviderBaseCents ?? 0) +
+                  (order.shippingCommissionCents ?? 0),
+              )}
+            </span>
+          )}
           {order.delivery === "domicilio" && order.address && (
             <span className="line-clamp-1 rounded-full bg-stone-100 px-2.5 py-1 dark:bg-stone-800">
               {order.address}
@@ -571,6 +618,140 @@ export default function AdminOrders({ orders, onOrdersChange }: Props) {
               <p className="rounded-2xl bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
                 Nota: {active.notes}
               </p>
+            )}
+
+            {canSeeShippingCosts && active.delivery === "domicilio" && (
+              <section className="space-y-3 rounded-2xl border border-brand-200 bg-brand-50/60 p-3 dark:border-brand-500/30 dark:bg-brand-500/5">
+                <div>
+                  <h3 className="text-sm font-bold text-stone-800 dark:text-stone-100">
+                    Comparar empresas de envío
+                  </h3>
+                  <p className="mt-1 text-xs text-stone-600 dark:text-stone-300">
+                    Tarifa cobrada: {formatMoney(HOME_DELIVERY_FEE_CENTS)}.
+                    {active.payment === "efectivo"
+                      ? ` La comisión contra entrega se calcula sobre los ${formatMoney(active.totalCents)} a recaudar.`
+                      : " Al pagar por transferencia no se estima comisión contra entrega."}
+                  </p>
+                </div>
+                {active.shippingProviderId && (
+                  <div className="rounded-xl bg-white px-3 py-2 text-xs dark:bg-stone-900">
+                    <p className="font-semibold text-stone-800 dark:text-stone-100">
+                      Empresa seleccionada:{" "}
+                      {DELIVERY_CARRIERS.find(
+                        (carrier) => carrier.id === active.shippingProviderId,
+                      )?.name ?? active.shippingProviderId}
+                    </p>
+                    <p className="mt-1 text-stone-600 dark:text-stone-300">
+                      Flete{" "}
+                      {formatMoney(active.shippingProviderBaseCents ?? 0)} + comisión{" "}
+                      {formatMoney(active.shippingCommissionCents ?? 0)} = costo{" "}
+                      {formatMoney(
+                        (active.shippingProviderBaseCents ?? 0) +
+                          (active.shippingCommissionCents ?? 0),
+                      )}
+                      {" · "}margen estimado{" "}
+                      {formatMoney(
+                        active.shippingCents -
+                          (active.shippingProviderBaseCents ?? 0) -
+                          (active.shippingCommissionCents ?? 0),
+                      )}
+                    </p>
+                  </div>
+                )}
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {activeCarrierQuotes.map((quote) => {
+                    const selected =
+                      active.shippingProviderId === quote.carrierId;
+                    const isCheapest =
+                      quote.totalCostCents === cheapestCarrierCost;
+                    const baseFee =
+                      selected && active.shippingProviderBaseCents != null
+                        ? active.shippingProviderBaseCents
+                        : quote.baseFeeCents;
+                    const commission =
+                      selected && active.shippingCommissionCents != null
+                        ? active.shippingCommissionCents
+                        : quote.commissionCents;
+                    const totalCost = baseFee + commission;
+                    const margin = active.shippingCents - totalCost;
+                    const commissionBps =
+                      selected && active.shippingCommissionBps != null
+                        ? active.shippingCommissionBps
+                        : quote.commissionBps;
+                    return (
+                      <article
+                        key={quote.carrierId}
+                        className={[
+                          "rounded-xl border p-3",
+                          selected
+                            ? "border-brand-500 bg-white shadow-sm dark:bg-stone-900"
+                            : "border-stone-200 bg-white/80 dark:border-stone-700 dark:bg-stone-900/70",
+                        ].join(" ")}
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-xs font-bold text-stone-800 dark:text-stone-100">
+                            {quote.carrierName}
+                          </p>
+                          {isCheapest && (
+                            <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300">
+                              Menor costo estimado
+                            </span>
+                          )}
+                        </div>
+                        <dl className="mt-2 space-y-1 text-[11px]">
+                          <div className="flex justify-between gap-2 text-stone-500 dark:text-stone-400">
+                            <dt>Tarifa Boxful</dt>
+                            <dd>{formatMoney(baseFee)}</dd>
+                          </div>
+                          <div className="flex justify-between gap-2 text-stone-500 dark:text-stone-400">
+                            <dt>Comisión ({(commissionBps / 100).toFixed(1)}%)</dt>
+                            <dd>{formatMoney(commission)}</dd>
+                          </div>
+                          <div className="flex justify-between gap-2 border-t border-stone-200 pt-1 font-semibold text-stone-800 dark:border-stone-700 dark:text-stone-100">
+                            <dt>Costo total estimado</dt>
+                            <dd>{formatMoney(totalCost)}</dd>
+                          </div>
+                          <div
+                            className={[
+                              "flex justify-between gap-2 font-semibold",
+                              margin >= 0
+                                ? "text-emerald-700 dark:text-emerald-300"
+                                : "text-red-700 dark:text-red-300",
+                            ].join(" ")}
+                          >
+                            <dt>Margen del envío</dt>
+                            <dd>{formatMoney(margin)}</dd>
+                          </div>
+                        </dl>
+                        <button
+                          type="button"
+                          disabled={busyId === active.id || selected}
+                          onClick={() =>
+                            patch(active.id, {
+                              shippingProviderId: quote.carrierId,
+                            })
+                          }
+                          className={[
+                            "mt-2 w-full rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-70",
+                            selected
+                              ? "bg-brand-600 text-white"
+                              : "border border-stone-200 text-stone-700 hover:bg-stone-50 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800",
+                          ].join(" ")}
+                        >
+                          {selected ? "Empresa seleccionada" : "Usar esta empresa"}
+                        </button>
+                      </article>
+                    );
+                  })}
+                </div>
+                <p className="text-[11px] leading-relaxed text-stone-500 dark:text-stone-400">
+                  Son estimaciones según las tarifas cotizadas en Boxful para
+                  paquetes de 1 lb. La tarifa y la promoción de Forza pueden
+                  cambiar por zona o disponibilidad; confirma el precio final
+                  en Boxful. Los datos se guardan en estadísticas al seleccionar
+                  una empresa.
+                </p>
+              </section>
             )}
 
             <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50/80 p-3 dark:border-amber-500/40 dark:bg-amber-500/10">

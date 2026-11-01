@@ -26,11 +26,13 @@ import {
 } from "@/lib/orders";
 import { formatMoney } from "@/lib/money";
 import { MAX_PRODUCT_IMAGES } from "@/lib/validation";
+import { DELIVERY_CARRIERS } from "@/lib/delivery";
 
 interface Props {
   orders: OrderDTO[];
   expenses: ExpenseDTO[];
   onExpensesChange: Dispatch<SetStateAction<ExpenseDTO[]>>;
+  canSeeShippingCosts: boolean;
 }
 
 const ACTIVE_STATUSES = ["new", "confirmed", "in_transit"];
@@ -74,7 +76,12 @@ const EMPTY_FORM: ExpenseForm = {
   imageUrls: [],
 };
 
-export default function AdminStats({ orders, expenses, onExpensesChange }: Props) {
+export default function AdminStats({
+  orders,
+  expenses,
+  onExpensesChange,
+  canSeeShippingCosts,
+}: Props) {
   const [form, setForm] = useState<ExpenseForm>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -108,6 +115,61 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
       entregados: orders.filter((o) => o.status === "delivered").length,
     };
   }, [orders, expenses]);
+
+  const shippingStats = useMemo(() => {
+    const assigned = orders.filter(
+      (order) =>
+        order.delivery === "domicilio" &&
+        order.status !== "cancelled" &&
+        Boolean(order.shippingProviderId),
+    );
+    const byCarrier = DELIVERY_CARRIERS.flatMap((carrier) => {
+      const carrierOrders = assigned.filter(
+        (order) => order.shippingProviderId === carrier.id,
+      );
+      if (carrierOrders.length === 0) return [];
+      const baseCents = carrierOrders.reduce(
+        (sum, order) => sum + (order.shippingProviderBaseCents ?? 0),
+        0,
+      );
+      const commissionCents = carrierOrders.reduce(
+        (sum, order) => sum + (order.shippingCommissionCents ?? 0),
+        0,
+      );
+      const shippingIncomeCents = carrierOrders.reduce(
+        (sum, order) => sum + order.shippingCents,
+        0,
+      );
+      const estimatedCostCents = baseCents + commissionCents;
+      return [{
+        id: carrier.id,
+        name: carrier.name,
+        count: carrierOrders.length,
+        baseCents,
+        commissionCents,
+        estimatedCostCents,
+        shippingIncomeCents,
+        estimatedMarginCents: shippingIncomeCents - estimatedCostCents,
+      }];
+    });
+    const totals = byCarrier.reduce(
+      (sum, carrier) => ({
+        count: sum.count + carrier.count,
+        shippingIncomeCents: sum.shippingIncomeCents + carrier.shippingIncomeCents,
+        commissionCents: sum.commissionCents + carrier.commissionCents,
+        estimatedCostCents: sum.estimatedCostCents + carrier.estimatedCostCents,
+        estimatedMarginCents: sum.estimatedMarginCents + carrier.estimatedMarginCents,
+      }),
+      {
+        count: 0,
+        shippingIncomeCents: 0,
+        commissionCents: 0,
+        estimatedCostCents: 0,
+        estimatedMarginCents: 0,
+      },
+    );
+    return { byCarrier, totals };
+  }, [orders]);
 
   const monthly = useMemo(() => {
     const now = svParts(new Date());
@@ -383,6 +445,126 @@ export default function AdminStats({ orders, expenses, onExpensesChange }: Props
         ))}
         </div>
       </section>
+
+      {canSeeShippingCosts && (
+        <section
+          aria-labelledby="shipping-stats-title"
+          className="space-y-3 rounded-2xl border border-brand-200 bg-brand-50/50 p-3.5 dark:border-brand-500/30 dark:bg-brand-500/5 sm:rounded-3xl sm:p-5"
+        >
+          <div>
+            <h2
+              id="shipping-stats-title"
+              className="text-lg font-semibold text-stone-800 dark:text-stone-100"
+            >
+              Resumen de envíos
+            </h2>
+            <p className="text-sm text-stone-600 dark:text-stone-300">
+              Pedidos no cancelados con empresa seleccionada. Los costos y
+              márgenes son estimados con las tarifas cotizadas en Boxful.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5 sm:gap-3">
+            {[
+              {
+                label: "Envíos asignados",
+                value: String(shippingStats.totals.count),
+                tone: "text-stone-900 dark:text-stone-100",
+              },
+              {
+                label: "Envíos cobrados",
+                value: formatMoney(shippingStats.totals.shippingIncomeCents),
+                tone: "text-sky-700 dark:text-sky-300",
+              },
+              {
+                label: "Comisiones estimadas",
+                value: formatMoney(shippingStats.totals.commissionCents),
+                tone: "text-amber-700 dark:text-amber-300",
+              },
+              {
+                label: "Costo estimado",
+                value: formatMoney(shippingStats.totals.estimatedCostCents),
+                tone: "text-rose-700 dark:text-rose-300",
+              },
+              {
+                label: "Margen estimado",
+                value: formatMoney(shippingStats.totals.estimatedMarginCents),
+                tone:
+                  shippingStats.totals.estimatedMarginCents >= 0
+                    ? "text-emerald-700 dark:text-emerald-300"
+                    : "text-red-700 dark:text-red-300",
+              },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="rounded-xl border border-stone-200 bg-white px-3 py-2.5 dark:border-stone-700 dark:bg-stone-900"
+              >
+                <p className="text-[10px] font-medium uppercase tracking-wide text-stone-500 dark:text-stone-400 sm:text-[11px]">
+                  {item.label}
+                </p>
+                <p className={["mt-1 text-base font-bold sm:text-xl", item.tone].join(" ")}>
+                  {item.value}
+                </p>
+              </div>
+            ))}
+          </div>
+          {shippingStats.byCarrier.length === 0 ? (
+            <p className="rounded-xl bg-white px-3 py-4 text-center text-sm text-stone-500 dark:bg-stone-900 dark:text-stone-400">
+              Selecciona una empresa en el detalle de un pedido a domicilio
+              para comenzar a registrar estas estadísticas.
+            </p>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
+              <table className="w-full min-w-[620px] text-left text-xs">
+                <thead className="bg-stone-100 text-stone-600 dark:bg-stone-800 dark:text-stone-300">
+                  <tr>
+                    <th className="px-3 py-2.5 font-semibold">Empresa</th>
+                    <th className="px-3 py-2.5 text-right font-semibold">Envíos</th>
+                    <th className="px-3 py-2.5 text-right font-semibold">Fletes</th>
+                    <th className="px-3 py-2.5 text-right font-semibold">Comisiones</th>
+                    <th className="px-3 py-2.5 text-right font-semibold">Costo estimado</th>
+                    <th className="px-3 py-2.5 text-right font-semibold">Margen</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-200 dark:divide-stone-800">
+                  {shippingStats.byCarrier.map((carrier) => (
+                    <tr key={carrier.id}>
+                      <td className="px-3 py-2.5 font-medium text-stone-800 dark:text-stone-100">
+                        {carrier.name}
+                      </td>
+                      <td className="px-3 py-2.5 text-right text-stone-600 dark:text-stone-300">
+                        {carrier.count}
+                      </td>
+                      <td className="px-3 py-2.5 text-right text-stone-600 dark:text-stone-300">
+                        {formatMoney(carrier.baseCents)}
+                      </td>
+                      <td className="px-3 py-2.5 text-right text-stone-600 dark:text-stone-300">
+                        {formatMoney(carrier.commissionCents)}
+                      </td>
+                      <td className="px-3 py-2.5 text-right font-semibold text-rose-700 dark:text-rose-300">
+                        {formatMoney(carrier.estimatedCostCents)}
+                      </td>
+                      <td
+                        className={[
+                          "px-3 py-2.5 text-right font-semibold",
+                          carrier.estimatedMarginCents >= 0
+                            ? "text-emerald-700 dark:text-emerald-300"
+                            : "text-red-700 dark:text-red-300",
+                        ].join(" ")}
+                      >
+                        {formatMoney(carrier.estimatedMarginCents)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+          <p className="text-xs text-stone-500 dark:text-stone-400">
+            La comisión se estima sobre el monto a recaudar del pedido. El cargo
+            real y promociones como Forza pueden variar en Boxful.
+          </p>
+        </section>
+      )}
 
       <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm dark:border-stone-700 dark:bg-stone-900 sm:rounded-3xl">
         <div className="flex flex-col gap-3 border-b border-stone-200 px-3.5 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-4 dark:border-stone-700">
