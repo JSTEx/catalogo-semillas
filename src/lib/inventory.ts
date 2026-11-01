@@ -18,7 +18,14 @@ function rowCount(result: unknown): number {
 
 /** Estados en los que el pedido mantiene stock reservado/descontado. */
 export function holdsStock(status: OrderStatus): boolean {
-  return status === "new" || status === "confirmed" || status === "in_transit" || status === "delivered";
+  return (
+    status === "new" ||
+    status === "confirmed" ||
+    status === "preparing" ||
+    status === "ready" ||
+    status === "in_transit" ||
+    status === "delivered"
+  );
 }
 
 /**

@@ -7,7 +7,10 @@ import type { OrderStatus } from "@/lib/orders";
 import { formatMoney } from "@/lib/money";
 import {
   ORDER_STATUS_META,
-  ORDER_STATUS_FLOW,
+  orderStatusDescription,
+  orderStatusFlow,
+  orderStatusForDelivery,
+  orderStatusLabel,
   orderStatusStep,
   businessWhatsAppLink,
   orderTrackingUrl,
@@ -41,7 +44,17 @@ const HERO: Record<OrderStatus, { emoji: string; bg: string; line: string }> = {
   confirmed: {
     emoji: "✅",
     bg: "border-amber-200 bg-gradient-to-br from-amber-500/15 via-amber-500/5 to-transparent dark:border-amber-500/30",
-    line: "Tu pedido esta confirmado. Lo estamos preparando.",
+    line: "Tu pedido está confirmado. Pronto iniciaremos la preparación.",
+  },
+  preparing: {
+    emoji: "📦",
+    bg: "border-orange-200 bg-gradient-to-br from-orange-500/15 via-orange-500/5 to-transparent dark:border-orange-500/30",
+    line: "Estamos preparando tu pedido.",
+  },
+  ready: {
+    emoji: "✅",
+    bg: "border-teal-200 bg-gradient-to-br from-teal-500/15 via-teal-500/5 to-transparent dark:border-teal-500/30",
+    line: "Tu pedido está listo.",
   },
   in_transit: {
     emoji: "🚚",
@@ -58,14 +71,6 @@ const HERO: Record<OrderStatus, { emoji: string; bg: string; line: string }> = {
     bg: "border-rose-200 bg-gradient-to-br from-rose-500/15 via-rose-500/5 to-transparent dark:border-rose-500/30",
     line: "Este pedido fue cancelado. Si fue un error, escribenos por WhatsApp.",
   },
-};
-
-const STEP_DESC: Record<OrderStatus, string> = {
-  new: "Recibimos tu pedido",
-  confirmed: "Confirmado y en preparacion",
-  in_transit: "En camino hacia ti",
-  delivered: "Entregado",
-  cancelled: "",
 };
 
 function InfoCard({
@@ -151,10 +156,11 @@ export default function OrderTracker({
     };
   }, [initial.id]);
 
-  const meta = ORDER_STATUS_META[order.status];
-  const hero = HERO[order.status];
-  const step = orderStatusStep(order.status);
-  const cancelled = order.status === "cancelled";
+  const visibleStatus = orderStatusForDelivery(order.status, order.delivery);
+  const meta = ORDER_STATUS_META[visibleStatus];
+  const hero = HERO[visibleStatus];
+  const step = orderStatusStep(order.status, order.delivery);
+  const cancelled = visibleStatus === "cancelled";
   const canUploadReceipt =
     order.payment === "transferencia" &&
     !cancelled &&
@@ -238,14 +244,16 @@ export default function OrderTracker({
             <div className="flex items-center gap-2">
               <span className={["h-2.5 w-2.5 rounded-full", meta.dot].join(" ")} />
               <h1 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
-                {meta.label}
+                {orderStatusLabel(visibleStatus, order.delivery)}
               </h1>
             </div>
             <p className="mt-0.5 text-sm font-semibold text-stone-600 dark:text-stone-300">
               Pedido N° {order.number}
             </p>
             <p className="mt-2 text-sm text-stone-500 dark:text-stone-400">
-              {hero.line}
+              {visibleStatus === "ready"
+                ? orderStatusDescription(visibleStatus, order.delivery)
+                : hero.line}
             </p>
           </div>
           <button
@@ -368,16 +376,26 @@ export default function OrderTracker({
         )}
       </section>
 
-      {!cancelled && (
+      {cancelled ? (
+        <section className="rounded-3xl border border-rose-200 bg-rose-50 p-5 dark:border-rose-500/30 dark:bg-rose-500/10">
+          <h2 className="text-sm font-semibold text-rose-800 dark:text-rose-200">
+            Pedido cancelado
+          </h2>
+          <p className="mt-1 text-sm text-rose-700 dark:text-rose-300">
+            El seguimiento del proceso terminó. Si necesitas ayuda, escríbenos
+            por WhatsApp.
+          </p>
+        </section>
+      ) : (
         <section className="rounded-3xl border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-900">
           <h2 className="mb-4 text-sm font-semibold text-stone-700 dark:text-stone-200">
             Progreso
           </h2>
           <ol className="relative space-y-5 pl-8">
             <span className="absolute bottom-2 left-[11px] top-2 w-0.5 bg-stone-200 dark:bg-stone-700" />
-            {ORDER_STATUS_FLOW.map((s, i) => {
+            {orderStatusFlow(order.delivery).map((s, i) => {
               const reached = step >= i;
-              const current = order.status === s;
+              const current = visibleStatus === s;
               return (
                 <li key={s} className="relative">
                   <span
@@ -412,7 +430,7 @@ export default function OrderTracker({
                         : "text-stone-400 dark:text-stone-500",
                     ].join(" ")}
                   >
-                    {ORDER_STATUS_META[s].label}
+                    {orderStatusLabel(s, order.delivery)}
                   </p>
                   <p
                     className={[
@@ -422,7 +440,7 @@ export default function OrderTracker({
                         : "text-stone-400 dark:text-stone-500",
                     ].join(" ")}
                   >
-                    {STEP_DESC[s]}
+                    {orderStatusDescription(s, order.delivery)}
                     {current ? " · el pedido esta aqui ahora" : ""}
                   </p>
                 </li>

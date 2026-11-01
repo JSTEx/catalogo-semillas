@@ -24,6 +24,8 @@ const MAX_STORED = 50;
 const ORDER_STATUSES: OrderStatus[] = [
   "new",
   "confirmed",
+  "preparing",
+  "ready",
   "in_transit",
   "delivered",
   "cancelled",
@@ -136,7 +138,13 @@ export function clearMyOrders(): void {
 
 /** Estados que cuentan como "en curso" (el pedido aun no finaliza). */
 export function isActiveOrder(status: OrderStatus): boolean {
-  return status === "new" || status === "confirmed" || status === "in_transit";
+  return (
+    status === "new" ||
+    status === "confirmed" ||
+    status === "preparing" ||
+    status === "ready" ||
+    status === "in_transit"
+  );
 }
 
 /** Quita un pedido del historial de este dispositivo. */

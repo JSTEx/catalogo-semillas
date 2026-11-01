@@ -93,6 +93,15 @@ export async function PATCH(req: Request, { params }: Params) {
     patch.totalCents = existing.productsTotal + fixedShipping;
   }
   if (parsed.data.status !== undefined) {
+    if (
+      parsed.data.status === "in_transit" &&
+      existing.delivery !== "domicilio"
+    ) {
+      return jsonError(
+        "El estado En camino solo aplica a pedidos con envío a domicilio",
+        400,
+      );
+    }
     if (parsed.data.status === "delivered") {
       if (existing.status !== "delivered" || !existing.deliveredAt) {
         patch.deliveredAt = new Date();

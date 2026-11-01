@@ -14,7 +14,7 @@ const statements = [
      ADD COLUMN IF NOT EXISTS stock integer NOT NULL DEFAULT 0`,
 
   // enums
-  `DO $$ BEGIN CREATE TYPE order_status AS ENUM ('new','confirmed','in_transit','delivered','cancelled'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
+  `DO $$ BEGIN CREATE TYPE order_status AS ENUM ('new','confirmed','preparing','ready','in_transit','delivered','cancelled'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
   `DO $$ BEGIN CREATE TYPE payment_method AS ENUM ('efectivo','transferencia'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
   `DO $$ BEGIN CREATE TYPE delivery_type AS ENUM ('retiro','domicilio'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
   `DO $$ BEGIN CREATE TYPE expense_category AS ENUM ('insumos','envio','empaque','publicidad','otros'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`,

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { PRODUCT_STATUSES } from "./product-status";
+import { ORDER_STATUSES } from "./orders";
 
 /**
  * Elimina etiquetas HTML y caracteres de control para mitigar XSS en la capa
@@ -160,9 +161,7 @@ export const createOrderSchema = z
 
 export const updateOrderSchema = z
   .object({
-    status: z
-      .enum(["new", "confirmed", "in_transit", "delivered", "cancelled"])
-      .optional(),
+    status: z.enum(ORDER_STATUSES).optional(),
     shippingCents: z
       .number()
       .int()

@@ -8,6 +8,8 @@ import {
   ORDER_STATUS_META,
   PAYMENT_META,
   DELIVERY_META,
+  orderStatusForDelivery,
+  orderStatusLabel,
   notifyCustomerWhatsAppLink,
   orderTrackingUrl,
   formatDateTime,
@@ -50,15 +52,21 @@ function WhatsAppIcon({ className }: { className?: string }) {
   );
 }
 
-function StatusBadge({ status }: { status: OrderStatus }) {
+function StatusBadge({
+  status,
+  delivery,
+}: {
+  status: OrderStatus;
+  delivery: OrderDTO["delivery"];
+}) {
   return (
     <span
       className={[
         "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold text-white",
-        ORDER_STATUS_META[status].active,
+        ORDER_STATUS_META[orderStatusForDelivery(status, delivery)].active,
       ].join(" ")}
     >
-      {ORDER_STATUS_META[status].short}
+      {orderStatusLabel(status, delivery)}
     </span>
   );
 }
@@ -220,7 +228,7 @@ export default function AdminOrders({
               {date}
             </p>
           </div>
-          <span className="scale-[0.82] origin-right sm:scale-100"><StatusBadge status={order.status} /></span>
+          <span className="scale-[0.82] origin-right sm:scale-100"><StatusBadge status={order.status} delivery={order.delivery} /></span>
 
           <div className="col-span-2 flex min-w-0 items-center gap-1.5 rounded-lg bg-stone-50 px-2 py-1.5 dark:bg-stone-800 sm:gap-2 sm:rounded-xl sm:px-2.5 sm:py-2">
             <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-[10px] font-bold text-stone-600 shadow-sm ring-1 ring-stone-200 dark:bg-stone-900 dark:text-stone-200 dark:ring-stone-600 sm:h-7 sm:w-7 sm:text-xs">
@@ -300,7 +308,7 @@ export default function AdminOrders({
             </div>
             <p className="mt-0.5 text-xs text-stone-600 dark:text-stone-300">{date}</p>
           </div>
-          <StatusBadge status={order.status} />
+          <StatusBadge status={order.status} delivery={order.delivery} />
         </header>
 
         <div className="flex items-center gap-3 rounded-xl bg-stone-50 px-3 py-2 dark:bg-stone-800">
@@ -401,7 +409,7 @@ export default function AdminOrders({
           </p>
         </div>
         <div className="flex items-center gap-2 sm:order-last">
-          <StatusBadge status={order.status} />
+          <StatusBadge status={order.status} delivery={order.delivery} />
           <span className="shrink-0 rounded-lg bg-brand-50 px-2 py-1 text-base font-extrabold text-brand-700 dark:bg-stone-800 dark:text-emerald-300 sm:text-lg">
             {formatMoney(order.totalCents)}
           </span>
@@ -549,7 +557,7 @@ export default function AdminOrders({
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <StatusBadge status={active.status} />
+                <StatusBadge status={active.status} delivery={active.delivery} />
                 <button
                   type="button"
                   onClick={() => setOpenId(null)}
@@ -832,7 +840,12 @@ export default function AdminOrders({
             </div>
 
             <div className="flex flex-wrap items-center gap-1.5">
-              {ORDER_STATUSES.map((s) => (
+              {ORDER_STATUSES.filter(
+                (status) =>
+                  status !== "in_transit" ||
+                  active.delivery === "domicilio" ||
+                  active.status === status,
+              ).map((s) => (
                 <button
                   key={s}
                   type="button"
@@ -845,7 +858,7 @@ export default function AdminOrders({
                       : "border-stone-200 text-stone-600 hover:border-brand-200 hover:text-brand-700 dark:border-stone-700 dark:text-stone-300",
                   ].join(" ")}
                 >
-                  {ORDER_STATUS_META[s].short}
+                  {orderStatusLabel(s, active.delivery)}
                 </button>
               ))}
             </div>

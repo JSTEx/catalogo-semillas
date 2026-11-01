@@ -3,7 +3,12 @@ import nodemailer from "nodemailer";
 import type { Transporter } from "nodemailer";
 import type { OrderDTO } from "./types";
 import { formatMoney } from "./money";
-import type { OrderStatus } from "./orders";
+import {
+  orderStatusDescription,
+  orderStatusLabel,
+  orderStatusForDelivery,
+  type OrderStatus,
+} from "./orders";
 import {
   PAYMENT_META,
   DELIVERY_META,
@@ -399,6 +404,8 @@ export async function sendNewOrderEmail(order: OrderDTO): Promise<void> {
 const CUSTOMER_STATUS_TITLES: Record<OrderStatus, string> = {
   new: "Recibimos tu pedido",
   confirmed: "Tu pedido fue confirmado",
+  preparing: "Estamos preparando tu pedido",
+  ready: "Tu pedido está listo",
   in_transit: "Tu pedido va en camino",
   delivered: "Tu pedido fue entregado",
   cancelled: "Tu pedido fue cancelado",
@@ -407,6 +414,8 @@ const CUSTOMER_STATUS_TITLES: Record<OrderStatus, string> = {
 const CUSTOMER_STATUS_LINES: Record<OrderStatus, string> = {
   new: "Ya recibimos tu pedido. Te confirmaremos en breve.",
   confirmed: "Tu pedido quedo confirmado. Pronto lo preparamos.",
+  preparing: "Estamos preparando tu pedido.",
+  ready: "Tu pedido está listo.",
   in_transit: "Tu pedido ya va en camino.",
   delivered: "Tu pedido fue entregado. Gracias por tu compra.",
   cancelled: "Tu pedido fue cancelado. Escribenos si tienes dudas.",
@@ -415,17 +424,38 @@ const CUSTOMER_STATUS_LINES: Record<OrderStatus, string> = {
 const CUSTOMER_STATUS_EMOJI: Record<OrderStatus, string> = {
   new: "🧾",
   confirmed: "✅",
+  preparing: "📦",
+  ready: "✅",
   in_transit: "🚚",
   delivered: "🎉",
   cancelled: "⚠️",
 };
 
+function customerStatusTitle(order: OrderDTO, status: OrderStatus): string {
+  const visibleStatus = orderStatusForDelivery(status, order.delivery);
+  if (visibleStatus === "ready") {
+    return `Tu pedido está ${orderStatusLabel(visibleStatus, order.delivery).toLocaleLowerCase("es")}`;
+  }
+  return CUSTOMER_STATUS_TITLES[visibleStatus];
+}
+
+function customerStatusLine(order: OrderDTO, status: OrderStatus): string {
+  const visibleStatus = orderStatusForDelivery(status, order.delivery);
+  if (visibleStatus === "ready" || visibleStatus === "in_transit") {
+    return `${orderStatusDescription(visibleStatus, order.delivery)}.`;
+  }
+  return CUSTOMER_STATUS_LINES[visibleStatus];
+}
+
 function customerHtml(order: OrderDTO, status: OrderStatus): string {
+  const title = customerStatusTitle(order, status);
+  const statusLine = customerStatusLine(order, status);
+  const visibleStatus = orderStatusForDelivery(status, order.delivery);
   const tracking = orderTrackingUrl(order.id);
   const receiptNote =
     order.payment === "transferencia" &&
-    status !== "delivered" &&
-    status !== "cancelled"
+    visibleStatus !== "delivered" &&
+    visibleStatus !== "cancelled"
       ? note(
           "Recuerda enviarnos el comprobante de tu transferencia por WhatsApp para confirmar el pago.",
         )
@@ -433,13 +463,13 @@ function customerHtml(order: OrderDTO, status: OrderStatus): string {
 
   const inner = `
     <div style="text-align:center;margin-bottom:18px;">
-      <div style="font-size:34px;line-height:1;">${CUSTOMER_STATUS_EMOJI[status]}</div>
-      <h1 style="margin:10px 0 6px;color:${INK};font-size:21px;font-weight:800;letter-spacing:-0.02em;">${CUSTOMER_STATUS_TITLES[status]}</h1>
+      <div style="font-size:34px;line-height:1;">${CUSTOMER_STATUS_EMOJI[visibleStatus]}</div>
+      <h1 style="margin:10px 0 6px;color:${INK};font-size:21px;font-weight:800;letter-spacing:-0.02em;">${title}</h1>
       <p style="margin:0;color:${MUTED};font-size:14px;">Pedido N° ${order.number}</p>
     </div>
     <p style="margin:0 0 18px;color:${TEXT};font-size:14px;line-height:1.6;text-align:center;">Hola ${escapeHtml(
       order.customerName,
-    )}, ${CUSTOMER_STATUS_LINES[status]}</p>
+    )}, ${statusLine}</p>
     ${sectionTitle("Tu pedido")}
     ${card(itemsTable(order))}
     ${totalsBox(order)}
@@ -455,18 +485,21 @@ function customerHtml(order: OrderDTO, status: OrderStatus): string {
     }`;
 
   return shell(
-    `${CUSTOMER_STATUS_TITLES[status]} · Pedido N° ${order.number}`,
+    `${title} · Pedido N° ${order.number}`,
     inner,
     "Recibes este correo porque pediste actualizaciones de tu pedido. JecsitoShop.",
   );
 }
 
 function customerText(order: OrderDTO, status: OrderStatus): string {
+  const title = customerStatusTitle(order, status);
+  const statusLine = customerStatusLine(order, status);
+  const visibleStatus = orderStatusForDelivery(status, order.delivery);
   const tracking = orderTrackingUrl(order.id);
   return [
-    `${CUSTOMER_STATUS_TITLES[status]} · Pedido N° ${order.number}`,
+    `${title} · Pedido N° ${order.number}`,
     "",
-    `Hola ${order.customerName}, ${CUSTOMER_STATUS_LINES[status]}`,
+    `Hola ${order.customerName}, ${statusLine}`,
     "",
     orderItemsSummary(order.items),
     "",
@@ -477,8 +510,8 @@ function customerText(order: OrderDTO, status: OrderStatus): string {
     `Entrega: ${DELIVERY_META[order.delivery].label}`,
     order.address ? `Direccion: ${order.address}` : null,
     order.payment === "transferencia" &&
-    status !== "delivered" &&
-    status !== "cancelled"
+    visibleStatus !== "delivered" &&
+    visibleStatus !== "cancelled"
       ? "Recuerda enviarnos el comprobante de tu transferencia por WhatsApp."
       : null,
     "",
@@ -491,9 +524,10 @@ function customerText(order: OrderDTO, status: OrderStatus): string {
 /** Avisa al cliente (si pidio actualizaciones) del estado de su pedido. */
 export async function sendCustomerOrderEmail(order: OrderDTO): Promise<void> {
   if (!order.notifyEmail || !order.customerEmail) return;
+  const title = customerStatusTitle(order, order.status);
   await sendEmail(
     [order.customerEmail],
-    `${CUSTOMER_STATUS_TITLES[order.status]} · Pedido N° ${order.number}`,
+    `${title} · Pedido N° ${order.number}`,
     customerHtml(order, order.status),
     customerText(order, order.status),
     unsubscribeHeaders(order),

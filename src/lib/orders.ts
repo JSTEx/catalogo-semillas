@@ -18,6 +18,8 @@ export function isOrderable(p: {
 export const ORDER_STATUSES = [
   "new",
   "confirmed",
+  "preparing",
+  "ready",
   "in_transit",
   "delivered",
   "cancelled",
@@ -40,6 +42,18 @@ export const ORDER_STATUS_META: Record<
     short: "Confirmado",
     dot: "bg-amber-500",
     active: "border-amber-500 bg-amber-500 text-white",
+  },
+  preparing: {
+    label: "Preparando",
+    short: "Preparando",
+    dot: "bg-orange-500",
+    active: "border-orange-500 bg-orange-500 text-white",
+  },
+  ready: {
+    label: "Listo",
+    short: "Listo",
+    dot: "bg-teal-500",
+    active: "border-teal-500 bg-teal-500 text-white",
   },
   in_transit: {
     label: "En camino",
@@ -217,14 +231,17 @@ export function confirmWhatsAppLink(order: OrderDTO): string {
 /** Mensaje corto al cliente segun el estado actual del pedido. */
 export function statusNotifyMessage(order: OrderDTO): string {
   const trackingUrl = orderTrackingUrl(order.id);
+  const visibleStatus = orderStatusForDelivery(order.status, order.delivery);
   const base: Record<OrderStatus, string> = {
     new: `Hola ${order.customerName}! Recibimos tu pedido N° ${order.number}. Te lo confirmamos en breve.`,
     confirmed: `Hola ${order.customerName}! Tu pedido N° ${order.number} quedo confirmado.`,
+    preparing: `Hola ${order.customerName}! Estamos preparando tu pedido N° ${order.number}.`,
+    ready: `Hola ${order.customerName}! Tu pedido N° ${order.number} está ${orderStatusLabel(visibleStatus, order.delivery).toLocaleLowerCase("es")}.`,
     in_transit: `Hola ${order.customerName}! Tu pedido N° ${order.number} va en camino.`,
     delivered: `Hola ${order.customerName}! Tu pedido N° ${order.number} fue entregado. Gracias por tu compra!`,
     cancelled: `Hola ${order.customerName}! Tu pedido N° ${order.number} fue cancelado. Escribenos si tienes dudas.`,
   };
-  return [base[order.status], trackingUrl ? `Sigue el estado aqui: ${trackingUrl}` : null]
+  return [base[visibleStatus], trackingUrl ? `Sigue el estado aqui: ${trackingUrl}` : null]
     .filter((l) => l !== null)
     .join("\n");
 }
@@ -272,11 +289,62 @@ export function orderTrackingUrl(id: string): string {
 export const ORDER_STATUS_FLOW: OrderStatus[] = [
   "new",
   "confirmed",
+  "preparing",
+  "ready",
   "in_transit",
   "delivered",
 ];
 
-/** Indice del estado dentro del flujo; -1 si esta cancelado. */
-export function orderStatusStep(status: OrderStatus): number {
-  return ORDER_STATUS_FLOW.indexOf(status);
+export function orderStatusForDelivery(
+  status: OrderStatus,
+  delivery: DeliveryType,
+): OrderStatus {
+  return status === "in_transit" && delivery === "retiro" ? "ready" : status;
+}
+
+export function orderStatusLabel(
+  status: OrderStatus,
+  delivery: DeliveryType,
+): string {
+  const visibleStatus = orderStatusForDelivery(status, delivery);
+  if (visibleStatus === "ready") {
+    return delivery === "domicilio" ? "Listo para enviar" : "Listo para retirar";
+  }
+  return ORDER_STATUS_META[visibleStatus].label;
+}
+
+export function orderStatusDescription(
+  status: OrderStatus,
+  delivery: DeliveryType,
+): string {
+  const visibleStatus = orderStatusForDelivery(status, delivery);
+  const descriptions: Record<OrderStatus, string> = {
+    new: "Recibimos tu pedido",
+    confirmed: "Tu pedido fue confirmado",
+    preparing: "Estamos preparando tu pedido",
+    ready:
+      delivery === "domicilio"
+        ? "Tu pedido está listo para entregar a la mensajería"
+        : "Tu pedido está listo; coordinaremos la entrega contigo",
+    in_transit: "La mensajería lleva tu pedido hacia ti",
+    delivered: "Tu pedido fue entregado",
+    cancelled: "Este pedido fue cancelado",
+  };
+  return descriptions[visibleStatus];
+}
+
+export function orderStatusFlow(delivery: DeliveryType): OrderStatus[] {
+  return delivery === "domicilio"
+    ? ORDER_STATUS_FLOW
+    : ORDER_STATUS_FLOW.filter((status) => status !== "in_transit");
+}
+
+/** Indice del estado dentro del flujo visible; -1 si está cancelado. */
+export function orderStatusStep(
+  status: OrderStatus,
+  delivery: DeliveryType,
+): number {
+  return orderStatusFlow(delivery).indexOf(
+    orderStatusForDelivery(status, delivery),
+  );
 }

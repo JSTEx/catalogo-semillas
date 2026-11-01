@@ -69,7 +69,14 @@ export interface OrderDTO {
   delivery: "retiro" | "domicilio";
   address: string | null;
   payment: "efectivo" | "transferencia";
-  status: "new" | "confirmed" | "in_transit" | "delivered" | "cancelled";
+  status:
+    | "new"
+    | "confirmed"
+    | "preparing"
+    | "ready"
+    | "in_transit"
+    | "delivered"
+    | "cancelled";
   items: OrderItem[];
   productsTotal: number;
   shippingCents: number;
@@ -136,7 +143,14 @@ export interface PublicOrderDTO {
   number: number;
   delivery: "retiro" | "domicilio";
   payment: "efectivo" | "transferencia";
-  status: "new" | "confirmed" | "in_transit" | "delivered" | "cancelled";
+  status:
+    | "new"
+    | "confirmed"
+    | "preparing"
+    | "ready"
+    | "in_transit"
+    | "delivered"
+    | "cancelled";
   items: OrderItem[];
   productsTotal: number;
   shippingCents: number;

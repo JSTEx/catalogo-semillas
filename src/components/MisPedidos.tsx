@@ -21,6 +21,8 @@ import {
   PAYMENT_META,
   DELIVERY_META,
   ORDER_STATUS_META,
+  orderStatusForDelivery,
+  orderStatusLabel,
   formatDateTime,
   type OrderStatus,
 } from "@/lib/orders";
@@ -42,8 +44,14 @@ function fromOrderDTO(order: OrderDTO): StoredOrder {
   };
 }
 
-function StatusBadge({ status }: { status: OrderStatus }) {
-  const meta = ORDER_STATUS_META[status];
+function StatusBadge({
+  status,
+  delivery,
+}: {
+  status: OrderStatus;
+  delivery: StoredOrder["delivery"];
+}) {
+  const meta = ORDER_STATUS_META[orderStatusForDelivery(status, delivery)];
   return (
     <span
       className={[
@@ -52,7 +60,7 @@ function StatusBadge({ status }: { status: OrderStatus }) {
       ].join(" ")}
     >
       <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
-      {meta.label}
+      {orderStatusLabel(status, delivery)}
     </span>
   );
 }
@@ -87,7 +95,7 @@ function OrderCard({
             {date}
           </p>
         </div>
-        <StatusBadge status={status} />
+        <StatusBadge status={status} delivery={order.delivery} />
       </div>
 
       <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-stone-500 dark:text-stone-400">

@@ -35,7 +35,13 @@ interface Props {
   canSeeShippingCosts: boolean;
 }
 
-const ACTIVE_STATUSES = ["new", "confirmed", "in_transit"];
+const ACTIVE_STATUSES = [
+  "new",
+  "confirmed",
+  "preparing",
+  "ready",
+  "in_transit",
+];
 const CHART_COLORS = ["#10b981", "#f59e0b", "#0ea5e9", "#8b5cf6", "#f43f5e", "#14b8a6"];
 
 const SV_TZ = "America/El_Salvador";
