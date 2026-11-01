@@ -7,40 +7,45 @@ import { ConfirmProvider } from "@/components/ConfirmDialog";
 
 export const metadata: Metadata = {
   title: {
-    default: "JecsitoShop",
-    template: "%s · JecsitoShop",
+    default: "JecsitoShop | Semillas, snacks y más",
+    template: "%s | JecsitoShop",
   },
   description:
-    "Catalogo en linea de JecsitoShop: consulta productos y disponibilidad en tiempo real.",
+    "Explora semillas, snacks y productos para disfrutar. Haz tu pedido en línea con opción de envío a domicilio o retiro.",
   robots: { index: true, follow: true },
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ||
       (typeof process.env.VERCEL_PROJECT_PRODUCTION_URL === "string"
         ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-        : "http://localhost:3000"),
+        : typeof process.env.VERCEL_URL === "string"
+          ? `https://${process.env.VERCEL_URL}`
+          : process.env.NODE_ENV === "production"
+            ? "https://jecsitoshop.vercel.app"
+            : "http://localhost:3000"),
   ),
+  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     locale: "es_SV",
-    url: process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") || "/",
+    url: "/",
     siteName: "JecsitoShop",
-    title: "JecsitoShop · Tienda online",
+    title: "JecsitoShop | Semillas, snacks y más",
     description:
-      "Catálogo en línea de JecsitoShop: consulta productos y disponibilidad en tiempo real.",
+      "Explora semillas, snacks y productos para disfrutar. Haz tu pedido en línea con opción de envío a domicilio o retiro.",
     images: [
       {
         url: "/og.png",
         width: 1200,
         height: 630,
-        alt: "JecsitoShop",
+        alt: "JecsitoShop: semillas, snacks y más para disfrutar",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "JecsitoShop · Tienda online",
+    title: "JecsitoShop | Semillas, snacks y más",
     description:
-      "Catálogo en línea de JecsitoShop: consulta productos y disponibilidad en tiempo real.",
+      "Explora semillas, snacks y productos para disfrutar. Haz tu pedido en línea con opción de envío a domicilio o retiro.",
     images: ["/og.png"],
   },
   icons: {

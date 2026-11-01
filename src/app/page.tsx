@@ -3,9 +3,39 @@ import { db } from "@/lib/db";
 import { products } from "@/lib/db/schema";
 import { toProductDTO } from "@/lib/types";
 import CatalogClient from "@/components/CatalogClient";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+export const metadata: Metadata = {
+  title: "Semillas, snacks y más",
+  description:
+    "Descubre el catálogo de JecsitoShop y haz tu pedido en línea. Elige envío a domicilio o retiro.",
+  alternates: { canonical: "/" },
+  openGraph: {
+    type: "website",
+    url: "/",
+    title: "JecsitoShop | Semillas, snacks y más",
+    description:
+      "Descubre el catálogo de JecsitoShop y haz tu pedido en línea. Elige envío a domicilio o retiro.",
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "JecsitoShop: semillas, snacks y más para disfrutar",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "JecsitoShop | Semillas, snacks y más",
+    description:
+      "Descubre el catálogo de JecsitoShop y haz tu pedido en línea. Elige envío a domicilio o retiro.",
+    images: ["/og.png"],
+  },
+};
 
 export default async function HomePage() {
   const rows = await db

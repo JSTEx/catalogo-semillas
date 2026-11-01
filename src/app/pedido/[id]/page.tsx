@@ -5,9 +5,50 @@ import { orders } from "@/lib/db/schema";
 import { productIdSchema } from "@/lib/validation";
 import { toPublicOrderDTO } from "@/lib/types";
 import OrderTracker from "./OrderTracker";
+import type { Metadata } from "next";
+import { orderTrackingPath } from "@/lib/orders";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const path = orderTrackingPath(id);
+  const title = "Seguimiento de pedido";
+  const description =
+    "Consulta el estado y los detalles de entrega de tu pedido en JecsitoShop.";
+
+  return {
+    title,
+    description,
+    robots: { index: false, follow: false, noarchive: true },
+    openGraph: {
+      type: "website",
+      url: path,
+      siteName: "JecsitoShop",
+      title: `${title} | JecsitoShop`,
+      description,
+      images: [
+        {
+          url: "/og.png",
+          width: 1200,
+          height: 630,
+          alt: "JecsitoShop: semillas, snacks y más para disfrutar",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${title} | JecsitoShop`,
+      description,
+      images: ["/og.png"],
+    },
+  };
+}
 
 function NotFound() {
   return (

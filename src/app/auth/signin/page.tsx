@@ -1,4 +1,31 @@
 import { signIn } from "@/auth";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Iniciar sesión",
+  description: "Accede a tu cuenta de JecsitoShop.",
+  robots: { index: false, follow: false, noarchive: true },
+  openGraph: {
+    type: "website",
+    url: "/auth/signin",
+    title: "Iniciar sesión | JecsitoShop",
+    description: "Accede a tu cuenta y consulta tus pedidos de JecsitoShop.",
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "JecsitoShop: semillas, snacks y más para disfrutar",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Iniciar sesión | JecsitoShop",
+    description: "Accede a tu cuenta y consulta tus pedidos de JecsitoShop.",
+    images: ["/og.png"],
+  },
+};
 
 type Props = {
   searchParams: Promise<{ callbackUrl?: string | string[] }>;

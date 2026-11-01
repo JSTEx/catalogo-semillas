@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/sync-bg-assets.mjs && next build",
+    "build": "node scripts/generate-og-image.mjs && node scripts/sync-bg-assets.mjs && next build",
+    "generate:og": "node scripts/generate-og-image.mjs",
     "start": "next start",
     "postinstall": "node scripts/sync-bg-assets.mjs",
     "lint": "eslint .",

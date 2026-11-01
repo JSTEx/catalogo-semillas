@@ -10,9 +10,36 @@ import {
 } from "@/lib/types";
 import AdminDashboard from "@/components/admin/AdminDashboard";
 import { getAdminUser } from "@/lib/admin/server";
+import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
+
+export const metadata: Metadata = {
+  title: "Administración",
+  description: "Acceso privado para administrar la tienda JecsitoShop.",
+  robots: { index: false, follow: false, noarchive: true },
+  openGraph: {
+    type: "website",
+    url: "/admin",
+    title: "Administración | JecsitoShop",
+    description: "Acceso privado para administrar la tienda JecsitoShop.",
+    images: [
+      {
+        url: "/og.png",
+        width: 1200,
+        height: 630,
+        alt: "JecsitoShop: semillas, snacks y más para disfrutar",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Administración | JecsitoShop",
+    description: "Acceso privado para administrar la tienda JecsitoShop.",
+    images: ["/og.png"],
+  },
+};
 
 export default async function AdminPage() {
   const admin = await getAdminUser();

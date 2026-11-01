@@ -112,8 +112,30 @@ check("GET /api/orders/status (batch)", statusRes?.status === 200, `-> ${statusR
 
 const html = await fetch(BASE + "/").then((r) => r.text()).catch(() => "");
 check("catalogo incluye og:image", /og:image/.test(html));
+check(
+  "vista previa Open Graph usa imagen horizontal 1200x630",
+  /property="og:image:width" content="1200"/.test(html) &&
+    /property="og:image:height" content="630"/.test(html),
+);
+check(
+  "vista previa describe el catálogo",
+  /og:title" content="JecsitoShop \| Semillas, snacks y más"/.test(html),
+);
 check("catalogo incluye favicon", /icons\/favicon/.test(html));
 check("login de Google visible mientras carga la sesion", /aria-label="Entrar con Google"/.test(html));
+
+for (const path of [
+  "/mis-pedidos",
+  "/admin",
+  "/auth/signin",
+  "/pedido/00000000-0000-4000-8000-000000000001",
+]) {
+  const page = await fetch(BASE + path).then((r) => r.text()).catch(() => "");
+  check(
+    `${path} no se indexa en buscadores`,
+    /name="robots" content="noindex,\s*nofollow,\s*noarchive"/.test(page),
+  );
+}
 
 if (process.env.SMOKE_WRITE === "1") {
   const cookie = process.env.ADMIN_COOKIE;
