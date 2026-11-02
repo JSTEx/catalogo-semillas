@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import type { ProductDTO } from "@/lib/types";
 import {
@@ -13,16 +14,17 @@ import { normalizeSearch } from "@/lib/search";
 import { useViewMode } from "@/lib/use-view-mode";
 import { businessWhatsAppLink } from "@/lib/orders";
 import SeedCard from "./SeedCard";
-import SeedModal from "./SeedModal";
 import ThemeToggle from "./ThemeToggle";
 import ViewToggle from "./ViewToggle";
 import MyOrderLink from "./MyOrderLink";
 import { CartProvider, useCart } from "./cart/CartProvider";
 import CartButton from "./cart/CartButton";
 import SignInButton from "./auth/SignInButton";
-import CartDrawer from "./cart/CartDrawer";
-import CheckoutModal from "./cart/CheckoutModal";
 import AdminQuickLink from "./AdminQuickLink";
+
+const SeedModal = dynamic(() => import("./SeedModal"), { loading: () => null });
+const CartDrawer = dynamic(() => import("./cart/CartDrawer"), { loading: () => null });
+const CheckoutModal = dynamic(() => import("./cart/CheckoutModal"), { loading: () => null });
 
 type Filter = "all" | ProductStatus;
 
@@ -335,25 +337,31 @@ export default function CatalogClient({ initialProducts }: Props) {
         </div>
       </footer>
 
-      <SeedModal
-        product={selected}
-        onClose={() => setSelected(null)}
-        onOpenCart={() => setCartOpen(true)}
-      />
+      {selected && (
+        <SeedModal
+          product={selected}
+          onClose={() => setSelected(null)}
+          onOpenCart={() => setCartOpen(true)}
+        />
+      )}
 
       <CartButton onClick={() => setCartOpen(true)} />
-      <CartDrawer
-        open={cartOpen}
-        onClose={() => setCartOpen(false)}
-        onCheckout={() => {
-          setCartOpen(false);
-          setCheckoutOpen(true);
-        }}
-      />
-      <CheckoutModal
-        open={checkoutOpen}
-        onClose={() => setCheckoutOpen(false)}
-      />
+      {cartOpen && (
+        <CartDrawer
+          open={cartOpen}
+          onClose={() => setCartOpen(false)}
+          onCheckout={() => {
+            setCartOpen(false);
+            setCheckoutOpen(true);
+          }}
+        />
+      )}
+      {checkoutOpen && (
+        <CheckoutModal
+          open={checkoutOpen}
+          onClose={() => setCheckoutOpen(false)}
+        />
+      )}
     </div>
     </CartProvider>
   );
