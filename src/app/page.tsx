@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export const metadata: Metadata = {
-  title: "Semillas, snacks y más",
+  title: "JecsitoShop",
   description:
     "Descubre el catálogo de JecsitoShop y haz tu pedido en línea. Elige envío a domicilio o retiro.",
   alternates: { canonical: "/" },
