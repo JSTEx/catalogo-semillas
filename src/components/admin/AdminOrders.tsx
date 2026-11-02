@@ -839,23 +839,29 @@ export default function AdminOrders({
                     />
                   </label>
                 </div>
-              ) : null}
-              <button
-                type="button"
-                onClick={() =>
-                  patch(active.id, {
-                    paymentConfirmed: !active.paymentConfirmedAt,
-                  })
-                }
-                disabled={busyId === active.id || active.status === "cancelled"}
-                className="self-start rounded-xl border border-emerald-300 bg-white px-3 py-2 text-xs font-semibold text-emerald-800 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-500/30 dark:bg-stone-900 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
-              >
-                {active.paymentConfirmedAt
-                  ? "Revertir confirmación de pago"
-                  : active.payment === "transferencia"
-                    ? "Confirmar que la transferencia llegó"
-                    : "Registrar pago recibido"}
-              </button>
+              ) : (
+                <p className="text-xs text-stone-600 dark:text-stone-300/80">
+                  {active.paymentConfirmedAt
+                    ? "El efectivo se registra como recibido al entregar el pedido."
+                    : "El pago en efectivo se confirma automáticamente al marcar el pedido como entregado."}
+                </p>
+              )}
+              {active.payment === "transferencia" && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    patch(active.id, {
+                      paymentConfirmed: !active.paymentConfirmedAt,
+                    })
+                  }
+                  disabled={busyId === active.id || active.status === "cancelled"}
+                  className="self-start rounded-xl border border-emerald-300 bg-white px-3 py-2 text-xs font-semibold text-emerald-800 transition-colors hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-emerald-500/30 dark:bg-stone-900 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
+                >
+                  {active.paymentConfirmedAt
+                    ? "Revertir confirmación de pago"
+                    : "Confirmar que la transferencia llegó"}
+                </button>
+              )}
             </div>
 
             <div className="flex items-center justify-between border-t border-stone-200/60 pt-3 text-sm dark:border-stone-800/60">

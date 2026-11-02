@@ -142,6 +142,9 @@ export async function PATCH(req: Request, { params }: Params) {
           409,
         );
       }
+      if (existing.payment === "efectivo" && !existing.paymentConfirmedAt) {
+        patch.paymentConfirmedAt = new Date();
+      }
       if (existing.status !== "delivered" || !existing.deliveredAt) {
         patch.deliveredAt = new Date();
       }
